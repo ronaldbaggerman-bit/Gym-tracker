@@ -1,33 +1,63 @@
-# Welcome to your Expo app 👋
+# Gym-Track 💪
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Een fitness tracking app gebouwd met React Native en Expo, ontworpen om op Windows te worden ontwikkeld en getest met Expo Go op je telefoon.
 
-## Get started
+## Functies
 
-1. Install dependencies
+- **Workout**: Beheer en track je workouts
+- **Historie**: Bekijk je workout geschiedenis
+- **Grafieken**: Visualiseer je training statistieken
 
-   ```bash
-   npm install
-   ```
+## Vereisten
 
-2. Start the app
+- Node.js (v16+)
+- npm of yarn
+- [Expo Go](https://expo.dev/go) app op je telefoon (iOS of Android)
 
-   ```bash
-   npx expo start
-   ```
+## Aan de slag
 
-In the output, you'll find options to open the app in a
+### 1. Installeer dependencies
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+```bash
+npm install
+```
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### 2. Start de development server
 
-## Get a fresh project
+```bash
+npx expo start
+```
 
-When you're ready, run:
+### 3. Open in Expo Go
+
+- Android: Scan de QR code met je camera of Expo Go app
+- iOS: Open de link in Safari en klik op "Open in Expo Go"
+
+## Project Structuur
+
+```
+app/
+├── (tabs)/              # Tab navigator screens
+│   ├── index.tsx       # Workout screen
+│   ├── explore.tsx     # Historie screen
+│   ├── grafieken.tsx   # Grafieken screen
+│   └── _layout.tsx     # Tab navigator setup
+├── navigation/         # Navigation configuratie
+└── screens/            # Reusable screen componenten
+```
+
+## Commando's
+
+- `npm run android` - Bouw voor Android
+- `npm run ios` - Bouw voor iOS (macOS vereist)
+- `npm run web` - Start web versie
+
+## Documentatie
+
+- [Expo Documentation](https://docs.expo.dev/)
+- [React Native Documentation](https://reactnative.dev/)
+- [Expo Router](https://docs.expo.dev/router/introduction/)
+
 
 ```bash
 npm run reset-project

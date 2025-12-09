@@ -1,0 +1,12 @@
+export const COLORS = {
+  BACKGROUND: '#0E0E10', // very dark matte
+  SURFACE: '#141416',
+  CARD: '#1C1C1E',
+  BORDER: '#2C2C2E',
+  MUTED: '#9A9A9A',
+  TEXT_PRIMARY: '#FFFFFF',
+  TEXT_SECONDARY: '#D1D1D6',
+  PRIMARY: '#34C759',
+  ACCENT: '#007AFF',
+  DANGER: '#FF3B30',
+};

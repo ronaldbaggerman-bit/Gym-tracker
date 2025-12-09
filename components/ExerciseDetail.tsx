@@ -159,15 +159,17 @@ export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete }:
           <View style={[styles.checkCircle, exercise.completed && styles.checkCircleCompleted]}>
             {exercise.completed && <ThemedText style={styles.checkmark}>✓</ThemedText>}
           </View>
-          <View style={styles.headerText}>
-            <ThemedText type="defaultSemiBold" style={styles.exerciseName}>
-              {exercise.name}
-            </ThemedText>
-            <ThemedText style={styles.muscleGroup}>
-              {exercise.muscleGroup} • {completedSets}/{exercise.sets.length} sets
-            </ThemedText>
+          <View style={styles.headerTextAndInfo}>
+            <View style={styles.headerText}>
+              <ThemedText type="defaultSemiBold" style={styles.exerciseName}>
+                {exercise.name}
+              </ThemedText>
+              <ThemedText style={styles.muscleGroup}>
+                {exercise.muscleGroup} • {completedSets}/{exercise.sets.length} sets
+              </ThemedText>
+            </View>
             {exercise.personalRecord && (
-              <>
+              <View style={styles.headerInfoColumn}>
                 <ThemedText style={styles.prDisplay}>
                   {getPRDisplay(exercise)}
                 </ThemedText>
@@ -181,7 +183,7 @@ export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete }:
                     {format1RMDisplay(calculate1RMFromPR(exercise.personalRecord))}
                   </ThemedText>
                 )}
-              </>
+              </View>
             )}
           </View>
         </View>
@@ -289,6 +291,16 @@ export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete }:
                     onPress={() => setExpandedSetId(isExpanded ? null : set.setNumber)}
                     activeOpacity={0.7}
                   >
+                    {/* Timer Progress Bar */}
+                    <View style={styles.timerProgressContainer}>
+                      <View
+                        style={[
+                          styles.timerProgressBar,
+                          { width: `${(timerVal / 90) * 100}%` },
+                        ]}
+                      />
+                    </View>
+
                     <ThemedText style={styles.timerDisplay}>{formatTime(timerVal)}</ThemedText>
 
                     {isExpanded && (
@@ -356,8 +368,9 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 12,
+    flex: 1,
   },
   checkCircle: {
     width: 28,
@@ -366,6 +379,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.BORDER,
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 2,
+  },
   },
   checkCircleCompleted: {
     backgroundColor: '#34C759',
@@ -377,6 +392,16 @@ const styles = StyleSheet.create({
   },
   headerText: {
     flex: 1,
+  },
+  headerTextAndInfo: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  headerInfoColumn: {
+    gap: 3,
   },
   exerciseName: {
     fontSize: 16,
@@ -529,6 +554,19 @@ const styles = StyleSheet.create({
   },
   timerSectionExpanded: {
     paddingVertical: 10,
+  },
+  timerProgressContainer: {
+    width: '100%',
+    height: 6,
+    backgroundColor: COLORS.SURFACE,
+    borderRadius: 3,
+    overflow: 'hidden',
+    marginBottom: 10,
+  },
+  timerProgressBar: {
+    height: '100%',
+    backgroundColor: COLORS.ACCENT,
+    borderRadius: 3,
   },
   timerDisplay: {
     fontSize: 32,

@@ -22,16 +22,24 @@ export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete }:
   const timerIntervals = useRef<Record<number, NodeJS.Timeout>>({});
 
   useEffect(() => {
-    setSetsCount(exercise.sets.length);
-    setWeightValue(exercise.sets?.[0]?.weight ?? 0);
-    setRepsValue(exercise.sets?.[0]?.reps ?? 12);
     // Initialize timer values for all sets
     const initialTimers: Record<number, number> = {};
     exercise.sets.forEach(s => {
-      initialTimers[s.setNumber] = 90;
+      initialTimers[s.setNumber] = 90; // 90 seconds rest between sets
     });
     setTimerValues(initialTimers);
   }, [exercise]);
+
+  // Effect to handle timer completion haptic feedback
+  useEffect(() => {
+    Object.entries(timerValues).forEach(([setNumStr, timeLeft]) => {
+      if (timeLeft === 0 && !runningTimers.has(Number(setNumStr))) {
+        // Timer just finished - trigger haptic feedback
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(err => console.warn('Haptic impact failed:', err));
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(err => console.warn('Haptic notification failed:', err));
+      }
+    });
+  }, [timerValues]);
 
   const updateSetsCount = (newCount: number) => {
     if (newCount < 1) return;
@@ -85,17 +93,13 @@ export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete }:
       setTimerValues(prev => {
         const newVal = Math.max(0, (prev[setNumber] || 0) - 1);
         if (newVal === 0) {
-          // Timer finished, stop it and play alert
+          // Timer finished, stop it
           clearInterval(timerIntervals.current[setNumber]);
           setRunningTimers(r => {
             const updated = new Set(r);
             updated.delete(setNumber);
             return updated;
           });
-          // Play haptic and audio alert
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(err => console.warn('Haptic failed:', err));
-          // Also try to play a notification
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(err => console.warn('Notification failed:', err));
         }
         return { ...prev, [setNumber]: newVal };
       });
@@ -113,7 +117,7 @@ export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete }:
 
   const resetTimer = (setNumber: number) => {
     pauseTimer(setNumber);
-    setTimerValues(prev => ({ ...prev, [setNumber]: 90 }));
+    setTimerValues(prev => ({ ...prev, [setNumber]: 90 })); // Reset to 90 seconds
   };
 
   const markSetComplete = (setIndex: number) => {

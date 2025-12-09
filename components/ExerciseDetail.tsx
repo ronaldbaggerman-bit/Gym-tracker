@@ -4,6 +4,7 @@ import { ThemedText } from '@/components/themed-text';
 import { DIFFICULTY_COLORS } from '@/app/types/workout';
 import { COLORS } from '@/app/styles/colors';
 import * as Haptics from 'expo-haptics';
+import { getPRDisplay } from '@/app/utils/prTracker';
 import type { WorkoutExercise, DifficultyRating } from '@/app/types/workout';
 
 interface ExerciseDetailProps {
@@ -161,6 +162,11 @@ export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete }:
             <ThemedText style={styles.muscleGroup}>
               {exercise.muscleGroup} • {completedSets}/{exercise.sets.length} sets
             </ThemedText>
+            {exercise.personalRecord && (
+              <ThemedText style={styles.prDisplay}>
+                {getPRDisplay(exercise)}
+              </ThemedText>
+            )}
           </View>
         </View>
       </TouchableOpacity>
@@ -345,6 +351,12 @@ const styles = StyleSheet.create({
   muscleGroup: {
     fontSize: 13,
     color: COLORS.TEXT_SECONDARY,
+  },
+  prDisplay: {
+    fontSize: 12,
+    color: '#FF9500',
+    marginTop: 6,
+    fontWeight: '600',
   },
   setsContainer: {
     paddingHorizontal: 16,

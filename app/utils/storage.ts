@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { PersonalRecord } from '@/app/types/workout';
 
 const SESSIONS_KEY = 'workout_sessions_v1';
+const PRS_KEY = 'personal_records_v1'; // Format: { exerciseName: PersonalRecord }
 
 export async function saveSession(session: any) {
   try {
@@ -52,5 +54,39 @@ export async function removeSession(sessionId: string) {
   } catch (e) {
     console.error('removeSession error', e);
     return false;
+  }
+}
+
+// Personal Records storage
+export async function savePR(exerciseName: string, pr: PersonalRecord) {
+  try {
+    const raw = await AsyncStorage.getItem(PRS_KEY);
+    const prs: Record<string, PersonalRecord> = raw ? JSON.parse(raw) : {};
+    prs[exerciseName] = pr;
+    await AsyncStorage.setItem(PRS_KEY, JSON.stringify(prs));
+    return true;
+  } catch (e) {
+    console.error('savePR error', e);
+    return false;
+  }
+}
+
+export async function loadPRs(): Promise<Record<string, PersonalRecord>> {
+  try {
+    const raw = await AsyncStorage.getItem(PRS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    console.error('loadPRs error', e);
+    return {};
+  }
+}
+
+export async function getPR(exerciseName: string): Promise<PersonalRecord | null> {
+  try {
+    const prs = await loadPRs();
+    return prs[exerciseName] || null;
+  } catch (e) {
+    console.error('getPR error', e);
+    return null;
   }
 }

@@ -8,7 +8,9 @@ import { SchemaSelector } from '@/components/SchemaSelector';
 import { ExerciseDetail } from '@/components/ExerciseDetail';
 import { WORKOUT_DATA } from '@/app/data/workoutData';
 import type { WorkoutExercise, ExerciseSet, WorkoutSession } from '@/app/types/workout';
-import { loadSessions, saveSession } from '@/app/utils/storage';
+import { loadSessions, saveSession, loadPRs, savePR } from '@/app/utils/storage';
+import { useEffect } from 'react';
+import { checkForNewPRs } from '@/app/utils/prTracker';
 
 const createDefaultSets = (numberOfSets: number = 3): ExerciseSet[] => {
   return Array.from({ length: numberOfSets }, (_, i) => ({
@@ -24,6 +26,12 @@ export default function WorkoutScreen() {
   const insets = useSafeAreaInsets();
   const [selectedSchemaId, setSelectedSchemaId] = useState<string>('schema1');
   const [workoutSession, setWorkoutSession] = useState<WorkoutSession | null>(null);
+  const [prs, setPRs] = useState<Record<string, any>>({});
+
+  // Load PRs on mount
+  useEffect(() => {
+    loadPRs().then(prData => setPRs(prData)).catch(err => console.warn('Failed to load PRs:', err));
+  }, []);
 
   const selectedSchema = useMemo(
     () => WORKOUT_DATA.schemas.find(s => s.id === selectedSchemaId),
@@ -33,16 +41,20 @@ export default function WorkoutScreen() {
   const exercises: WorkoutExercise[] = useMemo(() => {
     if (!selectedSchema) return [];
     return selectedSchema.muscleGroups.flatMap(mg =>
-      mg.exercises.map(ex => ({
-        exerciseId: ex.id,
-        name: ex.name,
-        muscleGroup: mg.name,
-        met: ex.met,
-        sets: createDefaultSets(3),
-        completed: false,
-      }))
+      mg.exercises.map(ex => {
+        const exerciseWithPR: WorkoutExercise = {
+          exerciseId: ex.id,
+          name: ex.name,
+          muscleGroup: mg.name,
+          met: ex.met,
+          sets: createDefaultSets(3),
+          completed: false,
+          personalRecord: prs[ex.name], // Load PR if exists
+        };
+        return exerciseWithPR;
+      })
     );
-  }, [selectedSchema]);
+  }, [selectedSchema, prs]);
 
   const handleUpdateExercise = (updatedExercise: WorkoutExercise) => {
     setWorkoutSession(prev => {
@@ -56,6 +68,14 @@ export default function WorkoutScreen() {
         updatedExercise.completed || updatedExercise.sets.every(s => s.completed);
 
       if (isExerciseCompleted) {
+        // Check for PRs and save them
+        const prResult = checkForNewPRs(updatedExercise);
+        if (prResult) {
+          savePR(updatedExercise.name, prResult.updatedPR).catch(err => console.error('Failed to save PR:', err));
+          // Update local PRs state
+          setPRs(prev => ({ ...prev, [updatedExercise.name]: prResult.updatedPR }));
+        }
+
         const snapshot = {
           ...prev,
           exercises: updatedExercises,

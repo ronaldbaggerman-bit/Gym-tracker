@@ -10,6 +10,13 @@ export interface ExerciseSet {
   difficulty: DifficultyRating | null;
 }
 
+export interface PersonalRecord {
+  maxWeight: number; // heaviest weight ever lifted
+  maxReps: number; // most reps ever done
+  maxWeightDate: string; // ISO date
+  maxRepsDate: string; // ISO date
+}
+
 export interface WorkoutExercise {
   exerciseId: number;
   name: string;
@@ -17,6 +24,7 @@ export interface WorkoutExercise {
   met: number;
   sets: ExerciseSet[];
   completed: boolean;
+  personalRecord?: PersonalRecord; // optional PR data
 }
 
 export interface WorkoutSession {

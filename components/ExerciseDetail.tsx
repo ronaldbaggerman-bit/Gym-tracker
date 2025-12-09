@@ -6,6 +6,7 @@ import { COLORS } from '@/app/styles/colors';
 import * as Haptics from 'expo-haptics';
 import { getPRDisplay } from '@/app/utils/prTracker';
 import { calculateProgressiveOverload, formatProgressiveSuggestion } from '@/app/utils/progressiveOverload';
+import { calculate1RMFromPR, format1RMDisplay } from '@/app/utils/oneRepMaxCalculator';
 import type { WorkoutExercise, DifficultyRating } from '@/app/types/workout';
 
 interface ExerciseDetailProps {
@@ -171,6 +172,11 @@ export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete }:
                 {calculateProgressiveOverload(exercise.personalRecord) && (
                   <ThemedText style={styles.progressiveOverloadDisplay}>
                     {formatProgressiveSuggestion(calculateProgressiveOverload(exercise.personalRecord)!)}
+                  </ThemedText>
+                )}
+                {calculate1RMFromPR(exercise.personalRecord) > 0 && (
+                  <ThemedText style={styles.oneRepMaxDisplay}>
+                    {format1RMDisplay(calculate1RMFromPR(exercise.personalRecord))}
                   </ThemedText>
                 )}
               </>
@@ -371,6 +377,12 @@ const styles = StyleSheet.create({
     color: '#34C759',
     marginTop: 4,
     fontStyle: 'italic',
+  },
+  oneRepMaxDisplay: {
+    fontSize: 11,
+    color: '#FF2D55',
+    marginTop: 3,
+    fontWeight: '500',
   },
   setsContainer: {
     paddingHorizontal: 16,

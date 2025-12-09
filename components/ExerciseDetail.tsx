@@ -159,7 +159,7 @@ export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete }:
           <View style={[styles.checkCircle, exercise.completed && styles.checkCircleCompleted]}>
             {exercise.completed && <ThemedText style={styles.checkmark}>✓</ThemedText>}
           </View>
-          <View style={styles.headerTextAndInfo}>
+          <View style={styles.headerTextWrapper}>
             <View style={styles.headerText}>
               <ThemedText type="defaultSemiBold" style={styles.exerciseName}>
                 {exercise.name}
@@ -169,7 +169,7 @@ export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete }:
               </ThemedText>
             </View>
             {exercise.personalRecord && (
-              <View style={styles.headerInfoColumn}>
+              <View style={styles.headerInfoBox}>
                 <ThemedText style={styles.prDisplay}>
                   {getPRDisplay(exercise)}
                 </ThemedText>
@@ -293,12 +293,7 @@ export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete }:
                   >
                     {/* Timer Progress Bar */}
                     <View style={styles.timerProgressContainer}>
-                      <View
-                        style={[
-                          styles.timerProgressBar,
-                          { width: `${(timerVal / 90) * 100}%` },
-                        ]}
-                      />
+                      <View style={[styles.timerProgressBar, { width: `${(timerVal / 90) * 100}%` }]} />
                     </View>
 
                     <ThemedText style={styles.timerDisplay}>{formatTime(timerVal)}</ThemedText>
@@ -372,6 +367,17 @@ const styles = StyleSheet.create({
     gap: 12,
     flex: 1,
   },
+  headerTextWrapper: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  headerInfoBox: {
+    gap: 2,
+    alignItems: 'flex-end',
+  },
   checkCircle: {
     width: 28,
     height: 28,
@@ -379,8 +385,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.BORDER,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 2,
-  },
   },
   checkCircleCompleted: {
     backgroundColor: '#34C759',
@@ -392,16 +396,6 @@ const styles = StyleSheet.create({
   },
   headerText: {
     flex: 1,
-  },
-  headerTextAndInfo: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: 12,
-  },
-  headerInfoColumn: {
-    gap: 3,
   },
   exerciseName: {
     fontSize: 16,
@@ -705,6 +699,11 @@ const styles = StyleSheet.create({
   },
   controlInlineGroupCenter: {
     flex: 1,
+  },
+  controlLabel: {
+    fontSize: 12,
+    color: COLORS.TEXT_SECONDARY,
+    marginBottom: 6,
   },
   counterRow: {
     flexDirection: 'row',

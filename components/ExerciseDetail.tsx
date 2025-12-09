@@ -706,11 +706,6 @@ const styles = StyleSheet.create({
   controlInlineGroupCenter: {
     flex: 1,
   },
-  controlLabel: {
-    fontSize: 12,
-    color: COLORS.TEXT_SECONDARY,
-    marginBottom: 6,
-  },
   counterRow: {
     flexDirection: 'row',
     alignItems: 'center',

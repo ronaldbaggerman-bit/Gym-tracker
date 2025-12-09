@@ -284,7 +284,7 @@ export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete }:
                   </View>
                 )}
 
-                {/* Timer Section - always visible when not completed */}
+                {/* Timer Section - progress bar only */}
                 {!set.completed && (
                   <TouchableOpacity
                     style={[styles.timerSection, isExpanded && styles.timerSectionExpanded]}
@@ -295,8 +295,6 @@ export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete }:
                     <View style={styles.timerProgressContainer}>
                       <View style={[styles.timerProgressBar, { width: `${(timerVal / 90) * 100}%` }]} />
                     </View>
-
-                    <ThemedText style={styles.timerDisplay}>{formatTime(timerVal)}</ThemedText>
 
                     {isExpanded && (
                       <View style={styles.timerButtonRow}>

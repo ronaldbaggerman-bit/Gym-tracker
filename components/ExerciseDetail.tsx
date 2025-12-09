@@ -239,19 +239,31 @@ export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete }:
                       <View style={styles.controlInputRow}>
                         <TouchableOpacity
                           style={styles.miniBtn}
-                          onPress={() => updateAllReps(Math.max(1, repsValue - 1))}
+                          onPress={() => {
+                            const updatedSets = [...exercise.sets];
+                            updatedSets[idx] = { ...updatedSets[idx], reps: Math.max(1, set.reps - 1) };
+                            onUpdateExercise({ ...exercise, sets: updatedSets });
+                          }}
                         >
                           <ThemedText style={styles.miniBtnText}>−</ThemedText>
                         </TouchableOpacity>
                         <TextInput
                           style={styles.miniInput}
-                          value={String(repsValue)}
+                          value={String(set.reps)}
                           keyboardType="number-pad"
-                          onChangeText={(t) => updateAllReps(parseInt(t) || 0)}
+                          onChangeText={(t) => {
+                            const updatedSets = [...exercise.sets];
+                            updatedSets[idx] = { ...updatedSets[idx], reps: parseInt(t) || 0 };
+                            onUpdateExercise({ ...exercise, sets: updatedSets });
+                          }}
                         />
                         <TouchableOpacity
                           style={styles.miniBtn}
-                          onPress={() => updateAllReps(repsValue + 1)}
+                          onPress={() => {
+                            const updatedSets = [...exercise.sets];
+                            updatedSets[idx] = { ...updatedSets[idx], reps: set.reps + 1 };
+                            onUpdateExercise({ ...exercise, sets: updatedSets });
+                          }}
                         >
                           <ThemedText style={styles.miniBtnText}>＋</ThemedText>
                         </TouchableOpacity>
@@ -263,19 +275,31 @@ export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete }:
                       <View style={styles.controlInputRow}>
                         <TouchableOpacity
                           style={styles.miniBtn}
-                          onPress={() => updateAllWeights(Math.max(0, +(weightValue - 1).toFixed(1)))}
+                          onPress={() => {
+                            const updatedSets = [...exercise.sets];
+                            updatedSets[idx] = { ...updatedSets[idx], weight: Math.max(0, +(set.weight - 1).toFixed(1)) };
+                            onUpdateExercise({ ...exercise, sets: updatedSets });
+                          }}
                         >
                           <ThemedText style={styles.miniBtnText}>−</ThemedText>
                         </TouchableOpacity>
                         <TextInput
                           style={styles.miniInput}
-                          value={String(weightValue)}
+                          value={String(set.weight)}
                           keyboardType="decimal-pad"
-                          onChangeText={(t) => updateAllWeights(parseFloat(t) || 0)}
+                          onChangeText={(t) => {
+                            const updatedSets = [...exercise.sets];
+                            updatedSets[idx] = { ...updatedSets[idx], weight: parseFloat(t) || 0 };
+                            onUpdateExercise({ ...exercise, sets: updatedSets });
+                          }}
                         />
                         <TouchableOpacity
                           style={styles.miniBtn}
-                          onPress={() => updateAllWeights(+(weightValue + 1).toFixed(1))}
+                          onPress={() => {
+                            const updatedSets = [...exercise.sets];
+                            updatedSets[idx] = { ...updatedSets[idx], weight: +(set.weight + 1).toFixed(1) };
+                            onUpdateExercise({ ...exercise, sets: updatedSets });
+                          }}
                         >
                           <ThemedText style={styles.miniBtnText}>＋</ThemedText>
                         </TouchableOpacity>

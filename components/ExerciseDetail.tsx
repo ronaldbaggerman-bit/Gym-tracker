@@ -5,6 +5,7 @@ import { DIFFICULTY_COLORS } from '@/app/types/workout';
 import { COLORS } from '@/app/styles/colors';
 import * as Haptics from 'expo-haptics';
 import { getPRDisplay } from '@/app/utils/prTracker';
+import { calculateProgressiveOverload, formatProgressiveSuggestion } from '@/app/utils/progressiveOverload';
 import type { WorkoutExercise, DifficultyRating } from '@/app/types/workout';
 
 interface ExerciseDetailProps {
@@ -163,9 +164,16 @@ export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete }:
               {exercise.muscleGroup} • {completedSets}/{exercise.sets.length} sets
             </ThemedText>
             {exercise.personalRecord && (
-              <ThemedText style={styles.prDisplay}>
-                {getPRDisplay(exercise)}
-              </ThemedText>
+              <>
+                <ThemedText style={styles.prDisplay}>
+                  {getPRDisplay(exercise)}
+                </ThemedText>
+                {calculateProgressiveOverload(exercise.personalRecord) && (
+                  <ThemedText style={styles.progressiveOverloadDisplay}>
+                    {formatProgressiveSuggestion(calculateProgressiveOverload(exercise.personalRecord)!)}
+                  </ThemedText>
+                )}
+              </>
             )}
           </View>
         </View>
@@ -357,6 +365,12 @@ const styles = StyleSheet.create({
     color: '#FF9500',
     marginTop: 6,
     fontWeight: '600',
+  },
+  progressiveOverloadDisplay: {
+    fontSize: 11,
+    color: '#34C759',
+    marginTop: 4,
+    fontStyle: 'italic',
   },
   setsContainer: {
     paddingHorizontal: 16,

@@ -1,147 +1,415 @@
-import React from 'react';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { useState, useEffect } from 'react';
+import { loadSessions } from '@/app/utils/storage';
+import { calculateWorkoutStats, getExerciseStats, type WorkoutStats, type ExerciseStats } from '@/app/utils/workoutStats';
+import type { WorkoutSession } from '@/app/types/workout';
 
-import { ThemedText } from '@/components/themed-text';
+// Carbon-fiber SVG background
+const CarbonFiberSVG = () => (
+  <svg width="100%" height="100%" style={{ position: 'absolute' }}>
+    <defs>
+      <pattern id="carbon" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse">
+        <rect x="0" y="0" width="6" height="6" fill="#0A0A0C" />
+        <circle cx="1" cy="1" r="0.8" fill="#141416" />
+        <circle cx="4" cy="4" r="0.8" fill="#141416" />
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#carbon)" />
+  </svg>
+);
+
+const COLORS = {
+  BACKGROUND: '#0E0E10',
+  SURFACE: '#141416',
+  CARD: '#1C1C1E',
+  TEXT_PRIMARY: '#FFFFFF',
+  TEXT_SECONDARY: '#8E8E93',
+  ACCENT: '#007AFF',
+  SUCCESS: '#34C759',
+  WARNING: '#FF9500',
+};
 
 export default function GrafiekenScreen() {
-  const [stats] = React.useState({
-    weeklyWorkouts: 5,
-    totalMinutes: 325,
-    avgDuration: 65,
-    streak: 7,
-  });
+  const [sessions, setSessions] = useState<WorkoutSession[]>([]);
+  const [stats, setStats] = useState<WorkoutStats | null>(null);
+  const [topExercises, setTopExercises] = useState<ExerciseStats[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const renderBar = (value: number, maxValue: number, label: string) => {
-    const height = (value / maxValue) * 100;
-    return (
-      <View key={label} style={styles.barContainer}>
-        <View style={[styles.bar, { height: `${height}%` }]} />
-        <ThemedText style={styles.barLabel}>{label}</ThemedText>
-        <ThemedText style={styles.barValue}>{value}</ThemedText>
-      </View>
-    );
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const loadedSessions = await loadSessions();
+      setSessions(loadedSessions);
+
+      const workoutStats = calculateWorkoutStats(loadedSessions);
+      setStats(workoutStats);
+
+      // Get top 5 exercises by frequency
+      const exerciseNames = Object.entries(workoutStats.exerciseFrequency)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([name]) => name);
+
+      const exerciseStatsArray = exerciseNames
+        .map(name => getExerciseStats(loadedSessions, name))
+        .filter((s): s is ExerciseStats => s !== null);
+
+      setTopExercises(exerciseStatsArray);
+    } catch (error) {
+      console.error('Failed to load stats:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <CarbonFiberSVG />
+        <ActivityIndicator size="large" color={COLORS.ACCENT} />
+      </View>
+    );
+  }
+
+  if (!stats || sessions.length === 0) {
+    return (
+      <View style={styles.container}>
+        <CarbonFiberSVG />
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>Nog geen workouts om weer te geven</Text>
+          <Text style={styles.emptySubtext}>Start je eerste workout om statistieken te zien</Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <ThemedText type="title">Grafieken</ThemedText>
-      </View>
+    <View style={styles.container}>
+      <CarbonFiberSVG />
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        <Text style={styles.header}>Jouw Statistieken</Text>
 
-      <View style={styles.statsGrid}>
-        <View style={styles.statCard}>
-          <ThemedText type="defaultSemiBold" style={styles.statCardValue}>
-            {stats.weeklyWorkouts}
-          </ThemedText>
-          <ThemedText style={styles.statCardLabel}>Workouts deze week</ThemedText>
+        {/* Overview Cards Row 1 */}
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{stats.totalWorkouts}</Text>
+            <Text style={styles.statLabel}>Workouts</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{Math.round(stats.totalVolume).toLocaleString()}</Text>
+            <Text style={styles.statLabel}>Totaal Volume (kg)</Text>
+          </View>
         </View>
-        <View style={styles.statCard}>
-          <ThemedText type="defaultSemiBold" style={styles.statCardValue}>
-            {stats.totalMinutes}
-          </ThemedText>
-          <ThemedText style={styles.statCardLabel}>Totale minuten</ThemedText>
-        </View>
-      </View>
 
-      <View style={styles.statsGrid}>
-        <View style={styles.statCard}>
-          <ThemedText type="defaultSemiBold" style={styles.statCardValue}>
-            {stats.avgDuration}
-          </ThemedText>
-          <ThemedText style={styles.statCardLabel}>Gem. duur (min)</ThemedText>
+        {/* Overview Cards Row 2 */}
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{stats.totalSets}</Text>
+            <Text style={styles.statLabel}>Sets</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{stats.totalReps.toLocaleString()}</Text>
+            <Text style={styles.statLabel}>Reps</Text>
+          </View>
         </View>
-        <View style={styles.statCard}>
-          <ThemedText type="defaultSemiBold" style={styles.statCardValue}>
-            {stats.streak}
-          </ThemedText>
-          <ThemedText style={styles.statCardLabel}>Streak (dagen)</ThemedText>
-        </View>
-      </View>
 
-      <View style={styles.chartSection}>
-        <ThemedText type="defaultSemiBold" style={styles.chartTitle}>
-          Workouts per dag (afgelopen week)
-        </ThemedText>
-        <View style={styles.barChart}>
-          {renderBar(3, 5, 'Ma')}
-          {renderBar(2, 5, 'Di')}
-          {renderBar(4, 5, 'Wo')}
-          {renderBar(2, 5, 'Do')}
-          {renderBar(1, 5, 'Vr')}
-          {renderBar(3, 5, 'Za')}
-          {renderBar(0, 5, 'Zo')}
+        {/* Streak Section */}
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>🔥 Workout Streak</Text>
+          <View style={styles.streakRow}>
+            <View style={styles.streakItem}>
+              <Text style={[styles.statValue, { color: COLORS.SUCCESS }]}>{stats.currentStreak}</Text>
+              <Text style={styles.statLabel}>Huidige Reeks</Text>
+            </View>
+            <View style={styles.streakDivider} />
+            <View style={styles.streakItem}>
+              <Text style={[styles.statValue, { color: COLORS.WARNING }]}>{stats.longestStreak}</Text>
+              <Text style={styles.statLabel}>Langste Reeks</Text>
+            </View>
+          </View>
         </View>
-      </View>
-    </ScrollView>
+
+        {/* Average Duration */}
+        {stats.averageWorkoutDuration > 0 && (
+          <View style={styles.sectionCard}>
+            <Text style={styles.sectionTitle}>⏱️ Gemiddelde Duur</Text>
+            <Text style={styles.durationValue}>{stats.averageWorkoutDuration} minuten</Text>
+          </View>
+        )}
+
+        {/* Top Exercises */}
+        {topExercises.length > 0 && (
+          <View style={styles.sectionCard}>
+            <Text style={styles.sectionTitle}>💪 Top Oefeningen</Text>
+            {topExercises.map((ex, idx) => (
+              <View key={ex.name} style={styles.exerciseRow}>
+                <View style={styles.exerciseRank}>
+                  <Text style={styles.rankText}>{idx + 1}</Text>
+                </View>
+                <View style={styles.exerciseInfo}>
+                  <Text style={styles.exerciseName}>{ex.name}</Text>
+                  <Text style={styles.exerciseDetails}>
+                    {ex.timesPerformed}x uitgevoerd • {Math.round(ex.totalVolume).toLocaleString()} kg volume
+                  </Text>
+                  <Text style={styles.exerciseDetails}>
+                    Max: {ex.maxWeight} kg • Gem: {ex.averageWeight.toFixed(1)} kg
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Volume by Week */}
+        {stats.volumeByWeek.length > 0 && (
+          <View style={styles.sectionCard}>
+            <Text style={styles.sectionTitle}>📊 Volume per Week (laatste 12 weken)</Text>
+            {stats.volumeByWeek.slice(-8).map((item, idx) => {
+              const maxVolume = Math.max(...stats.volumeByWeek.map(v => v.volume));
+              const percentage = (item.volume / maxVolume) * 100;
+              const weekDate = new Date(item.week);
+              const weekLabel = `Week ${weekDate.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })}`;
+
+              return (
+                <View key={idx} style={styles.volumeRow}>
+                  <Text style={styles.volumeLabel}>{weekLabel}</Text>
+                  <View style={styles.volumeBarContainer}>
+                    <View style={[styles.volumeBar, { width: `${percentage}%` }]} />
+                  </View>
+                  <Text style={styles.volumeValue}>{Math.round(item.volume).toLocaleString()}</Text>
+                </View>
+              );
+            })}
+          </View>
+        )}
+
+        {/* Monthly Activity */}
+        {Object.keys(stats.workoutsByMonth).length > 0 && (
+          <View style={styles.sectionCard}>
+            <Text style={styles.sectionTitle}>📅 Workouts per Maand</Text>
+            {Object.entries(stats.workoutsByMonth)
+              .sort((a, b) => b[0].localeCompare(a[0]))
+              .slice(0, 6)
+              .map(([month, count]) => {
+                const [year, monthNum] = month.split('-');
+                const monthName = new Date(parseInt(year), parseInt(monthNum) - 1).toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' });
+
+                return (
+                  <View key={month} style={styles.monthRow}>
+                    <Text style={styles.monthLabel}>{monthName}</Text>
+                    <View style={styles.monthDots}>
+                      {Array.from({ length: Math.min(count, 20) }).map((_, i) => (
+                        <View key={i} style={styles.dot} />
+                      ))}
+                      {count > 20 && <Text style={styles.dotOverflow}>+{count - 20}</Text>}
+                    </View>
+                    <Text style={styles.monthCount}>{count}</Text>
+                  </View>
+                );
+              })}
+          </View>
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: COLORS.BACKGROUND,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 32,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    fontSize: 28,
+    fontWeight: '700',
+    color: COLORS.TEXT_PRIMARY,
+    marginBottom: 20,
   },
-  statsGrid: {
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.TEXT_PRIMARY,
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: COLORS.TEXT_SECONDARY,
+    textAlign: 'center',
+  },
+  statsRow: {
     flexDirection: 'row',
-    padding: 15,
-    gap: 10,
+    gap: 12,
+    marginBottom: 12,
   },
   statCard: {
     flex: 1,
-    padding: 20,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#eee',
+    backgroundColor: COLORS.CARD,
+    borderRadius: 12,
+    padding: 16,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
   },
-  statCardValue: {
-    fontSize: 32,
-    color: '#007AFF',
-    marginBottom: 8,
+  statValue: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: COLORS.ACCENT,
+    marginBottom: 4,
   },
-  statCardLabel: {
+  statLabel: {
     fontSize: 12,
+    color: COLORS.TEXT_SECONDARY,
     textAlign: 'center',
   },
-  chartSection: {
-    margin: 15,
-    padding: 20,
-    borderRadius: 10,
+  sectionCard: {
+    backgroundColor: COLORS.CARD,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#eee',
+    borderColor: 'rgba(255,255,255,0.05)',
   },
-  chartTitle: {
+  sectionTitle: {
     fontSize: 16,
-    marginBottom: 15,
+    fontWeight: '700',
+    color: COLORS.TEXT_PRIMARY,
+    marginBottom: 16,
   },
-  barChart: {
+  streakRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'flex-end',
-    height: 200,
-  },
-  barContainer: {
     alignItems: 'center',
+  },
+  streakItem: {
     flex: 1,
-    marginHorizontal: 5,
+    alignItems: 'center',
   },
-  bar: {
-    width: '80%',
-    backgroundColor: '#007AFF',
-    borderRadius: 5,
-    marginBottom: 10,
+  streakDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    marginHorizontal: 16,
   },
-  barLabel: {
-    fontSize: 12,
-    marginBottom: 5,
+  durationValue: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: COLORS.ACCENT,
+    textAlign: 'center',
   },
-  barValue: {
-    fontSize: 11,
+  exerciseRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.05)',
+  },
+  exerciseRank: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: COLORS.ACCENT,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  rankText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  exerciseInfo: {
+    flex: 1,
+  },
+  exerciseName: {
+    fontSize: 16,
     fontWeight: '600',
+    color: COLORS.TEXT_PRIMARY,
+    marginBottom: 4,
+  },
+  exerciseDetails: {
+    fontSize: 12,
+    color: COLORS.TEXT_SECONDARY,
+    marginBottom: 2,
+  },
+  volumeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  volumeLabel: {
+    fontSize: 12,
+    color: COLORS.TEXT_SECONDARY,
+    width: 80,
+  },
+  volumeBarContainer: {
+    flex: 1,
+    height: 20,
+    backgroundColor: COLORS.SURFACE,
+    borderRadius: 10,
+    overflow: 'hidden',
+    marginHorizontal: 8,
+  },
+  volumeBar: {
+    height: '100%',
+    backgroundColor: COLORS.ACCENT,
+    borderRadius: 10,
+  },
+  volumeValue: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.TEXT_PRIMARY,
+    width: 70,
+    textAlign: 'right',
+  },
+  monthRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  monthLabel: {
+    fontSize: 14,
+    color: COLORS.TEXT_SECONDARY,
+    width: 140,
+  },
+  monthDots: {
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+    alignItems: 'center',
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.ACCENT,
+  },
+  dotOverflow: {
+    fontSize: 10,
+    color: COLORS.TEXT_SECONDARY,
+    marginLeft: 4,
+  },
+  monthCount: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.TEXT_PRIMARY,
+    width: 40,
+    textAlign: 'right',
   },
 });

@@ -48,10 +48,24 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="notities"
+        name="schemas"
         options={{
-          title: 'Notities',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="note.text" color={color} />,
+          title: 'Schemas',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="square.and.pencil" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="progressie"
+        options={{
+          title: 'Progressie',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="chart.line.uptrend.xyaxis" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="instellingen"
+        options={{
+          title: 'Instellingen',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="gear" color={color} />,
         }}
       />
     </Tabs>

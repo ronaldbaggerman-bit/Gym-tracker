@@ -1,16 +1,20 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { StyleSheet, View, ScrollView, TouchableOpacity } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '@/app/styles/colors';
 
 import { ThemedText } from '@/components/themed-text';
 import { SchemaSelector } from '@/components/SchemaSelector';
 import { ExerciseDetail } from '@/components/ExerciseDetail';
-import { WORKOUT_DATA } from '@/app/data/workoutData';
+import { WORKOUT_DATA, type Schema } from '@/app/data/workoutData';
 import type { WorkoutExercise, ExerciseSet, WorkoutSession } from '@/app/types/workout';
 import { loadSessions, saveSession, loadPRs, savePR } from '@/app/utils/storage';
-import { useEffect } from 'react';
+import { loadSettings } from '@/app/utils/settingsStorage';
+import { calculateSessionKcal, formatKcalDisplay } from '@/app/utils/kcalCalculator';
 import { checkForNewPRs } from '@/app/utils/prTracker';
+import { loadCustomSchemas, mergeSchemas, applyOverrides } from '@/app/utils/schemaStorage';
 
 const createDefaultSets = (numberOfSets: number = 3): ExerciseSet[] => {
   return Array.from({ length: numberOfSets }, (_, i) => ({
@@ -22,20 +26,72 @@ const createDefaultSets = (numberOfSets: number = 3): ExerciseSet[] => {
   }));
 };
 
+const formatWorkoutTime = (seconds: number): string => {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  
+  if (hours > 0) {
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+  return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+};
+
 export default function WorkoutScreen() {
   const insets = useSafeAreaInsets();
-  const [selectedSchemaId, setSelectedSchemaId] = useState<string>('schema1');
+  const router = useRouter();
+  const [schemas, setSchemas] = useState<Schema[]>(WORKOUT_DATA.schemas);
+  const [selectedSchemaId, setSelectedSchemaId] = useState<string>(WORKOUT_DATA.schemas[0]?.id ?? 'schema1');
   const [workoutSession, setWorkoutSession] = useState<WorkoutSession | null>(null);
   const [prs, setPRs] = useState<Record<string, any>>({});
+  const [workoutSeconds, setWorkoutSeconds] = useState(0);
+  const [bodyWeightKg, setBodyWeightKg] = useState(75);
+  const [defaultMET, setDefaultMET] = useState(5);
+
+  const refreshSchemas = useCallback(async () => {
+    const custom = await loadCustomSchemas();
+    const withOverrides = await applyOverrides(WORKOUT_DATA.schemas);
+    const merged = mergeSchemas(withOverrides, custom);
+    setSchemas(merged);
+    if (!merged.find(s => s.id === selectedSchemaId) && merged.length > 0) {
+      setSelectedSchemaId(merged[0].id);
+    }
+  }, [selectedSchemaId]);
 
   // Load PRs on mount
   useEffect(() => {
     loadPRs().then(prData => setPRs(prData)).catch(err => console.warn('Failed to load PRs:', err));
+    
+    // Load settings (body weight and MET)
+    loadSettings().then(settings => {
+      setBodyWeightKg(settings.bodyWeightKg || 75);
+      setDefaultMET(settings.defaultMET || 5);
+    }).catch(err => console.warn('Failed to load settings:', err));
   }, []);
 
+  // Workout timer - increments every second when workout is active
+  useEffect(() => {
+    if (!workoutSession) {
+      setWorkoutSeconds(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setWorkoutSeconds(prev => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [workoutSession]);
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshSchemas();
+    }, [refreshSchemas])
+  );
+
   const selectedSchema = useMemo(
-    () => WORKOUT_DATA.schemas.find(s => s.id === selectedSchemaId),
-    [selectedSchemaId]
+    () => schemas.find(s => s.id === selectedSchemaId),
+    [selectedSchemaId, schemas]
   );
 
   const exercises: WorkoutExercise[] = useMemo(() => {
@@ -176,9 +232,14 @@ export default function WorkoutScreen() {
       completed: true,
     };
     try {
-      await saveSession(finished);
-      // go back to selection after saving
-      setWorkoutSession(null);
+      const success = await saveSession(finished);
+      if (success) {
+        setWorkoutSession(null);
+        // Navigate to history tab
+        router.push('/(tabs)/explore');
+      } else {
+        console.error('Failed to save session');
+      }
     } catch (e) {
       console.error('Error saving session', e);
     }
@@ -200,13 +261,10 @@ export default function WorkoutScreen() {
         <ScrollView style={styles.selectionView}>
           <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
             <ThemedText type="title">Workout van Vandaag</ThemedText>
-            <ThemedText style={styles.subtitle}>
-              Selecteer een trainingsschema
-            </ThemedText>
           </View>
 
           <SchemaSelector
-            schemas={WORKOUT_DATA.schemas}
+            schemas={schemas}
             selectedSchemaId={selectedSchemaId}
             onSchemaSelect={setSelectedSchemaId}
           />
@@ -275,16 +333,34 @@ export default function WorkoutScreen() {
           {/* Exercises List */}
           <ScrollView style={styles.exercisesView}>
             <View style={styles.exerciseHeader}>
-              <ThemedText type="title" style={styles.sessionTitle}>
-                {workoutSession.schemaName}
-              </ThemedText>
-              <ThemedText style={styles.sessionDate}>
-                {new Date(workoutSession.date).toLocaleDateString('nl-NL', {
-                  weekday: 'long',
-                  month: 'short',
-                  day: 'numeric',
-                })}
-              </ThemedText>
+              <View style={styles.headerTop}>
+                <View>
+                  <ThemedText type="title" style={styles.sessionTitle}>
+                    {workoutSession.schemaName}
+                  </ThemedText>
+                  <ThemedText style={styles.sessionDate}>
+                    {new Date(workoutSession.date).toLocaleDateString('nl-NL', {
+                      weekday: 'long',
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </ThemedText>
+                </View>
+              </View>
+
+              {/* Timer & Calories Display */}
+              <View style={styles.timerKcalContainer}>
+                <View style={styles.timerCard}>
+                  <ThemedText style={styles.timerLabel}>⏱️ Tijd</ThemedText>
+                  <ThemedText style={styles.timerValue}>{formatWorkoutTime(workoutSeconds)}</ThemedText>
+                </View>
+                <View style={styles.kcalCard}>
+                  <ThemedText style={styles.kcalLabel}>🔥 Kcal</ThemedText>
+                  <ThemedText style={styles.kcalValue}>
+                    {formatKcalDisplay(calculateSessionKcal(bodyWeightKg, Math.floor(workoutSeconds / 60), defaultMET).totalKcal)}
+                  </ThemedText>
+                </View>
+              </View>
             </View>
 
             {workoutSession.exercises.map(exercise => (
@@ -295,6 +371,8 @@ export default function WorkoutScreen() {
                 onToggleComplete={() =>
                   handleToggleExerciseComplete(exercise.exerciseId)
                 }
+                bodyWeightKg={bodyWeightKg}
+                defaultMET={defaultMET}
               />
             ))}
 
@@ -334,6 +412,20 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.TEXT_SECONDARY,
     marginTop: 4,
+  },
+  manageButton: {
+    alignSelf: 'flex-start',
+    marginTop: 10,
+    backgroundColor: COLORS.CARD,
+    borderColor: COLORS.ACCENT,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  manageButtonText: {
+    color: COLORS.ACCENT,
+    fontWeight: '700',
   },
   schemaInfo: {
     marginHorizontal: 16,
@@ -457,12 +549,58 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 16,
   },
+  headerTop: {
+    marginBottom: 12,
+  },
   sessionTitle: {
     marginBottom: 4,
   },
   sessionDate: {
     fontSize: 13,
     color: COLORS.TEXT_SECONDARY,
+  },
+  timerKcalContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  timerCard: {
+    flex: 1,
+    backgroundColor: COLORS.SURFACE,
+    borderRadius: 10,
+    padding: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#FF9500',
+    alignItems: 'center',
+  },
+  timerLabel: {
+    fontSize: 11,
+    color: COLORS.TEXT_SECONDARY,
+    marginBottom: 4,
+  },
+  timerValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FF9500',
+    fontFamily: 'Courier New',
+  },
+  kcalCard: {
+    flex: 1,
+    backgroundColor: COLORS.SURFACE,
+    borderRadius: 10,
+    padding: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#FF3B30',
+    alignItems: 'center',
+  },
+  kcalLabel: {
+    fontSize: 11,
+    color: COLORS.TEXT_SECONDARY,
+    marginBottom: 4,
+  },
+  kcalValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FF3B30',
   },
   spacer: {
     height: 20,

@@ -47,17 +47,22 @@ export function calculateWorkoutDuration(session: WorkoutSession): number {
  * Calculate current workout streak (consecutive days)
  */
 export function calculateStreak(sessions: WorkoutSession[]): { current: number; longest: number } {
-  if (sessions.length === 0) return { current: 0, longest: 0 };
+  if (!sessions || sessions.length === 0) return { current: 0, longest: 0 };
 
-  // Sort by date descending
+  // Sort by date descending, filter out invalid sessions
   const sorted = [...sessions]
-    .filter(s => s.completed)
+    .filter(s => s && s.date && s.completed)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  if (sorted.length === 0) return { current: 0, longest: 0 };
 
   let currentStreak = 0;
   let longestStreak = 0;
   let tempStreak = 1;
-  let lastDate = new Date(sorted[0].date);
+  const firstSession = sorted[0];
+  if (!firstSession || !firstSession.date) return { current: 0, longest: 0 };
+  
+  let lastDate = new Date(firstSession.date);
   lastDate.setHours(0, 0, 0, 0);
 
   const today = new Date();
@@ -71,9 +76,15 @@ export function calculateStreak(sessions: WorkoutSession[]): { current: number; 
 
   // Calculate streaks
   for (let i = 1; i < sorted.length; i++) {
-    const currentDate = new Date(sorted[i].date);
+    const currentSession = sorted[i];
+    if (!currentSession || !currentSession.date) continue;
+    
+    const currentDate = new Date(currentSession.date);
     currentDate.setHours(0, 0, 0, 0);
-    const prevDate = new Date(sorted[i - 1].date);
+    const prevSession = sorted[i - 1];
+    if (!prevSession || !prevSession.date) continue;
+    
+    const prevDate = new Date(prevSession.date);
     prevDate.setHours(0, 0, 0, 0);
 
     const daysDiff = Math.floor((prevDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -99,9 +110,12 @@ export function calculateStreak(sessions: WorkoutSession[]): { current: number; 
 export function getExerciseFrequency(sessions: WorkoutSession[]): Record<string, number> {
   const frequency: Record<string, number> = {};
 
+  if (!sessions || !Array.isArray(sessions)) return frequency;
+
   sessions.forEach(session => {
+    if (!session || !session.exercises || !Array.isArray(session.exercises)) return;
     session.exercises
-      .filter(ex => ex.completed)
+      .filter(ex => ex && ex.completed)
       .forEach(ex => {
         frequency[ex.name] = (frequency[ex.name] || 0) + 1;
       });
@@ -116,13 +130,16 @@ export function getExerciseFrequency(sessions: WorkoutSession[]): Record<string,
 export function getVolumeByWeek(sessions: WorkoutSession[]): Array<{ week: string; volume: number }> {
   const weeklyVolume: Record<string, number> = {};
 
+  if (!sessions || !Array.isArray(sessions)) return [];
+
   sessions.forEach(session => {
+    if (!session || !session.date || !session.exercises || !Array.isArray(session.exercises)) return;
     const date = new Date(session.date);
     const weekStart = new Date(date);
     weekStart.setDate(date.getDate() - date.getDay()); // Start of week (Sunday)
     const weekKey = weekStart.toISOString().split('T')[0];
 
-    const sessionVolume = session.exercises.reduce((sum, ex) => sum + calculateExerciseVolume(ex), 0);
+    const sessionVolume = session.exercises.reduce((sum, ex) => sum + (ex ? calculateExerciseVolume(ex) : 0), 0);
     weeklyVolume[weekKey] = (weeklyVolume[weekKey] || 0) + sessionVolume;
   });
 
@@ -139,8 +156,10 @@ export function getVolumeByWeek(sessions: WorkoutSession[]): Array<{ week: strin
 export function getWorkoutsByMonth(sessions: WorkoutSession[]): Record<string, number> {
   const monthly: Record<string, number> = {};
 
+  if (!sessions || !Array.isArray(sessions)) return monthly;
+
   sessions
-    .filter(s => s.completed)
+    .filter(s => s && s.date && s.completed)
     .forEach(session => {
       const date = new Date(session.date);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -154,24 +173,27 @@ export function getWorkoutsByMonth(sessions: WorkoutSession[]): Record<string, n
  * Get detailed stats for a specific exercise across all sessions
  */
 export function getExerciseStats(sessions: WorkoutSession[], exerciseName: string): ExerciseStats | null {
+  if (!sessions || !Array.isArray(sessions)) return null;
+
   const exerciseData = sessions
+    .filter(s => s && s.exercises && Array.isArray(s.exercises))
     .flatMap(s => s.exercises)
-    .filter(ex => ex.name === exerciseName && ex.completed);
+    .filter(ex => ex && ex.name === exerciseName && ex.completed);
 
   if (exerciseData.length === 0) return null;
 
-  const totalSets = exerciseData.reduce((sum, ex) => sum + ex.sets.filter(s => s.completed).length, 0);
+  const totalSets = exerciseData.reduce((sum, ex) => sum + (ex.sets ? ex.sets.filter(s => s && s.completed).length : 0), 0);
   const totalReps = exerciseData.reduce((sum, ex) => 
-    sum + ex.sets.filter(s => s.completed).reduce((r, s) => r + s.reps, 0), 0
+    sum + (ex.sets ? ex.sets.filter(s => s && s.completed).reduce((r, s) => r + s.reps, 0) : 0), 0
   );
   const totalVolume = exerciseData.reduce((sum, ex) => sum + calculateExerciseVolume(ex), 0);
-  const weights = exerciseData.flatMap(ex => ex.sets.filter(s => s.completed).map(s => s.weight));
-  const maxWeight = Math.max(...weights);
-  const averageWeight = weights.reduce((a, b) => a + b, 0) / weights.length;
+  const weights = exerciseData.flatMap(ex => (ex.sets ? ex.sets.filter(s => s && s.completed).map(s => s.weight) : []));
+  const maxWeight = weights.length > 0 ? Math.max(...weights) : 0;
+  const averageWeight = weights.length > 0 ? weights.reduce((a, b) => a + b, 0) / weights.length : 0;
 
   // Find last performed date
   const sessionsWithExercise = sessions.filter(s => 
-    s.exercises.some(ex => ex.name === exerciseName && ex.completed)
+    s && s.exercises && s.exercises.some(ex => ex && ex.name === exerciseName && ex.completed)
   );
   const lastPerformed = sessionsWithExercise.length > 0
     ? new Date(Math.max(...sessionsWithExercise.map(s => new Date(s.date).getTime()))).toISOString()
@@ -193,7 +215,22 @@ export function getExerciseStats(sessions: WorkoutSession[], exerciseName: strin
  * Calculate comprehensive workout statistics
  */
 export function calculateWorkoutStats(sessions: WorkoutSession[]): WorkoutStats {
-  const completedSessions = sessions.filter(s => s.completed);
+  if (!sessions || !Array.isArray(sessions)) {
+    return {
+      totalWorkouts: 0,
+      totalVolume: 0,
+      totalSets: 0,
+      totalReps: 0,
+      averageWorkoutDuration: 0,
+      currentStreak: 0,
+      longestStreak: 0,
+      exerciseFrequency: {},
+      volumeByWeek: [],
+      workoutsByMonth: {},
+    };
+  }
+
+  const completedSessions = sessions.filter(s => s && s.completed);
 
   const totalVolume = completedSessions.reduce((sum, session) => {
     return sum + session.exercises.reduce((exSum, ex) => exSum + calculateExerciseVolume(ex), 0);

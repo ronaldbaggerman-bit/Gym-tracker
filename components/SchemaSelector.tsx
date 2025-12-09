@@ -58,6 +58,7 @@ const styles = StyleSheet.create({
   buttonGroup: {
     flexDirection: 'row',
     gap: 10,
+    flexWrap: 'wrap',
   },
   button: {
     flex: 1,

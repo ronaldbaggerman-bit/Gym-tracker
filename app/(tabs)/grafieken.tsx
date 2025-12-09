@@ -1,21 +1,25 @@
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Dimensions, RefreshControl } from 'react-native';
 import { useState, useEffect } from 'react';
+import Svg, { Defs, Pattern, Rect, Circle } from 'react-native-svg';
 import { loadSessions } from '@/app/utils/storage';
 import { calculateWorkoutStats, getExerciseStats, type WorkoutStats, type ExerciseStats } from '@/app/utils/workoutStats';
+import { EXERCISE_GUIDES } from '@/app/data/exerciseGuides';
 import type { WorkoutSession } from '@/app/types/workout';
+
+const { width, height } = Dimensions.get('window');
 
 // Carbon-fiber SVG background
 const CarbonFiberSVG = () => (
-  <svg width="100%" height="100%" style={{ position: 'absolute' }}>
-    <defs>
-      <pattern id="carbon" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse">
-        <rect x="0" y="0" width="6" height="6" fill="#0A0A0C" />
-        <circle cx="1" cy="1" r="0.8" fill="#141416" />
-        <circle cx="4" cy="4" r="0.8" fill="#141416" />
-      </pattern>
-    </defs>
-    <rect width="100%" height="100%" fill="url(#carbon)" />
-  </svg>
+  <Svg width={width} height={height} style={{ position: 'absolute' }}>
+    <Defs>
+      <Pattern id="carbon" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse">
+        <Rect x="0" y="0" width="6" height="6" fill="#0A0A0C" />
+        <Circle cx="1" cy="1" r="0.8" fill="#141416" />
+        <Circle cx="4" cy="4" r="0.8" fill="#141416" />
+      </Pattern>
+    </Defs>
+    <Rect width="100%" height="100%" fill="url(#carbon)" />
+  </Svg>
 );
 
 const COLORS = {
@@ -32,12 +36,20 @@ const COLORS = {
 export default function GrafiekenScreen() {
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
   const [stats, setStats] = useState<WorkoutStats | null>(null);
+  const [exerciseStats, setExerciseStats] = useState<ExerciseStats | null>(null);
   const [topExercises, setTopExercises] = useState<ExerciseStats[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     loadData();
   }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  };
 
   const loadData = async () => {
     try {
@@ -74,7 +86,7 @@ export default function GrafiekenScreen() {
     );
   }
 
-  if (!stats || sessions.length === 0) {
+  if (!stats) {
     return (
       <View style={styles.container}>
         <CarbonFiberSVG />
@@ -89,7 +101,18 @@ export default function GrafiekenScreen() {
   return (
     <View style={styles.container}>
       <CarbonFiberSVG />
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+      <ScrollView 
+        style={styles.scrollView} 
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={COLORS.ACCENT}
+            colors={[COLORS.ACCENT]}
+          />
+        }
+      >
         <Text style={styles.header}>Jouw Statistieken</Text>
 
         {/* Overview Cards Row 1 */}
@@ -150,7 +173,12 @@ export default function GrafiekenScreen() {
                   <Text style={styles.rankText}>{idx + 1}</Text>
                 </View>
                 <View style={styles.exerciseInfo}>
-                  <Text style={styles.exerciseName}>{ex.name}</Text>
+                  <Text style={styles.exerciseName}>
+                    {EXERCISE_GUIDES[ex.name]?.icon && (
+                      <Text style={styles.exerciseIcon}>{EXERCISE_GUIDES[ex.name].icon} </Text>
+                    )}
+                    {ex.name}
+                  </Text>
                   <Text style={styles.exerciseDetails}>
                     {ex.timesPerformed}x uitgevoerd • {Math.round(ex.totalVolume).toLocaleString()} kg volume
                   </Text>
@@ -341,6 +369,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: COLORS.TEXT_PRIMARY,
     marginBottom: 4,
+  },
+  exerciseIcon: {
+    fontSize: 18,
+    marginRight: 2,
   },
   exerciseDetails: {
     fontSize: 12,

@@ -1,9 +1,13 @@
 import { useEffect, useState, useMemo } from 'react';
-import { StyleSheet, View, FlatList, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, FlatList, TouchableOpacity, TextInput, Alert, RefreshControl } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { loadSessions, removeSession } from '@/app/utils/storage';
+import { importCsvSessions, clearImportedSessions } from '@/app/utils/csvImport';
 import { WORKOUT_DATA } from '@/app/data/workoutData';
+import { loadSettings } from '@/app/utils/settingsStorage';
+import { calculateTotalSessionKcal, formatKcalDisplay } from '@/app/utils/kcalCalculator';
+import { EXERCISE_GUIDES } from '@/app/data/exerciseGuides';
 import { COLORS } from '@/app/styles/colors';
 
 export default function HistorieScreen() {
@@ -14,14 +18,37 @@ export default function HistorieScreen() {
     d.setDate(1);
     return d;
   });
+  const [csvText, setCsvText] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<string>('');
+  const [csvImportEnabled, setCsvImportEnabled] = useState(true);
+  const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
+  const [bodyWeightKg, setBodyWeightKg] = useState(75);
+  const [defaultMET, setDefaultMET] = useState(5);
+  const [refreshing, setRefreshing] = useState(false);
 
   const reloadSessions = async () => {
     const s = await loadSessions();
     setSessions(s || []);
   };
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await reloadSessions();
+    const s = await loadSettings();
+    setCsvImportEnabled(s.csvImportEnabled);
+    setBodyWeightKg(s.bodyWeightKg || 75);
+    setDefaultMET(s.defaultMET || 5);
+    setRefreshing(false);
+  };
+
   useEffect(() => {
     reloadSessions();
+    loadSettings().then(s => {
+      setCsvImportEnabled(s.csvImportEnabled);
+      setBodyWeightKg(s.bodyWeightKg || 75);
+      setDefaultMET(s.defaultMET || 5);
+    });
   }, []);
 
   const handleDelete = async (id: string) => {
@@ -29,7 +56,40 @@ export default function HistorieScreen() {
     if (ok) await reloadSessions();
   };
 
+  const handleImport = async () => {
+    if (!csvText.trim()) {
+      Alert.alert('Geen data', 'Plak eerst CSV data uit Google Sheets.');
+      return;
+    }
+    setImporting(true);
+    try {
+      const res = await importCsvSessions(csvText);
+      setImportResult(`Geïmporteerd: ${res.imported} sessies`);
+      setCsvText('');
+      await reloadSessions();
+    } catch (e) {
+      console.error('Import error', e);
+      Alert.alert('Import mislukt', 'Controleer je CSV kolommen: date, schema, exercise, musclegroup, sets, reps, weight, durationMinutes.');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const handleClearImported = async () => {
+    setImporting(true);
+    try {
+      await clearImportedSessions();
+      await reloadSessions();
+      setImportResult('Geïmporteerde sessies verwijderd.');
+    } catch (e) {
+      Alert.alert('Fout', 'Kon geïmporteerde sessies niet verwijderen.');
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const renderHistoryItem = ({ item }: { item: any }) => {
+    const isExpanded = expandedSessionId === item.id;
     const start = item.startTime ? new Date(item.startTime) : null;
     const end = item.endTime ? new Date(item.endTime) : null;
     let duration = '—';
@@ -42,7 +102,10 @@ export default function HistorieScreen() {
     const color = schema ? schema.color : '#007AFF';
 
     return (
-      <View style={styles.historyCard}>
+      <TouchableOpacity 
+        onPress={() => setExpandedSessionId(isExpanded ? null : item.id)}
+        style={styles.historyCard}
+      >
         <View style={styles.dateSection}>
           <ThemedText type="defaultSemiBold" style={styles.dateText}>
             {item.date}
@@ -53,21 +116,75 @@ export default function HistorieScreen() {
           <View style={[styles.colorDot, { backgroundColor: color }]} />
           <View style={styles.sessionInfo}>
             <ThemedText style={styles.sessionSchema}>{item.schemaName}</ThemedText>
-            <ThemedText style={styles.sessionMeta}>{item.exercises?.length || 0} oefeningen • {duration}</ThemedText>
+            <ThemedText style={styles.sessionMeta}>
+              {item.exercises?.length || 0} oefeningen • {duration} • {formatKcalDisplay(calculateTotalSessionKcal(item, bodyWeightKg, defaultMET))}
+            </ThemedText>
           </View>
           <TouchableOpacity onPress={() => handleDelete(item.id)} style={styles.deleteButton}>
             <ThemedText style={styles.deleteText}>Verwijder</ThemedText>
           </TouchableOpacity>
         </View>
-      </View>
+
+        {/* Expanded view with exercises */}
+        {isExpanded && item.exercises && item.exercises.length > 0 && (
+          <View style={styles.expandedSection}>
+            <ThemedText type="defaultSemiBold" style={styles.expandedTitle}>Uitgevoerde oefeningen:</ThemedText>
+            {item.exercises.map((exercise: any, idx: number) => (
+              <View key={idx} style={styles.exerciseItem}>
+                <ThemedText style={styles.exerciseName}>
+                  {EXERCISE_GUIDES[exercise.name]?.icon && (
+                    <ThemedText style={styles.exerciseIcon}>{EXERCISE_GUIDES[exercise.name].icon} </ThemedText>
+                  )}
+                  {exercise.name}
+                </ThemedText>
+                {exercise.sets && (
+                  <ThemedText style={styles.exerciseSets}>
+                    {exercise.sets.length} × {exercise.sets[0]?.reps || 0} @ {exercise.sets[0]?.weight || 0} kg
+                  </ThemedText>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
+      </TouchableOpacity>
     );
   };
 
-  return (
-    <View style={styles.container}>
+  const renderImportHeader = () => (
+    <>
       <View style={styles.header}>
         <ThemedText type="title">Historie</ThemedText>
       </View>
+
+      {/* CSV import - only show if enabled */}
+      {csvImportEnabled && (
+      <View style={styles.importCard}>
+        <ThemedText type="defaultSemiBold" style={styles.importTitle}>Importeer vanaf Google Sheets (CSV)</ThemedText>
+        <ThemedText style={styles.importHint}>
+          Exporteer je sheet als CSV en plak hier. Kolommen: date, schema, exercise, musclegroup, sets, reps, weight, durationMinutes.
+          Sets/weight/reps kunnen ook pipe-gescheiden zijn (bijv. 12|10|8).
+        </ThemedText>
+        <TextInput
+          multiline
+          placeholder="date,schema,exercise,musclegroup,sets,reps,weight,durationMinutes\n2025-01-05,Schema 1,Chest Press,Borst,3,12|10|8,40|40|35,45"
+          placeholderTextColor={COLORS.TEXT_SECONDARY}
+          value={csvText}
+          onChangeText={setCsvText}
+          style={styles.csvInput}
+        />
+        <View style={styles.importButtonsRow}>
+          <TouchableOpacity style={[styles.importButton, importing && styles.importButtonDisabled]} onPress={handleImport} disabled={importing}>
+            <ThemedText style={styles.importButtonText}>{importing ? 'Bezig...' : 'Importeer CSV'}</ThemedText>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.clearButton} onPress={handleClearImported} disabled={importing}>
+            <ThemedText style={styles.clearButtonText}>Verwijder imports</ThemedText>
+          </TouchableOpacity>
+        </View>
+        {!!importResult && (
+          <ThemedText style={styles.importResult}>{importResult}</ThemedText>
+        )}
+      </View>
+      )}
 
       {/* Calendar */}
       <View style={styles.calendarContainer}>
@@ -113,30 +230,65 @@ export default function HistorieScreen() {
               if (day === null) return <View key={idx} style={styles.dayCell} />;
               const dateKey = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
               const daySessions = sessions.filter(s => s.date === dateKey);
-              const dotColor = daySessions.length ? (WORKOUT_DATA.schemas.find(s => s.id === daySessions[0].schemaId)?.color || '#007AFF') : null;
               const isSelected = selectedDate === dateKey;
+              
+              // Get unique schema colors for this day
+              const schemaColors = [...new Set(
+                daySessions
+                  .map(s => WORKOUT_DATA.schemas.find(schema => schema.id === s.schemaId)?.color || '#007AFF')
+              )];
+              
               return (
                 <TouchableOpacity key={idx} style={[styles.dayCell, isSelected && styles.dayCellSelected]} onPress={() => setSelectedDate(dateKey)}>
                   <ThemedText style={styles.dayNumber}>{day}</ThemedText>
-                  {dotColor ? <View style={[styles.dayDot, { backgroundColor: dotColor }]} /> : null}
+                  {schemaColors.length > 0 && (
+                    <View style={styles.dayDotsContainer}>
+                      {schemaColors.slice(0, 2).map((color, colorIdx) => (
+                        <View 
+                          key={colorIdx} 
+                          style={[
+                            styles.dayDot, 
+                            { backgroundColor: color },
+                            schemaColors.length > 1 && { width: 5, height: 5 }
+                          ]} 
+                        />
+                      ))}
+                      {schemaColors.length > 2 && (
+                        <ThemedText style={styles.dayDotsMore}>+</ThemedText>
+                      )}
+                    </View>
+                  )}
                 </TouchableOpacity>
               );
             });
           })()}
         </View>
       </View>
+    </>
+  );
 
+  return (
+    <View style={styles.container}>
       <FlatList
         data={selectedDate ? sessions.filter(s => s.date === selectedDate) : sessions}
         renderItem={renderHistoryItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}
+        ListHeaderComponent={renderImportHeader}
         ListEmptyComponent={() => (
           <View style={styles.emptyContainer}>
             <ThemedText type="defaultSemiBold">Nog geen opgeslagen workouts</ThemedText>
             <ThemedText style={styles.emptySub}>Maak een workout aan en druk op "Beëindig workout" of markeer oefeningen als voltooid.</ThemedText>
           </View>
         )}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={COLORS.ACCENT}
+            colors={[COLORS.ACCENT]}
+          />
+        }
       />
     </View>
   );
@@ -228,6 +380,68 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 13,
   },
+  importCard: {
+    backgroundColor: COLORS.CARD,
+    marginHorizontal: 12,
+    marginTop: 10,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.BORDER,
+    gap: 8,
+  },
+  importTitle: {
+    fontSize: 15,
+  },
+  importHint: {
+    color: COLORS.TEXT_SECONDARY,
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  csvInput: {
+    minHeight: 120,
+    borderWidth: 1,
+    borderColor: COLORS.BORDER,
+    borderRadius: 8,
+    padding: 10,
+    backgroundColor: COLORS.SURFACE,
+    color: COLORS.TEXT_PRIMARY,
+    fontSize: 12,
+  },
+  importButtonsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  importButton: {
+    flex: 1,
+    backgroundColor: '#34C759',
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  importButtonDisabled: {
+    opacity: 0.6,
+  },
+  importButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  clearButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.BORDER,
+    backgroundColor: COLORS.SURFACE,
+  },
+  clearButtonText: {
+    color: COLORS.TEXT_PRIMARY,
+    fontWeight: '600',
+  },
+  importResult: {
+    color: '#34C759',
+    fontWeight: '600',
+  },
   calendarContainer: {
     padding: 12,
     backgroundColor: COLORS.CARD,
@@ -278,10 +492,54 @@ const styles = StyleSheet.create({
   dayNumber: {
     fontSize: 13,
   },
+  dayDotsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 2,
+    marginTop: 4,
+  },
   dayDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    marginTop: 6,
+  },
+  dayDotsMore: {
+    fontSize: 8,
+    color: '#007AFF',
+    fontWeight: '700',
+  },
+  expandedSection: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.BORDER,
+    backgroundColor: COLORS.SURFACE,
+    borderRadius: 8,
+    padding: 12,
+  },
+  expandedTitle: {
+    fontSize: 13,
+    marginBottom: 10,
+    color: COLORS.TEXT_PRIMARY,
+  },
+  exerciseItem: {
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.CARD,
+  },
+  exerciseName: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.TEXT_PRIMARY,
+    marginBottom: 4,
+  },
+  exerciseIcon: {
+    fontSize: 14,
+    marginRight: 2,
+  },
+  exerciseSets: {
+    fontSize: 12,
+    color: COLORS.TEXT_SECONDARY,
   },
 });

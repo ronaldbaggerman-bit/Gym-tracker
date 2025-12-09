@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { StyleSheet, View, TouchableOpacity, TextInput } from 'react-native';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { StyleSheet, View, TouchableOpacity, TextInput, ImageBackground } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { DIFFICULTY_COLORS } from '@/app/types/workout';
 import { COLORS } from '@/app/styles/colors';
@@ -7,15 +7,20 @@ import * as Haptics from 'expo-haptics';
 import { getPRDisplay } from '@/app/utils/prTracker';
 import { calculateProgressiveOverload, formatProgressiveSuggestion } from '@/app/utils/progressiveOverload';
 import { calculate1RMFromPR, format1RMDisplay } from '@/app/utils/oneRepMaxCalculator';
+import { loadSettings } from '@/app/utils/settingsStorage';
+import { calculateExerciseKcal, formatKcalDisplay } from '@/app/utils/kcalCalculator';
 import type { WorkoutExercise, DifficultyRating } from '@/app/types/workout';
+import { EXERCISE_GUIDES } from '@/app/data/exerciseGuides';
 
 interface ExerciseDetailProps {
   exercise: WorkoutExercise;
   onUpdateExercise: (updatedExercise: WorkoutExercise) => void;
   onToggleComplete: () => void;
+  bodyWeightKg?: number;
+  defaultMET?: number;
 }
 
-export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete }: ExerciseDetailProps) {
+export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete, bodyWeightKg = 75, defaultMET = 5 }: ExerciseDetailProps) {
   const [setsCount, setSetsCount] = useState<number>(exercise.sets.length);
   const [weightValue, setWeightValue] = useState<number>(exercise.sets?.[0]?.weight || 0);
   const [repsValue, setRepsValue] = useState<number>(exercise.sets?.[0]?.reps || 12);
@@ -23,6 +28,13 @@ export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete }:
   const [timerValues, setTimerValues] = useState<Record<number, number>>({});
   const [runningTimers, setRunningTimers] = useState<Set<number>>(new Set());
   const [notesText, setNotesText] = useState<string>(exercise.notes || '');
+  const [showImages, setShowImages] = useState<boolean>(true);
+  const guide = useMemo(() => {
+    if (EXERCISE_GUIDES[exercise.name]) return EXERCISE_GUIDES[exercise.name];
+    const normalized = exercise.name.trim().toLowerCase();
+    const match = Object.entries(EXERCISE_GUIDES).find(([key]) => key.trim().toLowerCase() === normalized);
+    return match ? match[1] : undefined;
+  }, [exercise.name]);
   const timerIntervals = useRef<Record<number, NodeJS.Timeout>>({});
 
   useEffect(() => {
@@ -33,6 +45,9 @@ export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete }:
     });
     setTimerValues(initialTimers);
     setNotesText(exercise.notes || ''); // Sync notes when exercise changes
+    
+    // Load settings
+    loadSettings().then(s => setShowImages(s.showExerciseImages));
   }, [exercise]);
 
   // Effect to handle timer completion haptic feedback
@@ -162,6 +177,7 @@ export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete }:
           <View style={styles.headerTextWrapper}>
             <View style={styles.headerText}>
               <ThemedText type="defaultSemiBold" style={styles.exerciseName}>
+                {guide?.icon && <ThemedText style={styles.exerciseIcon}>{guide.icon} </ThemedText>}
                 {exercise.name}
               </ThemedText>
               <ThemedText style={styles.muscleGroup}>
@@ -185,9 +201,54 @@ export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete }:
                 )}
               </View>
             )}
+            <View style={styles.kcalInfoBox}>
+              <ThemedText style={styles.kcalInfoLabel}>🔥</ThemedText>
+              <ThemedText style={styles.kcalInfoValue}>
+                {formatKcalDisplay(calculateExerciseKcal(exercise, bodyWeightKg, defaultMET))}
+              </ThemedText>
+            </View>
           </View>
         </View>
       </TouchableOpacity>
+
+      {/* Guide card with dark overlay - only show if enabled */}
+      {guide && showImages && (
+        <View style={styles.guideCard}>
+          <ImageBackground
+            source={{ uri: guide.image }}
+            style={styles.guideImage}
+            imageStyle={styles.guideImageInner}
+          >
+            <View style={styles.guideOverlay}>
+              <ThemedText type="defaultSemiBold" style={styles.guideTitle}>
+                {guide.icon && <ThemedText style={styles.exerciseIcon}>{guide.icon} </ThemedText>}
+                {exercise.name}
+              </ThemedText>
+              {guide.primaryMuscles && (
+                <ThemedText style={styles.guideMeta}>{guide.primaryMuscles}</ThemedText>
+              )}
+              {guide.equipment && (
+                <ThemedText style={styles.guideMeta}>{guide.equipment}</ThemedText>
+              )}
+            </View>
+          </ImageBackground>
+          <View style={styles.guideBody}>
+            <ThemedText type="defaultSemiBold" style={styles.guideSectionTitle}>Instructies</ThemedText>
+            {guide.cues.map((cue, idx) => (
+              <ThemedText key={idx} style={styles.guideCueText}>{idx + 1}. {cue}</ThemedText>
+            ))}
+            {guide.tips && guide.tips.length > 0 && (
+              <View style={styles.tipRow}>
+                {guide.tips.map((tip, idx) => (
+                  <View key={idx} style={styles.tipPill}>
+                    <ThemedText style={styles.tipText}>{tip}</ThemedText>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        </View>
+      )}
 
       {/* Exercise Controls - only per-set timers/reps/weight */}
       {!exercise.completed && (
@@ -374,6 +435,75 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: 'transparent',
   },
+  guideCard: {
+    marginHorizontal: 16,
+    marginTop: 10,
+    marginBottom: 12,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: COLORS.CARD,
+    borderWidth: 1,
+    borderColor: COLORS.BORDER,
+  },
+  guideImage: {
+    width: '100%',
+    height: 180,
+    backgroundColor: COLORS.SURFACE,
+  },
+  guideImageInner: {
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+  },
+  guideOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    padding: 12,
+    justifyContent: 'flex-end',
+    gap: 4,
+  },
+  guideTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  guideMeta: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 12,
+  },
+  guideBody: {
+    padding: 12,
+    gap: 6,
+    backgroundColor: COLORS.CARD,
+  },
+  guideSectionTitle: {
+    color: COLORS.TEXT_PRIMARY,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  guideCueText: {
+    color: COLORS.TEXT_SECONDARY,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  tipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 4,
+  },
+  tipPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: COLORS.SURFACE,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.BORDER,
+  },
+  tipText: {
+    color: COLORS.TEXT_PRIMARY,
+    fontSize: 11,
+    fontWeight: '600',
+  },
   header: {
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -400,6 +530,19 @@ const styles = StyleSheet.create({
     gap: 2,
     alignItems: 'flex-end',
   },
+  kcalInfoBox: {
+    gap: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  kcalInfoLabel: {
+    fontSize: 14,
+  },
+  kcalInfoValue: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FF3B30',
+  },
   checkCircle: {
     width: 28,
     height: 28,
@@ -423,6 +566,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 4,
     color: COLORS.TEXT_PRIMARY,
+  },
+  exerciseIcon: {
+    fontSize: 18,
+    marginRight: 2,
   },
   muscleGroup: {
     fontSize: 13,

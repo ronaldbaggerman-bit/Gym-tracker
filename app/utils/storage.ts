@@ -1,19 +1,26 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { PersonalRecord } from '@/app/types/workout';
 
-const SESSIONS_KEY = 'workout_sessions_v1';
+export const SESSIONS_KEY = 'workout_sessions_v1';
 const PRS_KEY = 'personal_records_v1'; // Format: { exerciseName: PersonalRecord }
 
 export async function saveSession(session: any) {
   try {
+    // Convert Date objects to ISO strings for serialization
+    const serialized = {
+      ...session,
+      startTime: session.startTime instanceof Date ? session.startTime.toISOString() : session.startTime,
+      endTime: session.endTime instanceof Date ? session.endTime.toISOString() : session.endTime,
+    };
+    
     const raw = await AsyncStorage.getItem(SESSIONS_KEY);
     const sessions = raw ? JSON.parse(raw) : [];
     // If a session with the same id exists, replace it. Otherwise add to the front.
     const existingIndex = sessions.findIndex((s: any) => s.id === session.id);
     if (existingIndex >= 0) {
-      sessions[existingIndex] = session;
+      sessions[existingIndex] = serialized;
     } else {
-      sessions.unshift(session); // newest first
+      sessions.unshift(serialized); // newest first
     }
     await AsyncStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
     return true;
@@ -27,10 +34,33 @@ export async function loadSessions() {
   try {
     const raw = await AsyncStorage.getItem(SESSIONS_KEY);
     const sessions = raw ? JSON.parse(raw) : [];
-    return sessions;
+    
+    // Convert ISO strings back to Date objects for startTime and endTime
+    return sessions.map((s: any) => ({
+      ...s,
+      startTime: s.startTime ? new Date(s.startTime) : null,
+      endTime: s.endTime ? new Date(s.endTime) : null,
+    }));
   } catch (e) {
     console.error('loadSessions error', e);
     return [];
+  }
+}
+
+export async function saveSessionsList(sessions: any[]) {
+  try {
+    // Convert Date objects to ISO strings for serialization
+    const serialized = sessions.map(s => ({
+      ...s,
+      startTime: s.startTime instanceof Date ? s.startTime.toISOString() : s.startTime,
+      endTime: s.endTime instanceof Date ? s.endTime.toISOString() : s.endTime,
+    }));
+    
+    await AsyncStorage.setItem(SESSIONS_KEY, JSON.stringify(serialized));
+    return true;
+  } catch (e) {
+    console.error('saveSessionsList error', e);
+    return false;
   }
 }
 

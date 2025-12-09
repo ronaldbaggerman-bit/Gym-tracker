@@ -25,6 +25,7 @@ export interface WorkoutExercise {
   sets: ExerciseSet[];
   completed: boolean;
   personalRecord?: PersonalRecord; // optional PR data
+  notes?: string; // optional exercise notes (pain, energy, form notes, etc)
 }
 
 export interface WorkoutSession {

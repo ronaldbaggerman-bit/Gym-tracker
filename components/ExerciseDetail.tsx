@@ -22,6 +22,7 @@ export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete }:
   const [expandedSetId, setExpandedSetId] = useState<number | null>(null);
   const [timerValues, setTimerValues] = useState<Record<number, number>>({});
   const [runningTimers, setRunningTimers] = useState<Set<number>>(new Set());
+  const [notesText, setNotesText] = useState<string>(exercise.notes || '');
   const timerIntervals = useRef<Record<number, NodeJS.Timeout>>({});
 
   useEffect(() => {
@@ -31,6 +32,7 @@ export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete }:
       initialTimers[s.setNumber] = 90; // 90 seconds rest between sets
     });
     setTimerValues(initialTimers);
+    setNotesText(exercise.notes || ''); // Sync notes when exercise changes
   }, [exercise]);
 
   // Effect to handle timer completion haptic feedback
@@ -310,6 +312,25 @@ export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete }:
               </TouchableOpacity>
             );
           })}
+        </View>
+      )}
+
+      {/* Notes Section */}
+      {!exercise.completed && (
+        <View style={styles.notesSection}>
+          <ThemedText style={styles.notesLabel}>Notitie</ThemedText>
+          <TextInput
+            style={styles.notesInput}
+            placeholder="Pijn? Energy? Form opmerkingen?"
+            placeholderTextColor={COLORS.TEXT_SECONDARY}
+            multiline
+            numberOfLines={3}
+            value={notesText}
+            onChangeText={text => {
+              setNotesText(text);
+              onUpdateExercise({ ...exercise, notes: text });
+            }}
+          />
         </View>
       )}
     </View>
@@ -693,5 +714,32 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: COLORS.TEXT_SECONDARY,
     textAlign: 'center',
+  },
+  notesSection: {
+    marginHorizontal: 16,
+    marginBottom: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: COLORS.CARD,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.BORDER,
+  },
+  notesLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.TEXT_PRIMARY,
+    marginBottom: 8,
+  },
+  notesInput: {
+    backgroundColor: COLORS.SURFACE,
+    borderWidth: 1,
+    borderColor: COLORS.BORDER,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: COLORS.TEXT_PRIMARY,
+    fontSize: 12,
+    minHeight: 70,
   },
 });

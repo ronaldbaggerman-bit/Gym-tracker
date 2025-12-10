@@ -90,6 +90,22 @@ export default function MeerScreen() {
             onPress={() => router.push('/(tabs)/instellingen')}
             colors={COLORS}
           />
+
+          <MenuItem
+            icon="externaldrive.badge.checkmark"
+            title="Backup & Herstel"
+            subtitle="Beheer back-ups van je data"
+            onPress={() => router.push('/(tabs)/backup')}
+            colors={COLORS}
+          />
+
+          <MenuItem
+            icon="icloud"
+            title="Cloud Sync"
+            subtitle="Synchroniseer met cloud"
+            onPress={() => router.push('/(tabs)/cloudsync')}
+            colors={COLORS}
+          />
         </View>
 
         {/* App Info */}

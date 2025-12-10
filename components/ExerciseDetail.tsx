@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { StyleSheet, View, TouchableOpacity, TextInput, ImageBackground } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
+import { SearchableExerciseDropdown } from '@/components/SearchableExerciseDropdown';
 import { DIFFICULTY_COLORS } from '@/app/types/workout';
 import { COLORS } from '@/app/styles/colors';
 import * as Haptics from 'expo-haptics';
@@ -11,6 +12,7 @@ import { loadSettings } from '@/app/utils/settingsStorage';
 import { calculateExerciseKcal, formatKcalDisplay } from '@/app/utils/kcalCalculator';
 import type { WorkoutExercise, DifficultyRating } from '@/app/types/workout';
 import { EXERCISE_GUIDES } from '@/app/data/exerciseGuides';
+import type { Schema } from '@/app/data/workoutData';
 
 interface ExerciseDetailProps {
   exercise: WorkoutExercise;
@@ -18,9 +20,11 @@ interface ExerciseDetailProps {
   onToggleComplete: () => void;
   bodyWeightKg?: number;
   defaultMET?: number;
+  schema?: Schema;
+  onExerciseChange?: (newExerciseName: string) => void;
 }
 
-export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete, bodyWeightKg = 75, defaultMET = 5 }: ExerciseDetailProps) {
+export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete, bodyWeightKg = 75, defaultMET = 5, schema, onExerciseChange }: ExerciseDetailProps) {
   const [setsCount, setSetsCount] = useState<number>(exercise.sets.length);
   const [weightValue, setWeightValue] = useState<number>(exercise.sets?.[0]?.weight || 0);
   const [repsValue, setRepsValue] = useState<number>(exercise.sets?.[0]?.reps || 12);
@@ -184,8 +188,23 @@ export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete, b
     return `${mins}:${String(secs).padStart(2, '0')}`;
   };
 
+  const handleExerciseChange = (newExerciseName: string) => {
+    if (onExerciseChange) {
+      onExerciseChange(newExerciseName);
+    }
+  };
+
   return (
     <View style={styles.container}>
+      {/* Exercise Selector - only show if schema provided and not completed */}
+      {schema && !exercise.completed && (
+        <SearchableExerciseDropdown
+          muscleGroups={schema.muscleGroups}
+          selectedExerciseName={exercise.name}
+          onSelectExercise={handleExerciseChange}
+        />
+      )}
+
       {/* Header */}
       <TouchableOpacity
         style={[

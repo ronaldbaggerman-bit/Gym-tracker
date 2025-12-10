@@ -24,6 +24,21 @@ export interface ExerciseStats {
   lastPerformed: string;
 }
 
+export interface ExerciseVolumeSummary {
+  name: string;
+  totalVolume: number;
+  sessionsCount: number;
+  bestSessionVolume: number;
+  lastSessionVolume: number;
+  lastPerformed: string;
+  averageVolumePerSession: number;
+}
+
+export interface ExerciseVolumeEntry {
+  date: string;
+  volume: number;
+}
+
 /**
  * Calculate total volume (weight × reps) for an exercise
  */
@@ -211,6 +226,81 @@ export function getExerciseStats(sessions: WorkoutSession[], exerciseName: strin
     timesPerformed: exerciseData.length,
     lastPerformed,
   };
+}
+
+/**
+ * Aggregate volume per exercise across all sessions
+ */
+export function getExerciseVolumeSummary(sessions: WorkoutSession[]): ExerciseVolumeSummary[] {
+  if (!sessions || !Array.isArray(sessions)) return [];
+
+  const map: Record<string, ExerciseVolumeSummary> = {};
+
+  sessions
+    .filter(s => s && s.exercises && (s.completed !== false))
+    .forEach(session => {
+      const sessionDate = session.date;
+      session.exercises
+        .filter(ex => ex && (ex.completed !== false))
+        .forEach(ex => {
+          const volume = calculateExerciseVolume(ex);
+          if (!map[ex.name]) {
+            map[ex.name] = {
+              name: ex.name,
+              totalVolume: 0,
+              sessionsCount: 0,
+              bestSessionVolume: 0,
+              lastSessionVolume: 0,
+              lastPerformed: '',
+              averageVolumePerSession: 0,
+            };
+          }
+
+          const entry = map[ex.name];
+          entry.totalVolume += volume;
+          entry.sessionsCount += 1;
+          entry.bestSessionVolume = Math.max(entry.bestSessionVolume, volume);
+          const sessionTime = new Date(sessionDate).getTime();
+
+          if (!entry.lastPerformed || sessionTime > new Date(entry.lastPerformed).getTime()) {
+            entry.lastPerformed = sessionDate;
+            entry.lastSessionVolume = volume;
+          }
+        });
+    });
+
+  return Object.values(map)
+    .map(e => ({
+      ...e,
+      averageVolumePerSession: e.sessionsCount > 0 ? e.totalVolume / e.sessionsCount : 0,
+    }))
+    .sort((a, b) => b.totalVolume - a.totalVolume);
+}
+
+/**
+ * Get per-session volume history for a specific exercise
+ */
+export function getExerciseVolumeHistory(sessions: WorkoutSession[], exerciseName: string): ExerciseVolumeEntry[] {
+  if (!sessions || !Array.isArray(sessions) || !exerciseName) return [];
+
+  const entries: ExerciseVolumeEntry[] = [];
+
+  sessions
+    .filter(s => s && s.exercises && (s.completed !== false))
+    .forEach(session => {
+      const volume = session.exercises
+        .filter(ex => ex && ex.name === exerciseName && (ex.completed !== false))
+        .reduce((sum, ex) => sum + calculateExerciseVolume(ex), 0);
+
+      if (volume > 0) {
+        entries.push({
+          date: session.date,
+          volume,
+        });
+      }
+    });
+
+  return entries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 }
 
 /**

@@ -4,19 +4,19 @@ import { ImageBackground, StyleSheet } from 'react-native';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { CARBON_SVG_URI } from '@/app/styles/carbonBackground';
-import { COLORS } from '@/app/styles/colors';
+import { useThemeColors } from '@/app/hooks/useThemeColors';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const COLORS = useThemeColors();
 
   return (
     <ImageBackground
       source={{ uri: CARBON_SVG_URI }}
-      style={styles.background}
+      style={[styles.background, { backgroundColor: COLORS.BACKGROUND }]}
       resizeMode="repeat"
     >
       <ErrorBoundary>
@@ -57,6 +57,20 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="leaderboard"
+        options={{
+          title: 'Awards',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="star.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="motivation"
+        options={{
+          title: 'Motivation',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="bolt.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="meer"
         options={{
           title: 'Meer',
@@ -64,6 +78,18 @@ export default function TabLayout() {
         }}
       />
       {/* Hidden screens - accessible via navigation but not in tab bar */}
+      <Tabs.Screen
+        name="cloudsync"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="backup"
+        options={{
+          href: null,
+        }}
+      />
       <Tabs.Screen
         name="schemas"
         options={{
@@ -83,5 +109,5 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
-  background: { flex: 1, backgroundColor: COLORS.BACKGROUND },
+  background: { flex: 1 },
 });

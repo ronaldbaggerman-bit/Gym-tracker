@@ -14,12 +14,16 @@ interface ProgressLineChartProps {
   data: ProgressionDataPoint[];
   height?: number;
   width?: number;
+  showTrendline?: boolean;
+  showArea?: boolean;
 }
 
 export function ProgressLineChart({ 
   data, 
   height = 300, 
-  width = Dimensions.get('window').width - 32 
+  width = Dimensions.get('window').width - 32,
+  showTrendline = true,
+  showArea = true,
 }: ProgressLineChartProps) {
   if (data.length === 0) {
     return (
@@ -60,7 +64,7 @@ export function ProgressLineChart({
     .join(' ');
 
   // Grid lines for Y axis (every 5kg or so)
-  const gridStep = Math.ceil(weightRange / 5);
+  const gridStep = Math.max(1, Math.ceil(weightRange / 5));
   const gridLines = [];
   for (let w = Math.ceil(minWeight / gridStep) * gridStep; w <= maxWeight; w += gridStep) {
     const y = scaleY(w);
@@ -154,28 +158,78 @@ export function ProgressLineChart({
         })}
       </G>
 
+      {/* Area under line */}
+      {showArea && (
+        <Path
+          d={`${pathData} L ${padding.left + chartWidth} ${padding.top + chartHeight} L ${padding.left} ${padding.top + chartHeight} Z`}
+          fill="rgba(0, 191, 166, 0.08)"
+        />
+      )}
+
       {/* Line */}
       <Path
         d={pathData}
         stroke={COLORS.ACCENT}
-        strokeWidth="2"
+        strokeWidth="2.5"
         fill="none"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
 
+      {/* Trendline (linear regression) */}
+      {showTrendline && data.length > 1 && (() => {
+        const n = data.length;
+        const sumX = data.reduce((acc, _, i) => acc + i, 0);
+        const sumY = data.reduce((acc, point) => acc + point.weight, 0);
+        const sumXY = data.reduce((acc, point, i) => acc + i * point.weight, 0);
+        const sumX2 = data.reduce((acc, _, i) => acc + i * i, 0);
+        const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX || 1);
+        const intercept = (sumY - slope * sumX) / n;
+
+        const yStart = scaleY(intercept);
+        const yEnd = scaleY(slope * (n - 1) + intercept);
+
+        return (
+          <Line
+            x1={padding.left}
+            y1={yStart}
+            x2={padding.left + chartWidth}
+            y2={yEnd}
+            stroke={COLORS.TEXT_SECONDARY}
+            strokeDasharray="6,4"
+            strokeWidth="1.5"
+          />
+        );
+      })()}
+
       {/* Data points (circles) */}
       {data.map((point, index) => {
         const x = scaleX(index);
         const y = scaleY(point.weight);
+        const isLatest = index === data.length - 1;
+        const isMax = point.weight === maxWeight;
         return (
-          <Circle
-            key={`point-${index}`}
-            cx={x}
-            cy={y}
-            r="4"
-            fill={COLORS.ACCENT}
-          />
+          <G key={`point-${index}`}>
+            <Circle
+              cx={x}
+              cy={y}
+              r={isLatest ? 6 : 4}
+              fill={isLatest ? '#FFD166' : COLORS.ACCENT}
+              stroke={isMax ? '#FF3B30' : 'transparent'}
+              strokeWidth={isMax ? 2 : 0}
+            />
+            {isLatest && (
+              <SvgText
+                x={x}
+                y={y - 10}
+                fontSize="10"
+                fill={COLORS.TEXT_PRIMARY}
+                textAnchor="middle"
+              >
+                {`${point.weight} kg`}
+              </SvgText>
+            )}
+          </G>
         );
       })}
     </Svg>

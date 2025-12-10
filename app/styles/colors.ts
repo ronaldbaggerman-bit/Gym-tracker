@@ -1,5 +1,27 @@
-export const COLORS_DARK = {
-  BACKGROUND: '#0E0E10', // very dark matte
+const extendPalette = (base: {
+  BACKGROUND: string;
+  SURFACE: string;
+  CARD: string;
+  BORDER: string;
+  MUTED: string;
+  TEXT_PRIMARY: string;
+  TEXT_SECONDARY: string;
+  PRIMARY: string;
+  ACCENT: string;
+  DANGER: string;
+}) => ({
+  ...base,
+  // Common aliases for legacy components
+  accent: base.ACCENT,
+  text: base.TEXT_PRIMARY,
+  gray: base.TEXT_SECONDARY,
+  darkBg: base.BACKGROUND,
+  darkCard: base.CARD,
+  border: base.BORDER,
+});
+
+export const COLORS_DARK = extendPalette({
+  BACKGROUND: '#0E0E10',
   SURFACE: '#141416',
   CARD: '#1C1C1E',
   BORDER: '#2C2C2E',
@@ -9,9 +31,9 @@ export const COLORS_DARK = {
   PRIMARY: '#34C759',
   ACCENT: '#007AFF',
   DANGER: '#FF3B30',
-};
+});
 
-export const COLORS_LIGHT = {
+export const COLORS_LIGHT = extendPalette({
   BACKGROUND: '#FFFFFF',
   SURFACE: '#F9F9F9',
   CARD: '#F2F2F7',
@@ -22,9 +44,9 @@ export const COLORS_LIGHT = {
   PRIMARY: '#34C759',
   ACCENT: '#007AFF',
   DANGER: '#FF3B30',
-};
+});
 
-export const COLORS = COLORS_DARK; // Default to dark mode
+export const COLORS = COLORS_DARK; // Default (overridden in useThemeColors)
 
 export function getColors(colorScheme: 'light' | 'dark' | null): typeof COLORS_DARK {
   return colorScheme === 'light' ? COLORS_LIGHT : COLORS_DARK;

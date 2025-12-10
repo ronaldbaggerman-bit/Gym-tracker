@@ -1,22 +1,31 @@
 import { useEffect, useState, useMemo } from 'react';
-import { StyleSheet, View, FlatList, TouchableOpacity, TextInput, Alert, RefreshControl, Share } from 'react-native';
+import { StyleSheet, View, FlatList, TouchableOpacity, TextInput, Alert, RefreshControl, Share, Modal, Animated } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
+import { SwipeableRow } from '@/components/SwipeableRow';
+import { VersionHistoryView } from '@/components/VersionHistoryView';
+import { UndoSnackbar, type UndoAction } from '@/components/UndoSnackbar';
+import { ScreenTransition } from '@/components/ScreenTransition';
 import { loadSessions, removeSession, saveSessionsList } from '@/app/utils/storage';
 import { importCsvSessions, clearImportedSessions } from '@/app/utils/csvImport';
 import { WORKOUT_DATA } from '@/app/data/workoutData';
 import { loadSettings } from '@/app/utils/settingsStorage';
 import { calculateTotalSessionKcal, formatKcalDisplay } from '@/app/utils/kcalCalculator';
+import { getExerciseVolumeSummary, getExerciseVolumeHistory } from '@/app/utils/workoutStats';
 import { EXERCISE_GUIDES } from '@/app/data/exerciseGuides';
-import { COLORS } from '@/app/styles/colors';
+import { useThemeColors } from '@/app/hooks/useThemeColors';
 
 export default function HistorieScreen() {
   const insets = useSafeAreaInsets();
+  const COLORS = useThemeColors();
+  const styles = useMemo(() => createStyles(COLORS), [COLORS]);
   const [sessions, setSessions] = useState<any[]>([]);
+  const [undoAction, setUndoAction] = useState<UndoAction | null>(null);
+  const [isLoadingContent, setIsLoadingContent] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [monthDate, setMonthDate] = useState(() => {
     const d = new Date();
@@ -33,10 +42,13 @@ export default function HistorieScreen() {
   const [bodyWeightKg, setBodyWeightKg] = useState(75);
   const [defaultMET, setDefaultMET] = useState(5);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedVolumeExercise, setSelectedVolumeExercise] = useState<string | null>(null);
+  const [selectedSessionForHistory, setSelectedSessionForHistory] = useState<string | null>(null);
 
   const reloadSessions = async () => {
     const s = await loadSessions();
     setSessions(s || []);
+    setIsLoadingContent(false);
   };
 
   const onRefresh = async () => {
@@ -58,9 +70,55 @@ export default function HistorieScreen() {
     });
   }, []);
 
-  const handleDelete = async (id: string) => {
-    const ok = await removeSession(id);
-    if (ok) await reloadSessions();
+  const volumeSummaries = useMemo(() => getExerciseVolumeSummary(sessions), [sessions]);
+  const activeVolumeExercise = useMemo(() => {
+    if (selectedVolumeExercise) {
+      return volumeSummaries.find(v => v.name === selectedVolumeExercise) || volumeSummaries[0];
+    }
+    return volumeSummaries[0];
+  }, [selectedVolumeExercise, volumeSummaries]);
+
+  const volumeHistory = useMemo(() => {
+    if (!activeVolumeExercise) return [];
+    return getExerciseVolumeHistory(sessions, activeVolumeExercise.name).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 6);
+  }, [sessions, activeVolumeExercise]);
+
+  useEffect(() => {
+    if (!selectedVolumeExercise && volumeSummaries.length > 0) {
+      setSelectedVolumeExercise(volumeSummaries[0].name);
+    }
+  }, [selectedVolumeExercise, volumeSummaries]);
+
+  const handleDeleteSession = (id: string) => {
+    const sessionToDelete = sessions.find(s => s.id === id);
+    Alert.alert(
+      'Workout verwijderen?',
+      'Wil je deze workout echt verwijderen? Dit kan niet ongedaan gemaakt worden.',
+      [
+        { text: 'Annuleer', onPress: () => {}, style: 'cancel' },
+        {
+          text: 'Verwijder',
+          onPress: async () => {
+            const ok = await removeSession(id);
+            if (ok) {
+              setSessions(prev => prev.filter(s => s.id !== id));
+              
+              setUndoAction({
+                label: `Deleted "${sessionToDelete?.schemaName || 'Workout'}"`,
+                onUndo: async () => {
+                  if (sessionToDelete) {
+                    const newSessions = [...sessions.filter(s => s.id !== id), sessionToDelete];
+                    await saveSessionsList(newSessions);
+                    setSessions(newSessions);
+                  }
+                },
+              });
+            }
+          },
+          style: 'destructive',
+        },
+      ]
+    );
   };
 
   const handleImport = async () => {
@@ -176,7 +234,7 @@ export default function HistorieScreen() {
     const schema = WORKOUT_DATA.schemas.find(s => s.id === item.schemaId);
     const color = schema ? schema.color : '#007AFF';
 
-    return (
+    const cardContent = (
       <TouchableOpacity 
         onPress={() => setExpandedSessionId(isExpanded ? null : item.id)}
         style={styles.historyCard}
@@ -195,9 +253,6 @@ export default function HistorieScreen() {
               {item.exercises?.length || 0} oefeningen • {duration} • {formatKcalDisplay(calculateTotalSessionKcal(item, bodyWeightKg, defaultMET))}
             </ThemedText>
           </View>
-          <TouchableOpacity onPress={() => handleDelete(item.id)} style={styles.deleteButton}>
-            <ThemedText style={styles.deleteText}>Verwijder</ThemedText>
-          </TouchableOpacity>
         </View>
 
         {/* Expanded view with exercises */}
@@ -219,9 +274,24 @@ export default function HistorieScreen() {
                 )}
               </View>
             ))}
+            <TouchableOpacity 
+              style={styles.versionHistoryButton}
+              onPress={() => setSelectedSessionForHistory(item.id)}
+            >
+              <ThemedText style={styles.versionHistoryButtonText}>📜 Version History</ThemedText>
+            </TouchableOpacity>
           </View>
         )}
       </TouchableOpacity>
+    );
+
+    return (
+      <SwipeableRow
+        onSwipeLeft={() => handleDeleteSession(item.id)}
+        actionWidth={80}
+      >
+        {cardContent}
+      </SwipeableRow>
     );
   };
 
@@ -347,42 +417,151 @@ export default function HistorieScreen() {
           })()}
         </View>
       </View>
+
+      {/* Volume tracking per oefening */}
+      <View style={styles.volumeCard}>
+        <View style={styles.volumeHeader}>
+          <ThemedText type="defaultSemiBold" style={styles.volumeTitle}>Volume per oefening</ThemedText>
+          <ThemedText style={styles.volumeSubtitle}>kg × reps, laatste 6 sessies</ThemedText>
+        </View>
+
+        {volumeSummaries.length === 0 ? (
+          <ThemedText style={styles.volumeEmpty}>Nog geen volume beschikbaar. Log een workout om data te zien.</ThemedText>
+        ) : (
+          <>
+            <View style={styles.volumeChips}>
+              {volumeSummaries.map(v => (
+                <TouchableOpacity
+                  key={v.name}
+                  style={[styles.volumeChip, activeVolumeExercise?.name === v.name && styles.volumeChipActive]}
+                  onPress={() => setSelectedVolumeExercise(v.name)}
+                >
+                  <ThemedText style={[styles.volumeChipText, activeVolumeExercise?.name === v.name && styles.volumeChipTextActive]}>
+                    {v.name}
+                  </ThemedText>
+                  <ThemedText style={[styles.volumeChipValue, activeVolumeExercise?.name === v.name && styles.volumeChipTextActive]}>
+                    {Math.round(v.totalVolume).toLocaleString('nl-NL')} kg
+                  </ThemedText>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {activeVolumeExercise && (
+              <View style={styles.volumeMetrics}>
+                <View style={styles.volumeMetric}>
+                  <ThemedText style={styles.metricLabel}>Totaal</ThemedText>
+                  <ThemedText style={styles.metricValue}>{Math.round(activeVolumeExercise.totalVolume).toLocaleString('nl-NL')} kg</ThemedText>
+                </View>
+                <View style={styles.volumeMetric}>
+                  <ThemedText style={styles.metricLabel}>Gem. per sessie</ThemedText>
+                  <ThemedText style={styles.metricValue}>{Math.round(activeVolumeExercise.averageVolumePerSession).toLocaleString('nl-NL')} kg</ThemedText>
+                </View>
+                <View style={styles.volumeMetric}>
+                  <ThemedText style={styles.metricLabel}>Beste sessie</ThemedText>
+                  <ThemedText style={styles.metricValue}>{Math.round(activeVolumeExercise.bestSessionVolume).toLocaleString('nl-NL')} kg</ThemedText>
+                </View>
+                <View style={styles.volumeMetric}>
+                  <ThemedText style={styles.metricLabel}>Laatste sessie</ThemedText>
+                  <ThemedText style={styles.metricValue}>{Math.round(activeVolumeExercise.lastSessionVolume).toLocaleString('nl-NL')} kg</ThemedText>
+                </View>
+              </View>
+            )}
+
+            {volumeHistory.length > 0 && (
+              <View style={styles.volumeHistory}>
+                {volumeHistory.map(entry => (
+                  <View key={`${entry.date}-${entry.volume}`} style={styles.volumeHistoryRow}>
+                    <ThemedText style={styles.historyDate}>{new Date(entry.date).toLocaleDateString('nl-NL')}</ThemedText>
+                    <ThemedText style={styles.historyVolume}>{Math.round(entry.volume).toLocaleString('nl-NL')} kg</ThemedText>
+                  </View>
+                ))}
+              </View>
+            )}
+          </>
+        )}
+      </View>
     </>
   );
 
   return (
-    <View style={styles.container}>
-      <FlatList
-        data={selectedDate ? sessions.filter(s => s.date === selectedDate) : sessions}
-        renderItem={renderHistoryItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContainer}
-        ListHeaderComponent={renderImportHeader}
-        ListEmptyComponent={() => (
-          <View style={styles.emptyState}>
-            <ThemedText style={styles.emptyStateIcon}>🏋️</ThemedText>
-            <ThemedText type="defaultSemiBold" style={styles.emptyStateTitle}>
-              Nog geen workout historie
-            </ThemedText>
-            <ThemedText style={styles.emptyStateDescription}>
-              Voltooi je eerste workout om deze hier te zien verschijnen
-            </ThemedText>
-          </View>
-        )}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={COLORS.ACCENT}
-            colors={[COLORS.ACCENT]}
-          />
-        }
-      />
+    <View style={{ flex: 1 }}>
+      <ScreenTransition direction="fade">
+        <View style={styles.container}>
+          {isLoadingContent ? (
+            <View style={styles.skeletonList}>
+              {[1, 2, 3].map((idx) => (
+                <View key={idx} style={[styles.skeletonCard, { backgroundColor: COLORS.CARD, borderColor: COLORS.BORDER }]}>
+                  <View style={[styles.skeletonLine, { width: '40%' }]} />
+                  <View style={[styles.skeletonLine, { width: '70%', marginTop: 8 }]} />
+                  <View style={[styles.skeletonLine, { width: '50%', marginTop: 8 }]} />
+                </View>
+              ))}
+            </View>
+          ) : (
+            <FlatList
+              data={selectedDate ? sessions.filter(s => s.date === selectedDate) : sessions}
+              renderItem={renderHistoryItem}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.listContainer}
+              ListHeaderComponent={renderImportHeader}
+              ListEmptyComponent={() => (
+                <View style={styles.emptyState}>
+                  <ThemedText style={styles.emptyStateIcon}>🏋️</ThemedText>
+                  <ThemedText type="defaultSemiBold" style={styles.emptyStateTitle}>
+                    Nog geen workout historie
+                  </ThemedText>
+                  <ThemedText style={styles.emptyStateDescription}>
+                    Voltooi je eerste workout om deze hier te zien verschijnen
+                  </ThemedText>
+                </View>
+              )}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  tintColor={COLORS.ACCENT}
+                  colors={[COLORS.ACCENT]}
+                />
+              }
+            />
+          )}
+
+          {/* Version History Modal */}
+          {selectedSessionForHistory && (
+            <Modal
+              visible={true}
+              transparent
+              animationType="slide"
+              onRequestClose={() => setSelectedSessionForHistory(null)}
+            >
+              <View style={{ flex: 1, backgroundColor: COLORS.BACKGROUND }}>
+                <View style={styles.modalHeader}>
+                  <TouchableOpacity onPress={() => setSelectedSessionForHistory(null)}>
+                    <ThemedText style={styles.closeButton}>← Back</ThemedText>
+                  </TouchableOpacity>
+                  <ThemedText type="defaultSemiBold" style={styles.modalHeaderTitle}>
+                    Version History
+                  </ThemedText>
+                  <View style={{ width: 60 }} />
+                </View>
+                <VersionHistoryView
+                  sessionId={selectedSessionForHistory}
+                  onRestore={() => {
+                    setSelectedSessionForHistory(null);
+                    reloadSessions();
+                  }}
+                />
+              </View>
+            </Modal>
+          )}
+        </View>
+      </ScreenTransition>
+      <UndoSnackbar action={undoAction ?? undefined} />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (COLORS: ReturnType<typeof useThemeColors>) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -457,16 +636,6 @@ const styles = StyleSheet.create({
     color: COLORS.TEXT_SECONDARY,
     textAlign: 'center',
     maxWidth: 320,
-  },
-  deleteButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-    backgroundColor: '#FF3B30',
-  },
-  deleteText: {
-    color: '#FFFFFF',
-    fontSize: 13,
   },
   importCard: {
     backgroundColor: COLORS.CARD,
@@ -559,6 +728,109 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.CARD,
     margin: 12,
     borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.BORDER,
+  },
+  volumeCard: {
+    backgroundColor: COLORS.CARD,
+    marginHorizontal: 12,
+    marginBottom: 12,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.BORDER,
+    gap: 10,
+  },
+  volumeHeader: {
+    gap: 2,
+  },
+  volumeTitle: {
+    fontSize: 15,
+    color: COLORS.TEXT_PRIMARY,
+  },
+  volumeSubtitle: {
+    fontSize: 12,
+    color: COLORS.TEXT_SECONDARY,
+  },
+  volumeEmpty: {
+    color: COLORS.TEXT_SECONDARY,
+    fontSize: 12,
+  },
+  volumeChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  volumeChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: COLORS.SURFACE,
+    borderWidth: 1,
+    borderColor: COLORS.BORDER,
+    minWidth: '48%',
+  },
+  volumeChipActive: {
+    borderColor: COLORS.ACCENT,
+    backgroundColor: '#0A0A0F',
+  },
+  volumeChipText: {
+    color: COLORS.TEXT_PRIMARY,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  volumeChipTextActive: {
+    color: '#FFFFFF',
+  },
+  volumeChipValue: {
+    fontSize: 12,
+    color: COLORS.TEXT_SECONDARY,
+    marginTop: 4,
+  },
+  volumeMetrics: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  volumeMetric: {
+    flex: 1,
+    minWidth: '46%',
+    backgroundColor: COLORS.SURFACE,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.BORDER,
+    padding: 12,
+  },
+  metricLabel: {
+    fontSize: 11,
+    color: COLORS.TEXT_SECONDARY,
+    marginBottom: 4,
+  },
+  metricValue: {
+    fontSize: 14,
+    color: COLORS.TEXT_PRIMARY,
+    fontWeight: '700',
+  },
+  volumeHistory: {
+    marginTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.BORDER,
+  },
+  volumeHistoryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.BORDER,
+  },
+  historyDate: {
+    fontSize: 12,
+    color: COLORS.TEXT_PRIMARY,
+  },
+  historyVolume: {
+    fontSize: 12,
+    color: COLORS.TEXT_PRIMARY,
+    fontWeight: '700',
   },
   monthNav: {
     flexDirection: 'row',
@@ -574,6 +846,7 @@ const styles = StyleSheet.create({
   monthText: {
     fontSize: 16,
     fontWeight: '600',
+    color: COLORS.TEXT_PRIMARY,
   },
   weekHeader: {
     flexDirection: 'row',
@@ -599,10 +872,13 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   dayCellSelected: {
-    backgroundColor: '#F5F5F7',
+    backgroundColor: COLORS.SURFACE,
+    borderWidth: 1,
+    borderColor: COLORS.ACCENT,
   },
   dayNumber: {
     fontSize: 13,
+    color: COLORS.TEXT_PRIMARY,
   },
   dayDotsContainer: {
     flexDirection: 'row',
@@ -676,5 +952,52 @@ const styles = StyleSheet.create({
     color: COLORS.TEXT_SECONDARY,
     textAlign: 'center',
     lineHeight: 20,
+  },
+  versionHistoryButton: {
+    marginTop: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: COLORS.ACCENT,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  versionHistoryButtonText: {
+    color: COLORS.BACKGROUND,
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.BORDER,
+  },
+  closeButton: {
+    color: COLORS.ACCENT,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalHeaderTitle: {
+    color: COLORS.TEXT_PRIMARY,
+    fontSize: 18,
+  },
+  skeletonList: {
+    padding: 15,
+  },
+  skeletonCard: {
+    padding: 15,
+    marginBottom: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    height: 120,
+  },
+  skeletonLine: {
+    height: 12,
+    backgroundColor: COLORS.TEXT_SECONDARY,
+    borderRadius: 6,
+    opacity: 0.3,
   },
 });

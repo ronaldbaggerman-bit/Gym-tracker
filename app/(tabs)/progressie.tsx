@@ -6,7 +6,7 @@ import Svg, { Defs, Pattern, Rect, Circle } from 'react-native-svg';
 import { ThemedText } from '@/components/themed-text';
 import { ProgressLineChart } from '@/components/ProgressLineChart';
 import { loadSessions } from '@/app/utils/storage';
-import { loadSettings } from '@/app/utils/settingsStorage';
+import { loadSettings, updateSetting } from '@/app/utils/settingsStorage';
 import { WORKOUT_DATA } from '@/app/data/workoutData';
 import { 
   getExerciseProgressionData, 
@@ -44,11 +44,28 @@ export default function ProgressieScreen() {
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [prs, setPRs] = useState<Record<string, any>>({});
 
+  const ranges = useMemo(() => ([
+    { label: '30d', value: 30 },
+    { label: '90d', value: 90 },
+    { label: '180d', value: 180 },
+    { label: '365d', value: 365 },
+    { label: 'Alles', value: 0 },
+  ]), []);
+
   useFocusEffect(
     useCallback(() => {
       loadData();
     }, [])
   );
+
+  const handleRangeSelect = useCallback(async (value: number) => {
+    setProgressDaysBack(value);
+    try {
+      await updateSetting('progressDaysBack', value);
+    } catch (error) {
+      console.error('Failed to save progress range:', error);
+    }
+  }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -160,6 +177,32 @@ export default function ProgressieScreen() {
           <ThemedText style={styles.subtitle}>
             Volg je gewichtprogressie over tijd
           </ThemedText>
+        </View>
+
+        {/* Range Filter */}
+        <View style={styles.rangeSection}>
+          <ThemedText type="defaultSemiBold" style={styles.filterLabel}>
+            Periode
+          </ThemedText>
+          <View style={styles.rangeButtons}>
+            {ranges.map(r => (
+              <TouchableOpacity
+                key={r.value}
+                style={[
+                  styles.rangeButton,
+                  progressDaysBack === r.value && styles.rangeButtonActive,
+                ]}
+                onPress={() => handleRangeSelect(r.value)}
+              >
+                <ThemedText style={[
+                  styles.rangeButtonText,
+                  progressDaysBack === r.value && styles.rangeButtonTextActive,
+                ]}>
+                  {r.label}
+                </ThemedText>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
         {sessions.length === 0 ? (
@@ -367,6 +410,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.BORDER,
   },
+  rangeSection: {
+    marginTop: 16,
+    marginHorizontal: 12,
+  },
   subtitle: {
     fontSize: 13,
     color: COLORS.TEXT_SECONDARY,
@@ -390,6 +437,31 @@ const styles = StyleSheet.create({
     color: COLORS.TEXT_PRIMARY,
     marginBottom: 10,
     marginHorizontal: 4,
+  },
+  rangeButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  rangeButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: COLORS.SURFACE,
+    borderWidth: 1,
+    borderColor: COLORS.BORDER,
+  },
+  rangeButtonActive: {
+    backgroundColor: COLORS.ACCENT,
+    borderColor: COLORS.ACCENT,
+  },
+  rangeButtonText: {
+    fontSize: 12,
+    color: COLORS.TEXT_PRIMARY,
+    fontWeight: '600',
+  },
+  rangeButtonTextActive: {
+    color: '#FFFFFF',
   },
   filterScroll: {
     paddingHorizontal: 12,

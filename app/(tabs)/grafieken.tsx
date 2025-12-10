@@ -6,6 +6,8 @@ import Svg, { Defs, Pattern, Rect, Circle } from 'react-native-svg';
 import { loadSessions } from '@/app/utils/storage';
 import { calculateWorkoutStats, getExerciseStats, type WorkoutStats, type ExerciseStats } from '@/app/utils/workoutStats';
 import { EXERCISE_GUIDES } from '@/app/data/exerciseGuides';
+import { WeeklyVolumeChart } from '@/components/WeeklyVolumeChart';
+import { ScreenTransition } from '@/components/ScreenTransition';
 import type { WorkoutSession } from '@/app/types/workout';
 
 const { width, height } = Dimensions.get('window');
@@ -107,45 +109,49 @@ export default function GrafiekenScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <CarbonFiberSVG />
-      <ScrollView 
-        style={styles.scrollView} 
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={COLORS.ACCENT}
-            colors={[COLORS.ACCENT]}
-          />
-        }
-      >
-        <Text style={[styles.header, { paddingTop: insets.top + 16 }]}>Jouw Statistieken</Text>
+    <ScreenTransition direction="up" duration={400}>
+      <View style={styles.container}>
+        <CarbonFiberSVG />
+        <ScrollView 
+          style={styles.scrollView} 
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={COLORS.ACCENT}
+              colors={[COLORS.ACCENT]}
+            />
+          }
+        >
+          <Text style={[styles.header, { paddingTop: insets.top + 16 }]}>Jouw Statistieken</Text>
 
-        {/* Overview Cards Row 1 */}
-        <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{stats.totalWorkouts}</Text>
-            <Text style={styles.statLabel}>Workouts</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{Math.round(stats.totalVolume).toLocaleString()}</Text>
-            <Text style={styles.statLabel}>Totaal Volume (kg)</Text>
-          </View>
-        </View>
+          {/* Weekly Volume Chart */}
+          <WeeklyVolumeChart sessions={sessions} />
 
-        {/* Overview Cards Row 2 */}
-        <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{stats.totalSets}</Text>
-            <Text style={styles.statLabel}>Sets</Text>
+          {/* Overview Cards Row 1 */}
+          <View style={styles.statsRow}>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{stats.totalWorkouts}</Text>
+              <Text style={styles.statLabel}>Workouts</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{Math.round(stats.totalVolume).toLocaleString()}</Text>
+              <Text style={styles.statLabel}>Totaal Volume (kg)</Text>
+            </View>
           </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{stats.totalReps.toLocaleString()}</Text>
-            <Text style={styles.statLabel}>Reps</Text>
+
+          {/* Overview Cards Row 2 */}
+          <View style={styles.statsRow}>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{stats.totalSets}</Text>
+              <Text style={styles.statLabel}>Sets</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{stats.totalReps.toLocaleString()}</Text>
+              <Text style={styles.statLabel}>Reps</Text>
+            </View>
           </View>
-        </View>
 
         {/* Streak Section */}
         <View style={styles.sectionCard}>
@@ -250,6 +256,7 @@ export default function GrafiekenScreen() {
         )}
       </ScrollView>
     </View>
+    </ScreenTransition>
   );
 }
 

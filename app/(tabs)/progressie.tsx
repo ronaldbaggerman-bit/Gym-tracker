@@ -1,6 +1,7 @@
-import { useEffect, useState, useMemo } from 'react';
-import { StyleSheet, View, ScrollView, TouchableOpacity, Dimensions, RefreshControl } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import { useEffect, useState, useMemo, useCallback } from 'react';
+import { StyleSheet, View, ScrollView, TouchableOpacity, Dimensions, RefreshControl, FlatList, Modal } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import Svg, { Defs, Pattern, Rect, Circle } from 'react-native-svg';
 import { ThemedText } from '@/components/themed-text';
 import { ProgressLineChart } from '@/components/ProgressLineChart';
@@ -33,16 +34,21 @@ const CarbonFiberSVG = () => (
 );
 
 export default function ProgressieScreen() {
+  const insets = useSafeAreaInsets();
   const [sessions, setSessions] = useState<any[]>([]);
   const [progressDaysBack, setProgressDaysBack] = useState(180);
   const [selectedSchemaId, setSelectedSchemaId] = useState<string | null>(null);
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [dropdownVisible, setDropdownVisible] = useState(false);
+  const [prs, setPRs] = useState<Record<string, any>>({});
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -52,11 +58,15 @@ export default function ProgressieScreen() {
 
   const loadData = async () => {
     try {
+      const { loadPRs } = await import('@/app/utils/storage');
       const loadedSessions = await loadSessions();
       setSessions(loadedSessions || []);
       
       const settings = await loadSettings();
       setProgressDaysBack(settings.progressDaysBack || 180);
+      
+      const prData = await loadPRs();
+      setPRs(prData || {});
     } catch (error) {
       console.error('Failed to load progression data:', error);
     } finally {
@@ -145,7 +155,7 @@ export default function ProgressieScreen() {
           />
         }
       >
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
           <ThemedText type="title">Progressie</ThemedText>
           <ThemedText style={styles.subtitle}>
             Volg je gewichtprogressie over tijd
@@ -153,9 +163,13 @@ export default function ProgressieScreen() {
         </View>
 
         {sessions.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <ThemedText style={styles.emptyText}>
-              Geen trainingsdata beschikbaar
+          <View style={styles.emptyState}>
+            <ThemedText style={styles.emptyStateIcon}>📈</ThemedText>
+            <ThemedText type="defaultSemiBold" style={styles.emptyStateTitle}>
+              Nog geen progressiedata
+            </ThemedText>
+            <ThemedText style={styles.emptyStateDescription}>
+              Start je eerste workout om je gewichtprogressie te volgen
             </ThemedText>
           </View>
         ) : (
@@ -199,28 +213,68 @@ export default function ProgressieScreen() {
                 <ThemedText type="defaultSemiBold" style={styles.filterLabel}>
                   Oefening
                 </ThemedText>
-                <View style={styles.pickerContainer}>
-                  <Picker
-                    selectedValue={selectedExercise || ''}
-                    onValueChange={(value: string) => setSelectedExercise(value || null)}
-                    style={styles.picker}
-                    dropdownIconColor={COLORS.TEXT_PRIMARY}
+                <TouchableOpacity
+                  style={styles.dropdownButton}
+                  onPress={() => setDropdownVisible(true)}
+                >
+                  <View style={styles.dropdownButtonContent}>
+                    <ThemedText style={styles.dropdownButtonText}>
+                      {selectedExercise ? `${selectedExercise}${prs[selectedExercise] ? ' 🏅' : ''}` : 'Selecteer een oefening...'}
+                    </ThemedText>
+                  </View>
+                  <ThemedText style={styles.dropdownArrow}>▼</ThemedText>
+                </TouchableOpacity>
+
+                <Modal
+                  visible={dropdownVisible}
+                  transparent={true}
+                  animationType="fade"
+                  onRequestClose={() => setDropdownVisible(false)}
+                >
+                  <TouchableOpacity
+                    style={styles.dropdownOverlay}
+                    onPress={() => setDropdownVisible(false)}
                   >
-                    <Picker.Item label="Selecteer een oefening..." value="" />
-                    {exercisesForSchema.map(exercise => (
-                      <Picker.Item key={exercise} label={exercise} value={exercise} />
-                    ))}
-                  </Picker>
-                </View>
+                    <View style={[styles.dropdownList, { maxHeight: 300 }]}>
+                      <FlatList
+                        data={exercisesForSchema}
+                        keyExtractor={(item) => item}
+                        renderItem={({ item: exercise }) => (
+                          <TouchableOpacity
+                            style={styles.dropdownItem}
+                            onPress={() => {
+                              setSelectedExercise(exercise);
+                              setDropdownVisible(false);
+                            }}
+                          >
+                            <ThemedText style={styles.dropdownItemText}>
+                              {exercise}
+                            </ThemedText>
+                            {prs[exercise] && (
+                              <ThemedText style={styles.prBadge}>🏅 PR</ThemedText>
+                            )}
+                          </TouchableOpacity>
+                        )}
+                      />
+                    </View>
+                  </TouchableOpacity>
+                </Modal>
               </View>
             )}
 
             {/* Metrics Display */}
             {selectedExercise && progressionData.length > 0 && (
               <View style={styles.metricsContainer}>
-                <ThemedText type="defaultSemiBold" style={styles.metricsTitle}>
-                  {selectedExercise}
-                </ThemedText>
+                <View style={styles.titleRow}>
+                  <ThemedText type="defaultSemiBold" style={styles.metricsTitle}>
+                    {selectedExercise}
+                  </ThemedText>
+                  {prs[selectedExercise] && (
+                    <View style={styles.prIndicator}>
+                      <ThemedText style={styles.prIndicatorText}>🏅 PR</ThemedText>
+                    </View>
+                  )}
+                </View>
 
                 <View style={styles.metricsGrid}>
                   <View style={styles.metricCard}>
@@ -372,6 +426,66 @@ const styles = StyleSheet.create({
     color: COLORS.TEXT_PRIMARY,
     backgroundColor: 'transparent',
   },
+  dropdownButton: {
+    backgroundColor: COLORS.SURFACE,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.BORDER,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dropdownButtonContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dropdownButtonText: {
+    fontSize: 14,
+    color: COLORS.TEXT_PRIMARY,
+    flex: 1,
+  },
+  dropdownArrow: {
+    fontSize: 12,
+    color: COLORS.TEXT_SECONDARY,
+    marginLeft: 8,
+  },
+  dropdownOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dropdownList: {
+    backgroundColor: COLORS.CARD,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.BORDER,
+    width: '80%',
+    maxHeight: 300,
+  },
+  dropdownItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.BORDER,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dropdownItemText: {
+    fontSize: 14,
+    color: COLORS.TEXT_PRIMARY,
+    flex: 1,
+  },
+  prBadge: {
+    fontSize: 12,
+    color: '#FF3B30',
+    fontWeight: '700',
+    marginLeft: 8,
+  },
   metricsContainer: {
     marginTop: 20,
     marginHorizontal: 12,
@@ -383,8 +497,24 @@ const styles = StyleSheet.create({
   },
   metricsTitle: {
     fontSize: 16,
-    marginBottom: 16,
     color: COLORS.TEXT_PRIMARY,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  prIndicator: {
+    backgroundColor: '#FF3B30',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  prIndicatorText: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
   metricsGrid: {
     flexDirection: 'row',
@@ -440,5 +570,28 @@ const styles = StyleSheet.create({
   chartPlaceholderText: {
     fontSize: 13,
     color: COLORS.TEXT_SECONDARY,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+    paddingVertical: 80,
+  },
+  emptyStateIcon: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  emptyStateTitle: {
+    fontSize: 20,
+    color: COLORS.TEXT_PRIMARY,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptyStateDescription: {
+    fontSize: 14,
+    color: COLORS.TEXT_SECONDARY,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });

@@ -49,9 +49,9 @@ export function calculateWorkoutDuration(session: WorkoutSession): number {
 export function calculateStreak(sessions: WorkoutSession[]): { current: number; longest: number } {
   if (!sessions || sessions.length === 0) return { current: 0, longest: 0 };
 
-  // Sort by date descending, filter out invalid sessions
+  // Sort by date descending, filter out invalid sessions (if completed doesn't exist, assume completed)
   const sorted = [...sessions]
-    .filter(s => s && s.date && s.completed)
+    .filter(s => s && s.date && (s.completed !== false))
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   if (sorted.length === 0) return { current: 0, longest: 0 };
@@ -114,8 +114,10 @@ export function getExerciseFrequency(sessions: WorkoutSession[]): Record<string,
 
   sessions.forEach(session => {
     if (!session || !session.exercises || !Array.isArray(session.exercises)) return;
+    // Only count from completed sessions
+    if (session.completed === false) return;
     session.exercises
-      .filter(ex => ex && ex.completed)
+      .filter(ex => ex && (ex.completed !== false))
       .forEach(ex => {
         frequency[ex.name] = (frequency[ex.name] || 0) + 1;
       });
@@ -159,7 +161,7 @@ export function getWorkoutsByMonth(sessions: WorkoutSession[]): Record<string, n
   if (!sessions || !Array.isArray(sessions)) return monthly;
 
   sessions
-    .filter(s => s && s.date && s.completed)
+    .filter(s => s && s.date && (s.completed !== false))
     .forEach(session => {
       const date = new Date(session.date);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -176,9 +178,9 @@ export function getExerciseStats(sessions: WorkoutSession[], exerciseName: strin
   if (!sessions || !Array.isArray(sessions)) return null;
 
   const exerciseData = sessions
-    .filter(s => s && s.exercises && Array.isArray(s.exercises))
+    .filter(s => s && s.exercises && Array.isArray(s.exercises) && (s.completed !== false))
     .flatMap(s => s.exercises)
-    .filter(ex => ex && ex.name === exerciseName && ex.completed);
+    .filter(ex => ex && ex.name === exerciseName && (ex.completed !== false));
 
   if (exerciseData.length === 0) return null;
 
@@ -193,7 +195,7 @@ export function getExerciseStats(sessions: WorkoutSession[], exerciseName: strin
 
   // Find last performed date
   const sessionsWithExercise = sessions.filter(s => 
-    s && s.exercises && s.exercises.some(ex => ex && ex.name === exerciseName && ex.completed)
+    s && s.exercises && (s.completed !== false) && s.exercises.some(ex => ex && ex.name === exerciseName && (ex.completed !== false))
   );
   const lastPerformed = sessionsWithExercise.length > 0
     ? new Date(Math.max(...sessionsWithExercise.map(s => new Date(s.date).getTime()))).toISOString()
@@ -230,21 +232,25 @@ export function calculateWorkoutStats(sessions: WorkoutSession[]): WorkoutStats 
     };
   }
 
-  const completedSessions = sessions.filter(s => s && s.completed);
+  // Filter completed sessions (if completed field doesn't exist, assume it's completed)
+  const completedSessions = sessions.filter(s => s && (s.completed !== false));
 
   const totalVolume = completedSessions.reduce((sum, session) => {
-    return sum + session.exercises.reduce((exSum, ex) => exSum + calculateExerciseVolume(ex), 0);
+    if (!session.exercises || !Array.isArray(session.exercises)) return sum;
+    return sum + session.exercises.reduce((exSum, ex) => exSum + (ex ? calculateExerciseVolume(ex) : 0), 0);
   }, 0);
 
   const totalSets = completedSessions.reduce((sum, session) => {
+    if (!session.exercises || !Array.isArray(session.exercises)) return sum;
     return sum + session.exercises.reduce((exSum, ex) => 
-      exSum + ex.sets.filter(s => s.completed).length, 0
+      exSum + (ex && ex.sets ? ex.sets.filter(s => s && s.completed).length : 0), 0
     );
   }, 0);
 
   const totalReps = completedSessions.reduce((sum, session) => {
+    if (!session.exercises || !Array.isArray(session.exercises)) return sum;
     return sum + session.exercises.reduce((exSum, ex) => 
-      exSum + ex.sets.filter(s => s.completed).reduce((r, s) => r + s.reps, 0), 0
+      exSum + (ex && ex.sets ? ex.sets.filter(s => s && s.completed).reduce((r, s) => r + (s.reps || 0), 0) : 0), 0
     );
   }, 0);
 

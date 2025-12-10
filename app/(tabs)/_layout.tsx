@@ -41,20 +41,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="grafieken"
-        options={{
-          title: 'Grafieken',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="chart.bar.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="schemas"
-        options={{
-          title: 'Schemas',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="square.and.pencil" color={color} />,
-        }}
-      />
-      <Tabs.Screen
         name="progressie"
         options={{
           title: 'Progressie',
@@ -62,10 +48,30 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="grafieken"
+        options={{
+          title: 'Statistieken',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="chart.bar.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="meer"
+        options={{
+          title: 'Meer',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="ellipsis.circle.fill" color={color} />,
+        }}
+      />
+      {/* Hidden screens - accessible via navigation but not in tab bar */}
+      <Tabs.Screen
+        name="schemas"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
         name="instellingen"
         options={{
-          title: 'Instellingen',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="gear" color={color} />,
+          href: null,
         }}
       />
     </Tabs>

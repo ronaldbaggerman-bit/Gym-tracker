@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '@/app/styles/colors';
+import { initDatabase } from '@/app/utils/database';
 
 import { ThemedText } from '@/components/themed-text';
 import { SchemaSelector } from '@/components/SchemaSelector';
@@ -60,6 +61,9 @@ export default function WorkoutScreen() {
 
   // Load PRs on mount
   useEffect(() => {
+    // Initialize database on app load
+    initDatabase().catch(e => console.error('Failed to init database:', e));
+    
     loadPRs().then(prData => setPRs(prData)).catch(err => console.warn('Failed to load PRs:', err));
     
     // Load settings (body weight and MET)
@@ -351,11 +355,11 @@ export default function WorkoutScreen() {
               {/* Timer & Calories Display */}
               <View style={styles.timerKcalContainer}>
                 <View style={styles.timerCard}>
-                  <ThemedText style={styles.timerLabel}>⏱️ Tijd</ThemedText>
+                  <ThemedText style={styles.timerLabel}>�Ŧ��� Tijd</ThemedText>
                   <ThemedText style={styles.timerValue}>{formatWorkoutTime(workoutSeconds)}</ThemedText>
                 </View>
                 <View style={styles.kcalCard}>
-                  <ThemedText style={styles.kcalLabel}>🔥 Kcal</ThemedText>
+                  <ThemedText style={styles.kcalLabel}>���� Kcal</ThemedText>
                   <ThemedText style={styles.kcalValue}>
                     {formatKcalDisplay(calculateSessionKcal(bodyWeightKg, Math.floor(workoutSeconds / 60), defaultMET).totalKcal)}
                   </ThemedText>
@@ -381,7 +385,7 @@ export default function WorkoutScreen() {
               onPress={handleFinishWorkout}
               activeOpacity={0.8}
             >
-              <ThemedText style={styles.finishButtonText}>Beëindig workout</ThemedText>
+              <ThemedText style={styles.finishButtonText}>Be+�indig workout</ThemedText>
             </TouchableOpacity>
 
             <View style={styles.spacer} />
@@ -442,13 +446,13 @@ const styles = StyleSheet.create({
   },
   infoDescription: {
     fontSize: 14,
-    color: '#4B4B4B',
+    color: COLORS.TEXT_SECONDARY,
     marginBottom: 16,
     lineHeight: 20,
   },
   muscleGroupsList: {
     borderTopWidth: 1,
-    borderTopColor: '#D1D1D6',
+    borderTopColor: COLORS.BORDER,
     paddingVertical: 12,
     marginVertical: 16,
   },
@@ -458,14 +462,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#D1D1D6',
+    borderBottomColor: COLORS.BORDER,
   },
   muscleGroupName: {
     fontSize: 15,
+    color: COLORS.TEXT_PRIMARY,
+    fontWeight: '500',
   },
   muscleGroupCount: {
     fontSize: 14,
-    color: '#007AFF',
+    color: COLORS.ACCENT,
     fontWeight: '600',
   },
   startButton: {

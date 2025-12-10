@@ -1,46 +1,77 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { PersonalRecord } from '@/app/types/workout';
+import {
+  saveSessionToDB,
+  loadSessionsFromDB,
+  loadAllSessionsFromDB,
+  deleteSessionFromDB,
+  bulkInsertSessionsToDB,
+  savePRToDB,
+  loadPRsFromDB,
+  getPRFromDB,
+  initDatabase,
+} from '@/app/utils/database';
 
 export const SESSIONS_KEY = 'workout_sessions_v1';
-const PRS_KEY = 'personal_records_v1'; // Format: { exerciseName: PersonalRecord }
+const PRS_KEY = 'personal_records_v1';
+const DB_MIGRATED_KEY = 'db_migrated_v1';
+
+// One-time migration from AsyncStorage to SQLite
+async function migrateToDatabase() {
+  try {
+    const migrated = await AsyncStorage.getItem(DB_MIGRATED_KEY);
+    if (migrated === 'true') return;
+
+    console.log('[Storage] Starting migration from AsyncStorage to SQLite...');
+    await initDatabase();
+
+    // Migrate sessions
+    const rawSessions = await AsyncStorage.getItem(SESSIONS_KEY);
+    if (rawSessions) {
+      const sessions = JSON.parse(rawSessions);
+      if (Array.isArray(sessions) && sessions.length > 0) {
+        await bulkInsertSessionsToDB(sessions);
+        console.log('[Storage] Migrated', sessions.length, 'sessions to SQLite');
+      }
+    }
+
+    // Migrate personal records
+    const rawPRs = await AsyncStorage.getItem(PRS_KEY);
+    if (rawPRs) {
+      const prs = JSON.parse(rawPRs);
+      for (const [exerciseName, pr] of Object.entries(prs)) {
+        await savePRToDB(exerciseName, pr as PersonalRecord);
+      }
+      console.log('[Storage] Migrated personal records to SQLite');
+    }
+
+    // Mark migration as done
+    await AsyncStorage.setItem(DB_MIGRATED_KEY, 'true');
+    console.log('[Storage] Migration complete');
+  } catch (e) {
+    console.error('[Storage] Migration error:', e);
+  }
+}
 
 export async function saveSession(session: any) {
   try {
-    // Convert Date objects to ISO strings for serialization
-    const serialized = {
-      ...session,
-      startTime: session.startTime instanceof Date ? session.startTime.toISOString() : session.startTime,
-      endTime: session.endTime instanceof Date ? session.endTime.toISOString() : session.endTime,
-    };
-    
-    const raw = await AsyncStorage.getItem(SESSIONS_KEY);
-    const sessions = raw ? JSON.parse(raw) : [];
-    // If a session with the same id exists, replace it. Otherwise add to the front.
-    const existingIndex = sessions.findIndex((s: any) => s.id === session.id);
-    if (existingIndex >= 0) {
-      sessions[existingIndex] = serialized;
-    } else {
-      sessions.unshift(serialized); // newest first
-    }
-    await AsyncStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
-    return true;
+    await migrateToDatabase();
+    return await saveSessionToDB(session);
   } catch (e) {
     console.error('saveSession error', e);
     return false;
   }
 }
 
-export async function loadSessions() {
+export async function loadSessions(limit?: number, offset?: number) {
   try {
-    const raw = await AsyncStorage.getItem(SESSIONS_KEY);
-    const sessions = raw ? JSON.parse(raw) : [];
-    
-    // Convert ISO strings back to Date objects for startTime and endTime
-    return sessions.map((s: any) => ({
-      ...s,
-      startTime: s.startTime ? new Date(s.startTime) : null,
-      endTime: s.endTime ? new Date(s.endTime) : null,
-    }));
+    await migrateToDatabase();
+    // Support both paginated and full loads for backward compatibility
+    if (limit !== undefined && offset !== undefined) {
+      return await loadSessionsFromDB(limit, offset);
+    }
+    // Default: load all sessions (use with caution for large datasets)
+    return await loadAllSessionsFromDB();
   } catch (e) {
     console.error('loadSessions error', e);
     return [];
@@ -49,15 +80,8 @@ export async function loadSessions() {
 
 export async function saveSessionsList(sessions: any[]) {
   try {
-    // Convert Date objects to ISO strings for serialization
-    const serialized = sessions.map(s => ({
-      ...s,
-      startTime: s.startTime instanceof Date ? s.startTime.toISOString() : s.startTime,
-      endTime: s.endTime instanceof Date ? s.endTime.toISOString() : s.endTime,
-    }));
-    
-    await AsyncStorage.setItem(SESSIONS_KEY, JSON.stringify(serialized));
-    return true;
+    await migrateToDatabase();
+    return await bulkInsertSessionsToDB(sessions);
   } catch (e) {
     console.error('saveSessionsList error', e);
     return false;
@@ -66,6 +90,8 @@ export async function saveSessionsList(sessions: any[]) {
 
 export async function clearSessions() {
   try {
+    await migrateToDatabase();
+    // Note: For safety, we don't have a clearAllSessions in DB. Clear from AsyncStorage only.
     await AsyncStorage.removeItem(SESSIONS_KEY);
     return true;
   } catch (e) {
@@ -76,25 +102,18 @@ export async function clearSessions() {
 
 export async function removeSession(sessionId: string) {
   try {
-    const raw = await AsyncStorage.getItem(SESSIONS_KEY);
-    const sessions = raw ? JSON.parse(raw) : [];
-    const filtered = sessions.filter((s: any) => s.id !== sessionId);
-    await AsyncStorage.setItem(SESSIONS_KEY, JSON.stringify(filtered));
-    return true;
+    await migrateToDatabase();
+    return await deleteSessionFromDB(sessionId);
   } catch (e) {
     console.error('removeSession error', e);
     return false;
   }
 }
 
-// Personal Records storage
 export async function savePR(exerciseName: string, pr: PersonalRecord) {
   try {
-    const raw = await AsyncStorage.getItem(PRS_KEY);
-    const prs: Record<string, PersonalRecord> = raw ? JSON.parse(raw) : {};
-    prs[exerciseName] = pr;
-    await AsyncStorage.setItem(PRS_KEY, JSON.stringify(prs));
-    return true;
+    await migrateToDatabase();
+    return await savePRToDB(exerciseName, pr);
   } catch (e) {
     console.error('savePR error', e);
     return false;
@@ -103,8 +122,8 @@ export async function savePR(exerciseName: string, pr: PersonalRecord) {
 
 export async function loadPRs(): Promise<Record<string, PersonalRecord>> {
   try {
-    const raw = await AsyncStorage.getItem(PRS_KEY);
-    return raw ? JSON.parse(raw) : {};
+    await migrateToDatabase();
+    return await loadPRsFromDB();
   } catch (e) {
     console.error('loadPRs error', e);
     return {};
@@ -113,8 +132,8 @@ export async function loadPRs(): Promise<Record<string, PersonalRecord>> {
 
 export async function getPR(exerciseName: string): Promise<PersonalRecord | null> {
   try {
-    const prs = await loadPRs();
-    return prs[exerciseName] || null;
+    await migrateToDatabase();
+    return await getPRFromDB(exerciseName);
   } catch (e) {
     console.error('getPR error', e);
     return null;

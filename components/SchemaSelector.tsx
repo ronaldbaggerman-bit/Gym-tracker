@@ -1,7 +1,9 @@
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { useMemo } from 'react';
 import { ThemedText } from '@/components/themed-text';
 import type { Schema } from '@/app/data/workoutData';
-import { COLORS } from '@/app/styles/colors';
+import { useThemeColors } from '@/app/hooks/useThemeColors';
+import { getColors } from '@/app/styles/colors';
 
 interface SchemaSelectorProps {
   schemas: Schema[];
@@ -10,6 +12,9 @@ interface SchemaSelectorProps {
 }
 
 export function SchemaSelector({ schemas, selectedSchemaId, onSchemaSelect }: SchemaSelectorProps) {
+  const COLORS = useThemeColors();
+  const styles = useMemo(() => getStyles(COLORS), [COLORS]);
+
   return (
     <View style={styles.container}>
       <ThemedText type="defaultSemiBold" style={styles.label}>
@@ -45,40 +50,42 @@ export function SchemaSelector({ schemas, selectedSchemaId, onSchemaSelect }: Sc
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  label: {
-    fontSize: 17,
-    marginBottom: 10,
-    letterSpacing: 0.5,
-  },
-  buttonGroup: {
-    flexDirection: 'row',
-    gap: 10,
-    flexWrap: 'wrap',
-  },
-  button: {
-    flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLORS.BORDER,
-    alignItems: 'center',
-    backgroundColor: COLORS.SURFACE,
-  },
-  buttonSelected: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
-  },
-  buttonText: {
-    fontSize: 14,
-    color: COLORS.TEXT_SECONDARY,
-  },
-  buttonTextSelected: {
-    color: COLORS.TEXT_PRIMARY,
-  },
-});
+const getStyles = (COLORS: ReturnType<typeof getColors>) =>
+  StyleSheet.create({
+    container: {
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+    },
+    label: {
+      fontSize: 17,
+      marginBottom: 10,
+      letterSpacing: 0.5,
+      color: COLORS.TEXT_PRIMARY,
+    },
+    buttonGroup: {
+      flexDirection: 'row',
+      gap: 10,
+      flexWrap: 'wrap',
+    },
+    button: {
+      flex: 1,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: COLORS.BORDER,
+      alignItems: 'center',
+      backgroundColor: COLORS.SURFACE,
+    },
+    buttonSelected: {
+      backgroundColor: COLORS.ACCENT,
+      borderColor: COLORS.ACCENT,
+    },
+    buttonText: {
+      fontSize: 14,
+      color: COLORS.TEXT_PRIMARY,
+    },
+    buttonTextSelected: {
+      color: COLORS.TEXT_PRIMARY,
+    },
+  });

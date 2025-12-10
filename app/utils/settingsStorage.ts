@@ -8,6 +8,7 @@ export interface AppSettings {
   bodyWeightKg: number; // User's body weight in kg
   defaultMET: number;   // Default metabolic equivalent for exercises
   progressDaysBack: number; // Days back to show in progression graph (180 default)
+  themePreference?: 'system' | 'light' | 'dark'; // Optional theme preference
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -16,6 +17,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   bodyWeightKg: 75, // Default 75 kg
   defaultMET: 5,    // Default MET value
   progressDaysBack: 180, // Default 180 days
+  themePreference: 'dark',
 };
 
 export const loadSettings = async (): Promise<AppSettings> => {

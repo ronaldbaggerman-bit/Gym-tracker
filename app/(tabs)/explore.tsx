@@ -1,8 +1,12 @@
 import { useEffect, useState, useMemo } from 'react';
-import { StyleSheet, View, FlatList, TouchableOpacity, TextInput, Alert, RefreshControl } from 'react-native';
+import { StyleSheet, View, FlatList, TouchableOpacity, TextInput, Alert, RefreshControl, Share } from 'react-native';
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
-import { loadSessions, removeSession } from '@/app/utils/storage';
+import { loadSessions, removeSession, saveSessionsList } from '@/app/utils/storage';
 import { importCsvSessions, clearImportedSessions } from '@/app/utils/csvImport';
 import { WORKOUT_DATA } from '@/app/data/workoutData';
 import { loadSettings } from '@/app/utils/settingsStorage';
@@ -11,6 +15,7 @@ import { EXERCISE_GUIDES } from '@/app/data/exerciseGuides';
 import { COLORS } from '@/app/styles/colors';
 
 export default function HistorieScreen() {
+  const insets = useSafeAreaInsets();
   const [sessions, setSessions] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [monthDate, setMonthDate] = useState(() => {
@@ -20,8 +25,10 @@ export default function HistorieScreen() {
   });
   const [csvText, setCsvText] = useState('');
   const [importing, setImporting] = useState(false);
+  const [jsonImporting, setJsonImporting] = useState(false);
   const [importResult, setImportResult] = useState<string>('');
   const [csvImportEnabled, setCsvImportEnabled] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
   const [bodyWeightKg, setBodyWeightKg] = useState(75);
   const [defaultMET, setDefaultMET] = useState(5);
@@ -75,6 +82,32 @@ export default function HistorieScreen() {
     }
   };
 
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const s = await loadSessions();
+      const payload = JSON.stringify(s, null, 2);
+      const fileUri = `${FileSystem.documentDirectory}workout-export-${Date.now()}.json`;
+
+      await FileSystem.writeAsStringAsync(fileUri, payload);
+
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(fileUri, {
+          dialogTitle: 'Workout export',
+          mimeType: 'application/json',
+          UTI: 'public.json',
+        });
+      } else {
+        await Share.share({ title: 'Workout export', url: fileUri, message: payload });
+      }
+    } catch (e) {
+      console.error('Export error', e);
+      Alert.alert('Export mislukt', 'Kon sessies niet exporteren.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const handleClearImported = async () => {
     setImporting(true);
     try {
@@ -85,6 +118,48 @@ export default function HistorieScreen() {
       Alert.alert('Fout', 'Kon geïmporteerde sessies niet verwijderen.');
     } finally {
       setImporting(false);
+    }
+  };
+
+  const handleImportJson = async () => {
+    setJsonImporting(true);
+    try {
+      // Allow common JSON/text UTIs so iCloud/Files can pick saved exports
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['application/json', 'text/json', 'text/plain', 'public.json', 'public.text', '*/*'],
+        copyToCacheDirectory: true,
+      });
+      if (result.canceled) return;
+
+      const file = result.assets?.[0];
+      if (!file?.uri) {
+        Alert.alert('Geen bestand', 'Kon het geselecteerde bestand niet openen.');
+        return;
+      }
+
+      const content = await FileSystem.readAsStringAsync(file.uri);
+      const parsed = JSON.parse(content);
+
+      if (!Array.isArray(parsed)) {
+        Alert.alert('Onverwacht formaat', 'De JSON backup moet een array van sessies zijn.');
+        return;
+      }
+
+      const normalized = parsed.map((s: any, idx: number) => ({
+        ...s,
+        id: s.id || `import-${idx}-${Date.now()}`,
+        startTime: s.startTime ? new Date(s.startTime).toISOString() : null,
+        endTime: s.endTime ? new Date(s.endTime).toISOString() : null,
+      }));
+
+      await saveSessionsList(normalized);
+      setImportResult(`Geïmporteerd vanuit JSON: ${normalized.length} sessies`);
+      await reloadSessions();
+    } catch (e) {
+      console.error('JSON import error', e);
+      Alert.alert('Import mislukt', 'Kon JSON backup niet importeren. Controleer of je het juiste exportbestand hebt gekozen.');
+    } finally {
+      setJsonImporting(false);
     }
   };
 
@@ -178,6 +253,14 @@ export default function HistorieScreen() {
           </TouchableOpacity>
           <TouchableOpacity style={styles.clearButton} onPress={handleClearImported} disabled={importing}>
             <ThemedText style={styles.clearButtonText}>Verwijder imports</ThemedText>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.importButtonsRow}>
+          <TouchableOpacity style={[styles.exportButton, exporting && styles.importButtonDisabled]} onPress={handleExport} disabled={exporting}>
+            <ThemedText style={styles.exportButtonText}>{exporting ? 'Exporteren...' : 'Exporteer JSON'}</ThemedText>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.jsonImportButton, jsonImporting && styles.importButtonDisabled]} onPress={handleImportJson} disabled={jsonImporting}>
+            <ThemedText style={styles.jsonImportButtonText}>{jsonImporting ? 'Bezig...' : 'Importeer JSON'}</ThemedText>
           </TouchableOpacity>
         </View>
         {!!importResult && (
@@ -276,9 +359,14 @@ export default function HistorieScreen() {
         contentContainerStyle={styles.listContainer}
         ListHeaderComponent={renderImportHeader}
         ListEmptyComponent={() => (
-          <View style={styles.emptyContainer}>
-            <ThemedText type="defaultSemiBold">Nog geen opgeslagen workouts</ThemedText>
-            <ThemedText style={styles.emptySub}>Maak een workout aan en druk op "Beëindig workout" of markeer oefeningen als voltooid.</ThemedText>
+          <View style={styles.emptyState}>
+            <ThemedText style={styles.emptyStateIcon}>🏋️</ThemedText>
+            <ThemedText type="defaultSemiBold" style={styles.emptyStateTitle}>
+              Nog geen workout historie
+            </ThemedText>
+            <ThemedText style={styles.emptyStateDescription}>
+              Voltooi je eerste workout om deze hier te zien verschijnen
+            </ThemedText>
           </View>
         )}
         refreshControl={
@@ -438,6 +526,30 @@ const styles = StyleSheet.create({
     color: COLORS.TEXT_PRIMARY,
     fontWeight: '600',
   },
+  exportButton: {
+    flex: 1,
+    backgroundColor: COLORS.SURFACE,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.BORDER,
+  },
+  exportButtonText: {
+    color: COLORS.TEXT_PRIMARY,
+    fontWeight: '600',
+  },
+  jsonImportButton: {
+    flex: 1,
+    backgroundColor: '#0A84FF',
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  jsonImportButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
   importResult: {
     color: '#34C759',
     fontWeight: '600',
@@ -541,5 +653,28 @@ const styles = StyleSheet.create({
   exerciseSets: {
     fontSize: 12,
     color: COLORS.TEXT_SECONDARY,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+    paddingVertical: 80,
+  },
+  emptyStateIcon: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  emptyStateTitle: {
+    fontSize: 20,
+    color: COLORS.TEXT_PRIMARY,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptyStateDescription: {
+    fontSize: 14,
+    color: COLORS.TEXT_SECONDARY,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });

@@ -172,7 +172,9 @@ export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete, b
       >
         <View style={styles.headerContent}>
           <View style={[styles.checkCircle, exercise.completed && styles.checkCircleCompleted]}>
-            {exercise.completed && <ThemedText style={styles.checkmark}>✓</ThemedText>}
+            <View style={[styles.checkCircleInner, exercise.completed && styles.checkCircleInnerCompleted]}>
+              {exercise.completed && <ThemedText style={styles.checkmark}>✓</ThemedText>}
+            </View>
           </View>
           <View style={styles.headerTextWrapper}>
             <View style={styles.headerText}>
@@ -544,6 +546,17 @@ const styles = StyleSheet.create({
     color: '#FF3B30',
   },
   checkCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'transparent',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkCircleCompleted: {
+    backgroundColor: 'transparent',
+  },
+  checkCircleInner: {
     width: 28,
     height: 28,
     borderRadius: 14,
@@ -551,7 +564,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  checkCircleCompleted: {
+  checkCircleInnerCompleted: {
     backgroundColor: '#34C759',
   },
   checkmark: {
@@ -635,9 +648,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   setNumCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: COLORS.SURFACE,
     justifyContent: 'center',
     alignItems: 'center',
@@ -650,10 +663,10 @@ const styles = StyleSheet.create({
     color: COLORS.ACCENT,
   },
   setCheckBox: {
-    width: 28,
-    height: 28,
-    borderRadius: 6,
-    borderWidth: 1.5,
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    borderWidth: 2,
     borderColor: COLORS.BORDER,
     justifyContent: 'center',
     alignItems: 'center',
@@ -682,9 +695,9 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   miniBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 4,
+    width: 44,
+    height: 44,
+    borderRadius: 8,
     backgroundColor: COLORS.SURFACE,
     justifyContent: 'center',
     alignItems: 'center',
@@ -745,8 +758,9 @@ const styles = StyleSheet.create({
   },
   timerBtn: {
     flex: 1,
-    paddingVertical: 8,
-    borderRadius: 6,
+    paddingVertical: 12,
+    minHeight: 44,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -798,9 +812,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   btn: {
-    width: 32,
-    height: 32,
-    borderRadius: 6,
+    width: 44,
+    height: 44,
+    borderRadius: 8,
     backgroundColor: COLORS.SURFACE,
     justifyContent: 'center',
     alignItems: 'center',
@@ -880,9 +894,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   counterBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 6,
+    width: 44,
+    height: 44,
+    borderRadius: 8,
     backgroundColor: COLORS.SURFACE,
     justifyContent: 'center',
     alignItems: 'center',

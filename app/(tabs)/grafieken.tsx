@@ -1,5 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Dimensions, RefreshControl } from 'react-native';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import Svg, { Defs, Pattern, Rect, Circle } from 'react-native-svg';
 import { loadSessions } from '@/app/utils/storage';
 import { calculateWorkoutStats, getExerciseStats, type WorkoutStats, type ExerciseStats } from '@/app/utils/workoutStats';
@@ -34,6 +36,7 @@ const COLORS = {
 };
 
 export default function GrafiekenScreen() {
+  const insets = useSafeAreaInsets();
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
   const [stats, setStats] = useState<WorkoutStats | null>(null);
   const [exerciseStats, setExerciseStats] = useState<ExerciseStats | null>(null);
@@ -41,9 +44,11 @@ export default function GrafiekenScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -91,8 +96,11 @@ export default function GrafiekenScreen() {
       <View style={styles.container}>
         <CarbonFiberSVG />
         <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>Nog geen workouts om weer te geven</Text>
-          <Text style={styles.emptySubtext}>Start je eerste workout om statistieken te zien</Text>
+          <Text style={styles.emptyStateIcon}>📊</Text>
+          <Text style={styles.emptyStateTitle}>Nog geen statistieken</Text>
+          <Text style={styles.emptyStateDescription}>
+            Voltooi workouts om je voortgang en statistieken te bekijken
+          </Text>
         </View>
       </View>
     );
@@ -113,7 +121,7 @@ export default function GrafiekenScreen() {
           />
         }
       >
-        <Text style={styles.header}>Jouw Statistieken</Text>
+        <Text style={[styles.header, { paddingTop: insets.top + 16 }]}>Jouw Statistieken</Text>
 
         {/* Overview Cards Row 1 */}
         <View style={styles.statsRow}>
@@ -443,5 +451,23 @@ const styles = StyleSheet.create({
     color: COLORS.TEXT_PRIMARY,
     width: 40,
     textAlign: 'right',
+  },
+  emptyStateIcon: {
+    fontSize: 64,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  emptyStateTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: COLORS.TEXT_PRIMARY,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptyStateDescription: {
+    fontSize: 14,
+    color: COLORS.TEXT_SECONDARY,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });

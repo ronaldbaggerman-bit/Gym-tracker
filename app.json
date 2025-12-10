@@ -1,15 +1,25 @@
 {
   "expo": {
-    "name": "Projecten",
+    "name": "Gym-Track",
     "slug": "Projecten",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "projecten",
+    "scheme": "gymtrack",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "d0823766-f853-4b9e-89d0-df6744d52bf4"
+      }
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "gymtrack.dev",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {

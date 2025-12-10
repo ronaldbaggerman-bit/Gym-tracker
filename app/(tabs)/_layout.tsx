@@ -8,6 +8,7 @@ import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { CARBON_SVG_URI } from '@/app/styles/carbonBackground';
 import { COLORS } from '@/app/styles/colors';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -18,14 +19,15 @@ export default function TabLayout() {
       style={styles.background}
       resizeMode="repeat"
     >
-      <Tabs
-        screenOptions={{
-          tabBarActiveTintColor: COLORS.ACCENT,
-          headerShown: false,
-          tabBarButton: HapticTab,
-          tabBarStyle: { backgroundColor: COLORS.SURFACE, borderTopColor: COLORS.BORDER },
-        }}
-      >
+      <ErrorBoundary>
+        <Tabs
+          screenOptions={{
+            tabBarActiveTintColor: COLORS.ACCENT,
+            headerShown: false,
+            tabBarButton: HapticTab,
+            tabBarStyle: { backgroundColor: COLORS.SURFACE, borderTopColor: COLORS.BORDER },
+          }}
+        >
       <Tabs.Screen
         name="index"
         options={{
@@ -74,7 +76,8 @@ export default function TabLayout() {
           href: null,
         }}
       />
-    </Tabs>
+        </Tabs>
+      </ErrorBoundary>
     </ImageBackground>
   );
 }

@@ -25,6 +25,8 @@ export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete, b
   const [weightValue, setWeightValue] = useState<number>(exercise.sets?.[0]?.weight || 0);
   const [repsValue, setRepsValue] = useState<number>(exercise.sets?.[0]?.reps || 12);
   const [expandedSetId, setExpandedSetId] = useState<number | null>(null);
+  const [defaultRestSeconds, setDefaultRestSeconds] = useState<number>(90);
+  const [customRestInput, setCustomRestInput] = useState<string>('90');
   const [timerValues, setTimerValues] = useState<Record<number, number>>({});
   const [runningTimers, setRunningTimers] = useState<Set<number>>(new Set());
   const [notesText, setNotesText] = useState<string>(exercise.notes || '');
@@ -41,14 +43,14 @@ export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete, b
     // Initialize timer values for all sets
     const initialTimers: Record<number, number> = {};
     exercise.sets.forEach(s => {
-      initialTimers[s.setNumber] = 90; // 90 seconds rest between sets
+      initialTimers[s.setNumber] = defaultRestSeconds; // Use configurable rest time
     });
     setTimerValues(initialTimers);
     setNotesText(exercise.notes || ''); // Sync notes when exercise changes
     
     // Load settings
     loadSettings().then(s => setShowImages(s.showExerciseImages));
-  }, [exercise]);
+  }, [exercise, defaultRestSeconds]);
 
   // Effect to handle timer completion haptic feedback
   useEffect(() => {
@@ -137,7 +139,30 @@ export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete, b
 
   const resetTimer = (setNumber: number) => {
     pauseTimer(setNumber);
-    setTimerValues(prev => ({ ...prev, [setNumber]: 90 })); // Reset to 90 seconds
+    setTimerValues(prev => ({ ...prev, [setNumber]: defaultRestSeconds }));
+  };
+
+  const setQuickTimer = (seconds: number) => {
+    setDefaultRestSeconds(seconds);
+    setCustomRestInput(seconds.toString());
+    setTimerValues(prev => {
+      const updated = { ...prev };
+      exercise.sets.forEach(s => {
+        if (!runningTimers.has(s.setNumber)) {
+          updated[s.setNumber] = seconds;
+        }
+      });
+      return updated;
+    });
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
+  const setCustomRestTime = (text: string) => {
+    setCustomRestInput(text);
+    const seconds = parseInt(text) || 90;
+    if (seconds > 0 && seconds <= 3600) { // Max 1 hour
+      setQuickTimer(seconds);
+    }
   };
 
   const markSetComplete = (setIndex: number) => {
@@ -380,23 +405,63 @@ export function ExerciseDetail({ exercise, onUpdateExercise, onToggleComplete, b
                   >
                     {/* Timer Progress Bar */}
                     <View style={styles.timerProgressContainer}>
-                      <View style={[styles.timerProgressBar, { width: `${(timerVal / 90) * 100}%` }]} />
+                      <View style={[styles.timerProgressBar, { width: `${(timerVal / defaultRestSeconds) * 100}%` }]} />
                     </View>
 
                     {isExpanded && (
-                      <View style={styles.timerButtonRow}>
-                        {!isRunning ? (
-                          <TouchableOpacity style={[styles.timerBtn, styles.timerBtnStart]} onPress={() => startTimer(set.setNumber)}>
-                            <ThemedText style={styles.timerBtnText}>▶ Start</ThemedText>
+                      <View>
+                        <View style={styles.timerButtonRow}>
+                          {!isRunning ? (
+                            <TouchableOpacity style={[styles.timerBtn, styles.timerBtnStart]} onPress={() => startTimer(set.setNumber)}>
+                              <ThemedText style={styles.timerBtnText}>▶ Start</ThemedText>
+                            </TouchableOpacity>
+                          ) : (
+                            <TouchableOpacity style={[styles.timerBtn, styles.timerBtnPause]} onPress={() => pauseTimer(set.setNumber)}>
+                              <ThemedText style={styles.timerBtnText}>⏸ Pause</ThemedText>
+                            </TouchableOpacity>
+                          )}
+                          <TouchableOpacity style={[styles.timerBtn, styles.timerBtnReset]} onPress={() => resetTimer(set.setNumber)}>
+                            <ThemedText style={styles.timerBtnText}>↻ Reset</ThemedText>
                           </TouchableOpacity>
-                        ) : (
-                          <TouchableOpacity style={[styles.timerBtn, styles.timerBtnPause]} onPress={() => pauseTimer(set.setNumber)}>
-                            <ThemedText style={styles.timerBtnText}>⏸ Pause</ThemedText>
-                          </TouchableOpacity>
-                        )}
-                        <TouchableOpacity style={[styles.timerBtn, styles.timerBtnReset]} onPress={() => resetTimer(set.setNumber)}>
-                          <ThemedText style={styles.timerBtnText}>↻ Reset</ThemedText>
-                        </TouchableOpacity>
+                        </View>
+
+                        {/* Quick Timer Buttons */}
+                        <View style={styles.quickTimerSection}>
+                          <ThemedText style={styles.quickTimerLabel}>Rustpauze:</ThemedText>
+                          <View style={styles.quickTimerButtons}>
+                            {[30, 60, 90, 120].map(seconds => (
+                              <TouchableOpacity
+                                key={seconds}
+                                style={[
+                                  styles.quickTimerBtn,
+                                  defaultRestSeconds === seconds && styles.quickTimerBtnActive
+                                ]}
+                                onPress={() => setQuickTimer(seconds)}
+                              >
+                                <ThemedText style={[
+                                  styles.quickTimerBtnText,
+                                  defaultRestSeconds === seconds && styles.quickTimerBtnTextActive
+                                ]}>
+                                  {seconds}s
+                                </ThemedText>
+                              </TouchableOpacity>
+                            ))}
+                          </View>
+
+                          {/* Custom Rest Time Input */}
+                          <View style={styles.customRestSection}>
+                            <ThemedText style={styles.customRestLabel}>Custom (s):</ThemedText>
+                            <TextInput
+                              style={styles.customRestInput}
+                              placeholder="120"
+                              placeholderTextColor={COLORS.TEXT_SECONDARY}
+                              keyboardType="number-pad"
+                              value={customRestInput}
+                              onChangeText={setCustomRestTime}
+                              maxLength={4}
+                            />
+                          </View>
+                        </View>
                       </View>
                     )}
                   </TouchableOpacity>
@@ -956,5 +1021,70 @@ const styles = StyleSheet.create({
     color: COLORS.TEXT_PRIMARY,
     fontSize: 12,
     minHeight: 70,
+  },
+  quickTimerSection: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: COLORS.CARD,
+    marginTop: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.BORDER,
+  },
+  quickTimerLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.TEXT_PRIMARY,
+    marginBottom: 8,
+  },
+  quickTimerButtons: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  quickTimerBtn: {
+    flex: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    backgroundColor: COLORS.SURFACE,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: COLORS.BORDER,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quickTimerBtnActive: {
+    backgroundColor: '#34C759',
+    borderColor: '#34C759',
+  },
+  quickTimerBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.TEXT_PRIMARY,
+  },
+  quickTimerBtnTextActive: {
+    color: '#FFFFFF',
+  },
+  customRestSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  customRestLabel: {
+    fontSize: 12,
+    color: COLORS.TEXT_SECONDARY,
+    fontWeight: '500',
+  },
+  customRestInput: {
+    flex: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    backgroundColor: COLORS.SURFACE,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: COLORS.BORDER,
+    color: COLORS.TEXT_PRIMARY,
+    fontSize: 12,
+    textAlign: 'center',
   },
 });

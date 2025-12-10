@@ -2,6 +2,31 @@
 
 Alle belangrijke wijzigingen aan dit project worden in dit bestand gedocumenteerd.
 
+## [1.2.0] - 2025-12-10 (Adjustable Rest Timers)
+
+### Feature: Adjustable Rest Timers ⏱️
+- ✅ Quick timer presets: 30s, 60s, 90s, 120s buttons
+- ✅ Custom rest time input field (up to 3600 seconds / 1 hour)
+- ✅ Per-exercise rest time setting (not global, respects per-set state)
+- ✅ Visual feedback for active timer preset (green highlight)
+- ✅ Haptic feedback when changing timer
+- ✅ Timer progress bar now scales with custom duration
+- ✅ Clean UI with quick controls in expanded timer section
+
+### UX Improvements
+- Quick timer buttons appear in timer expanded view
+- Custom input only accepts seconds 1-3600
+- Changes only apply to non-running timers
+- Progress bar dynamically adjusts to selected rest duration
+
+### Technical Changes
+- Added `defaultRestSeconds` and `customRestInput` state
+- New `setQuickTimer()` and `setCustomRestTime()` handlers
+- Updated `resetTimer()` to use configurable rest seconds
+- Enhanced timer progress calculation
+
+---
+
 ## [1.1.0] - 2025-12-10 (Performance & Optimization)
 
 ### Performance Optimizations 🚀

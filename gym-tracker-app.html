@@ -1729,9 +1729,9 @@ h1 {
                 <div class="rest-timer-header">
                     <div class="rest-timer-title" id="restTimerLabel">Rust: 1:30</div>
                     <div class="rest-timer-actions">
-                        <button class="btn btn-secondary" style="padding:0.35rem 0.75rem; font-size:0.85rem;" onclick="startRestTimer(30)">30s</button>
-                        <button class="btn btn-secondary" style="padding:0.35rem 0.75rem; font-size:0.85rem;" onclick="startRestTimer(60)">60s</button>
-                        <button class="btn btn-secondary" style="padding:0.35rem 0.75rem; font-size:0.85rem;" onclick="startRestTimer(90)">90s</button>
+                        <button class="btn btn-secondary" style="padding:0.35rem 0.75rem; font-size:0.85rem;" onclick="startRestTimerWithToast(30)">30s</button>
+                        <button class="btn btn-secondary" style="padding:0.35rem 0.75rem; font-size:0.85rem;" onclick="startRestTimerWithToast(60)">60s</button>
+                        <button class="btn btn-secondary" style="padding:0.35rem 0.75rem; font-size:0.85rem;" onclick="startRestTimerWithToast(90)">90s</button>
                         <button class="btn btn-secondary" style="padding:0.35rem 0.75rem; font-size:0.85rem;" onclick="refreshRestTimer()">Refresh</button>
                         <button class="btn btn-secondary" style="padding:0.35rem 0.75rem; font-size:0.85rem;" onclick="stopRestTimer()">Stop</button>
                     </div>
@@ -2410,6 +2410,11 @@ function startRestTimer(seconds = REST_DURATION_SECONDS) {
             playEndBeep();
         }
     }, 1000);
+}
+
+function startRestTimerWithToast(seconds) {
+    startRestTimer(seconds);
+    showToast(`Rust ${seconds}s gestart`, 'success');
 }
 
 function refreshRestTimer() {

@@ -37,6 +37,18 @@
     --shadow: 0 10px 40px rgba(0,0,0,0.3);
 }
 
+/* Light Mode Colors */
+body.light-mode {
+    --dark: #FFFFFF;
+    --dark-lighter: #F5F5F7;
+    --dark-card: #FFFFFF;
+    --dark-elevated: #F9F9FB;
+    --text: #000000;
+    --text-muted: #6B6B6F;
+    --border: #D5D5D7;
+    --shadow: 0 10px 40px rgba(0,0,0,0.1);
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background: var(--dark);
@@ -160,7 +172,7 @@ h1 {
 }
 
 .tab {
-    padding: 0.625rem 1.25rem;
+    padding: 0.5rem 0.875rem;
     border-radius: 20px;
     background: var(--dark-card);
     color: var(--text-muted);
@@ -168,7 +180,7 @@ h1 {
     cursor: pointer;
     white-space: nowrap;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
@@ -469,6 +481,30 @@ h1 {
     height: 48px;
     padding: 0;
     border-radius: 50%;
+}
+
+.btn-icon.delete-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.35rem;
+    border-radius: 8px;
+    width: auto;
+    height: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.btn-icon.delete-btn:hover {
+    background: var(--dark-elevated);
+    color: #FF3B30;
+}
+
+.btn-icon.delete-btn:active {
+    transform: scale(0.95);
 }
 
 /* Stats Card */
@@ -794,6 +830,122 @@ h1 {
     font-weight: 700;
 }
 
+/* Calendar Styles */
+.calendar-container {
+    padding: 1rem 0;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+}
+
+.calendar-month-year {
+    font-size: 1.25rem;
+    font-weight: 700;
+    text-align: center;
+    flex: 1;
+}
+
+.calendar-nav-btn {
+    background: var(--dark-card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.calendar-nav-btn:active {
+    transform: scale(0.92);
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.calendar-weekday {
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    padding: 0.5rem 0;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--dark-card);
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.calendar-day:active {
+    transform: scale(0.95);
+}
+
+.calendar-day.other-month {
+    color: var(--text-muted);
+    opacity: 0.4;
+}
+
+.calendar-day.has-workout {
+    background: var(--primary);
+    color: #000;
+    box-shadow: 0 0 12px rgba(52, 199, 89, 0.3);
+}
+
+.calendar-day.has-workout::after {
+    content: "";
+    position: absolute;
+    bottom: 4px;
+    width: 4px;
+    height: 4px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 50%;
+}
+
+.calendar-day.today {
+    border: 2px solid var(--primary);
+}
+
+.calendar-workouts {
+    background: var(--dark-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.calendar-workouts-title {
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--text);
+}
+
+.calendar-workout-item {
+    background: var(--dark-elevated);
+    padding: 0.75rem;
+    border-radius: 12px;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
 /* Bottom Actions */
 .bottom-actions {
     position: fixed;
@@ -987,6 +1139,29 @@ h1 {
     font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    color: var(--text-muted);
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+}
+
+.empty-state p {
+    font-size: 1rem;
 }
 
 /* PR Celebration */
@@ -1255,23 +1430,180 @@ h1 {
     .schema-card h3 {
         font-size: 1.5rem;
     }
-}
+
+    /* Sets Layout */
+    .sets-container {
+        display: grid;
+        gap: 0.75rem;
+    }
+
+    .set-row {
+        display: grid;
+        grid-template-columns: 52px 1fr 1fr 40px;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 0.75rem 0.75rem 1.25rem; /* extra left space */
+        background: var(--dark-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+    }
+
+    .set-row.completed {
+        opacity: 0.9;
+        background: var(--dark-elevated);
+    }
+
+    .set-number {
+        width: 52px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--dark-elevated);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        font-weight: 700;
+    }
+
+    .set-input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+    }
+
+    .set-input-group > div {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .set-input {
+        flex: 1 1 auto;
+        min-width: 88px;
+        width: auto;
+        text-align: center;
+        padding: 0.4rem 0.6rem;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: var(--dark-elevated);
+        color: var(--text);
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.02em;
+    }
+
+    .set-input-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        font-weight: 600;
+    }
+
+    .checkbox {
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        border: 2px solid var(--border);
+        background: transparent;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .checkbox.checked {
+        background: var(--primary);
+        border-color: var(--primary);
+    }
+
+    /* Settings Styles */
+    .settings-container {
+        padding: 2rem 1.5rem;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .settings-section {
+        background: var(--dark-card);
+        border-radius: 1.25rem;
+        padding: 1.5rem;
+        border: 1px solid var(--border);
+    }
+
+    .settings-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        gap: 1.5rem;
+    }
+
+    .settings-label {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .settings-label > span:first-child {
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    .settings-description {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+
+    .settings-divider {
+        height: 1px;
+        background: var(--border);
+        margin: 1rem 0;
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+        position: relative;
+        width: 60px;
+        height: 34px;
+        background: var(--dark-elevated);
+        border-radius: 17px;
+        cursor: pointer;
+        border: 1px solid var(--border);
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        padding: 2px;
+        flex-shrink: 0;
+    }
+
+    .toggle-switch.active {
+        background: var(--primary);
+        border-color: var(--primary);
+    }
+
+    .toggle-slider {
+        width: 30px;
+        height: 30px;
+        background: var(--text);
+        border-radius: 13px;
+        transition: transform 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .toggle-switch.active .toggle-slider {
+        transform: translateX(26px);
+    }
+
 </style>
 
 <div class="container">
     <div class="header">
         <div class="header-top">
             <h1> Gym Tracker</h1>
-            <div class="icon-group">
-                <button class="icon-btn" onclick="openBackup()" title="Backup & Sync"></button>
-                <button class="icon-btn" onclick="openSettings()" title="Instellingen"></button>
-            </div>
         </div>
         <div class="header-tabs">
             <button class="tab active" data-view="workout" onclick="switchView('workout')"> Workout</button>
             <button class="tab" data-view="history" onclick="switchView('history')"> Historie</button>
             <button class="tab" data-view="progress" onclick="switchView('progress')"> Progressie</button>
             <button class="tab" data-view="prs" onclick="switchView('prs')"> PRs</button>
+            <button class="tab" data-view="settings" onclick="switchView('settings')"> ⚙️ Instellingen</button>
         </div>
     </div>
 
@@ -1319,6 +1651,7 @@ h1 {
 
     <!-- History View -->
     <div id="historyView" class="view">
+        <div class="calendar-container" id="calendarContainer"></div>
         <div id="historyContainer"></div>
     </div>
 
@@ -1330,6 +1663,68 @@ h1 {
     <!-- PRs View -->
     <div id="prsView" class="view">
         <div id="prsContainer"></div>
+    </div>
+
+    <!-- Settings View -->
+    <div id="settingsView" class="view">
+        <div class="settings-container">
+            <div class="settings-section">
+                <h2 style="margin-bottom: 2rem;">⚙️ Instellingen</h2>
+                
+                <div class="settings-item">
+                    <div class="settings-label">
+                        <span>Donker Thema</span>
+                        <span class="settings-description">Schakel donker/licht thema in</span>
+                    </div>
+                    <div class="toggle-switch" id="themeToggle" onclick="toggleDarkMode()" title="Toggle dark/light mode">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+
+                <div class="settings-divider"></div>
+
+                <h3 style="margin: 2rem 0 1rem 0; color: var(--text);">📦 Backup & Synchronisatie</h3>
+                
+                <div style="display: grid; gap: 0.75rem; margin-bottom: 1.5rem;">
+                    <button class="btn btn-primary" onclick="exportBackup()" style="width: 100%;">
+                        ⬇️ Download Backup
+                    </button>
+                    <button class="btn btn-secondary" onclick="importBackup()" style="width: 100%;">
+                        ⬆️ Import Backup
+                    </button>
+                    <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="handleImportFile(event)">
+                    <div style="padding: 1rem; background: var(--dark-card); border-radius: 12px; border: 1px solid var(--border);">
+                        <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.5;">
+                            💡 Tip: Backup bevat al je workouts, PRs en instellingen. Bewaar in OneDrive voor sync tussen apparaten.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="settings-divider"></div>
+
+                <div class="settings-item">
+                    <div class="settings-label">
+                        <span>Lichaamsgewicht (kg)</span>
+                        <span class="settings-description">Gebruikt voor calorieberekening</span>
+                    </div>
+                    <input type="number" id="bodyWeightInput" min="30" max="200" value="75" 
+                           onchange="updateBodyWeight(this.value)" style="width: 100px; padding: 0.5rem; border-radius: 0.5rem; border: 1px solid var(--border); background: var(--dark-card); color: var(--text);">
+                </div>
+
+                <div class="settings-item">
+                    <div class="settings-label">
+                        <span>Standaard Sets</span>
+                        <span class="settings-description">Aantal sets per oefening</span>
+                    </div>
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <button class="btn btn-secondary" style="padding: 0.5rem 1rem;" onclick="updateDefaultSets(parseInt(document.getElementById('defaultSetsInput').value) - 1)">−</button>
+                        <input type="number" id="defaultSetsInput" min="1" max="10" value="3" 
+                               style="width: 60px; text-align: center; padding: 0.5rem; border-radius: 0.5rem; border: 1px solid var(--border); background: var(--dark-card); color: var(--text);">
+                        <button class="btn btn-secondary" style="padding: 0.5rem 1rem;" onclick="updateDefaultSets(parseInt(document.getElementById('defaultSetsInput').value) + 1)">+</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -1348,52 +1743,7 @@ h1 {
     </div>
 </div>
 
-<div class="modal" id="backupModal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2> Backup & Sync</h2>
-            <button class="close-btn" onclick="closeModal('backupModal')">×</button>
-        </div>
-        <div class="modal-body">
-            <div style="display: grid; gap: 1rem;">
-                <button class="btn btn-primary" onclick="exportBackup()">
-                     Download Backup
-                </button>
-                <button class="btn btn-secondary" onclick="importBackup()">
-                     Import Backup
-                </button>
-                <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="handleImportFile(event)">
-                <div style="padding: 1.25rem; background: var(--dark-card); border-radius: 16px; margin-top: 1rem; border: 1px solid var(--border);">
-                    <p style="color: var(--text-muted); font-size: 0.95rem; text-align: center; line-height: 1.6;">
-                         Backup bevat al je workouts, PRs en instellingen<br>
-                         Bewaar in OneDrive voor sync tussen apparaten
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <div class="modal" id="settingsModal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2> Instellingen</h2>
-            <button class="close-btn" onclick="closeModal('settingsModal')">×</button>
-        </div>
-        <div class="modal-body">
-            <div class="form-group">
-                <label>Lichaamsgewicht (kg)</label>
-                <input type="number" class="form-input" id="bodyWeight" placeholder="75" step="0.1" min="30" max="200">
-            </div>
-            <div class="form-group">
-                <label>Standaard Sets per Oefening</label>
-                <input type="number" class="form-input" id="defaultSets" placeholder="3" step="1" min="1" max="10">
-            </div>
-            <button class="btn btn-primary" style="width: 100%;" onclick="saveSettings()"> Opslaan</button>
-        </div>
-    </div>
-</div>
-
 <div class="toast" id="toast"></div>
 
 <script>// WORKOUT DATA
@@ -1498,34 +1848,9 @@ function getSettings() {
 }
 
 function saveSettings() {
-    const bodyWeight = parseFloat(document.getElementById("bodyWeight").value);
-    const defaultSets = parseInt(document.getElementById("defaultSets").value);
-    
-    if (isNaN(bodyWeight) || bodyWeight < 30 || bodyWeight > 200) {
-        showToast("Ongeldig lichaamsgewicht", "error");
-        return;
-    }
-    
-    if (isNaN(defaultSets) || defaultSets < 1 || defaultSets > 10) {
-        showToast("Ongeldig aantal sets", "error");
-        return;
-    }
-    
-    const settings = { bodyWeight, defaultSets };
-    localStorage.setItem("gym_settings", JSON.stringify(settings));
-    showToast("Instellingen opgeslagen!", "success");
-    closeModal("settingsModal");
-}
-
-function openSettings() {
-    const settings = getSettings();
-    document.getElementById("bodyWeight").value = settings.bodyWeight;
-    document.getElementById("defaultSets").value = settings.defaultSets;
-    openModal("settingsModal");
-}
-
 // INITIALIZATION
 function init() {
+    loadTheme();
     renderSchemaSelection();
     loadSettings();
     renderHistory();
@@ -1585,8 +1910,8 @@ function selectSchema(schemaId) {
             const sets = [];
             for (let i = 0; i < settings.defaultSets; i++) {
                 sets.push({
-                    reps: 0,
-                    weight: 0,
+                    reps: 12,
+                    weight: getInitialWeight(exercise.id),
                     completed: false
                 });
             }
@@ -1676,28 +2001,38 @@ function renderExerciseCard(exercise) {
                     <div class="set-row ${set.completed ? "completed" : ""}">
                         <div class="set-number">${idx + 1}</div>
                         <div class="set-input-group">
-                            <input 
-                                type="number" 
-                                class="set-input" 
-                                placeholder="0" 
-                                value="${set.reps || ""}"
-                                onchange="updateSet(${exercise.id}, ${idx}, 'reps', this.value)"
-                                min="0"
-                                max="100"
-                            >
+                            <div style="display:flex; align-items:center; gap:0.5rem;">
+                                <button class="btn btn-secondary" style="padding:0.4rem 0.6rem" onclick="adjustSet(${exercise.id}, ${idx}, 'reps', -1)">−</button>
+                                <input 
+                                    type="number" 
+                                    class="set-input" 
+                                    placeholder="12" 
+                                    value="${set.reps ?? 12}"
+                                    onchange="updateSet(${exercise.id}, ${idx}, 'reps', this.value)"
+                                    min="0"
+                                    max="100"
+                                    step="1"
+                                >
+                                <button class="btn btn-secondary" style="padding:0.4rem 0.6rem" onclick="adjustSet(${exercise.id}, ${idx}, 'reps', 1)">+</button>
+                            </div>
                             <div class="set-input-label">Reps</div>
                         </div>
                         <div class="set-input-group">
-                            <input 
-                                type="number" 
-                                class="set-input" 
-                                placeholder="0" 
-                                value="${set.weight || ""}"
-                                onchange="updateSet(${exercise.id}, ${idx}, 'weight', this.value)"
-                                min="0"
-                                max="500"
-                                step="0.5"
-                            >
+                            <div style="display:flex; align-items:center; gap:0.5rem;">
+                                <button class="btn btn-secondary" style="padding:0.4rem 0.6rem" onclick="adjustSet(${exercise.id}, ${idx}, 'weight', -1)">−</button>
+                                <input 
+                                    type="number" 
+                                    class="set-input" 
+                                    placeholder="0" 
+                                    value="${set.weight ?? getLastWeight(exercise.id) ?? 0}"
+                                    onchange="updateSet(${exercise.id}, ${idx}, 'weight', this.value)"
+                                    min="0"
+                                    max="500"
+                                    step="1"
+                                    inputmode="numeric"
+                                >
+                                <button class="btn btn-secondary" style="padding:0.4rem 0.6rem" onclick="adjustSet(${exercise.id}, ${idx}, 'weight', 1)">+</button>
+                            </div>
                             <div class="set-input-label">KG</div>
                         </div>
                         <div 
@@ -1715,7 +2050,11 @@ function updateSet(exerciseId, setIndex, field, value) {
     const exercise = currentWorkout.exercises.find(ex => ex.id === exerciseId);
     if (!exercise) return;
     
-    exercise.sets[setIndex][field] = parseFloat(value) || 0;
+    const num = parseFloat(value);
+    exercise.sets[setIndex][field] = isNaN(num) ? 0 : num;
+    if (field === 'weight') {
+        saveLastWeight(exerciseId, exercise.sets[setIndex].weight);
+    }
     updateStats();
     
     // Check for PR
@@ -1750,8 +2089,8 @@ function addSet(exerciseId) {
     if (!exercise) return;
     
     exercise.sets.push({
-        reps: 0,
-        weight: 0,
+        reps: 12,
+        weight: getInitialWeight(exerciseId),
         completed: false
     });
     
@@ -1794,6 +2133,43 @@ function updateStats() {
 function calculateKcal(volume, durationMinutes, bodyWeight) {
     const met = 5.0;
     return (met * bodyWeight * (durationMinutes / 60)) * 1.2;
+}
+
+// SET ADJUST HELPERS & LAST WEIGHT PERSISTENCE
+function adjustSet(exerciseId, setIndex, field, delta) {
+    const exercise = currentWorkout?.exercises.find(ex => ex.id === exerciseId);
+    if (!exercise) return;
+    const set = exercise.sets[setIndex];
+    if (field === 'reps') {
+        const next = Math.max(0, Math.min(100, (parseInt(set.reps || 0) + delta)));
+        set.reps = next;
+    } else if (field === 'weight') {
+        const next = Math.max(0, Math.min(500, (parseInt(set.weight || 0) + delta)));
+        set.weight = next;
+        saveLastWeight(exerciseId, next);
+    }
+    renderExercises();
+    updateStats();
+}
+
+function saveLastWeight(exerciseId, weight) {
+    try {
+        localStorage.setItem(`last_weight_${exerciseId}`, JSON.stringify(weight));
+    } catch (e) {}
+}
+
+function getLastWeight(exerciseId) {
+    try {
+        const v = localStorage.getItem(`last_weight_${exerciseId}`);
+        return v ? JSON.parse(v) : 0;
+    } catch (e) { return 0; }
+}
+
+function getInitialWeight(exerciseId) {
+    const last = getLastWeight(exerciseId);
+    if (last && last > 0) return last;
+    const prev = getPreviousBest(exerciseId);
+    return prev ? prev.weight : 0;
 }
 
 // TIMER
@@ -1926,6 +2302,22 @@ function getWorkoutHistory() {
     return stored ? JSON.parse(stored) : [];
 }
 
+function deleteWorkout(index) {
+    if (!confirm('Weet je zeker dat je deze workout wilt verwijderen?')) {
+        return;
+    }
+    
+    const history = getWorkoutHistory();
+    if (index < 0 || index >= history.length) return;
+    
+    history.splice(index, 1);
+    localStorage.setItem("workout_history", JSON.stringify(history));
+    
+    showToast("Workout verwijderd", "success");
+    renderHistory();
+    renderPRs();
+}
+
 // PR TRACKING
 function getPRs() {
     const stored = localStorage.getItem("workout_prs");
@@ -2018,58 +2410,214 @@ function closePRCelebration() {
 
 // HISTORY RENDERING
 function renderHistory() {
-    const history = getWorkoutHistory();
-    const container = document.getElementById("historyContainer");
+    renderCalendar();
+    renderHistoryList();
+}
+
+function renderCalendar() {
+    const container = document.getElementById('calendarContainer');
+    if (!container) return;
     
-    if (history.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon"></div>
-                <h3>Geen Workouts</h3>
-                <p>Start je eerste workout om geschiedenis te zien!</p>
+    const today = new Date();
+    const year = currentCalendarYear || today.getFullYear();
+    const month = currentCalendarMonth !== undefined ? currentCalendarMonth : today.getMonth();
+    
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    
+    // Start from Monday before first day
+    const startDate = new Date(firstDay);
+    const dayOfWeek = firstDay.getDay();
+    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    startDate.setDate(startDate.getDate() - daysToSubtract);
+    
+    const history = getWorkoutHistory();
+    const workoutsByDate = {};
+    
+    history.forEach(w => {
+        const date = new Date(w.startTime).toDateString();
+        if (!workoutsByDate[date]) workoutsByDate[date] = [];
+        workoutsByDate[date].push(w);
+    });
+    
+    let html = `
+        <div class="calendar-header">
+            <button class="calendar-nav-btn" onclick="previousMonth()">◀</button>
+            <div class="calendar-month-year">${firstDay.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' })}</div>
+            <button class="calendar-nav-btn" onclick="nextMonth()">▶</button>
+        </div>
+        <div class="calendar-grid">
+            <div class="calendar-weekday">Ma</div>
+            <div class="calendar-weekday">Di</div>
+            <div class="calendar-weekday">Wo</div>
+            <div class="calendar-weekday">Do</div>
+            <div class="calendar-weekday">Vr</div>
+            <div class="calendar-weekday">Za</div>
+            <div class="calendar-weekday">Zo</div>
+    `;
+    
+    const currentDate = new Date(startDate);
+    const today_str = today.toDateString();
+    
+    // Render 6 weeks (42 days)
+    for (let i = 0; i < 42; i++) {
+        const dateStr = currentDate.toDateString();
+        const hasWorkout = workoutsByDate[dateStr] ? true : false;
+        const isToday = dateStr === today_str;
+        const isOtherMonth = currentDate.getMonth() !== month;
+        
+        const classes = [
+            'calendar-day',
+            hasWorkout && !isOtherMonth ? 'has-workout' : '',
+            isToday ? 'today' : '',
+            isOtherMonth ? 'other-month' : ''
+        ].filter(c => c).join(' ');
+        
+        html += `<div class="${classes}" onclick="selectCalendarDay('${dateStr}')">${currentDate.getDate()}</div>`;
+        
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    html += '</div>';
+    
+    container.innerHTML = html;
+}
+
+let currentCalendarMonth = new Date().getMonth();
+let currentCalendarYear = new Date().getFullYear();
+
+function previousMonth() {
+    currentCalendarMonth--;
+    if (currentCalendarMonth < 0) {
+        currentCalendarMonth = 11;
+        currentCalendarYear--;
+    }
+    renderCalendar();
+}
+
+function nextMonth() {
+    currentCalendarMonth++;
+    if (currentCalendarMonth > 11) {
+        currentCalendarMonth = 0;
+        currentCalendarYear++;
+    }
+    renderCalendar();
+}
+
+function selectCalendarDay(dateStr) {
+    const history = getWorkoutHistory();
+    const dayWorkouts = history.filter(w => {
+        const workoutDate = new Date(w.startTime);
+        return workoutDate.toDateString() === dateStr;
+    });
+    
+    if (dayWorkouts.length === 0) return;
+    
+    const historyContainer = document.getElementById('historyContainer');
+    
+    let html = `
+        <div class="calendar-workouts">
+            <div class="calendar-workouts-title">${new Date(dateStr).toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+    `;
+    
+    dayWorkouts.forEach((workout, idx) => {
+        const completedSets = workout.exercises.reduce((sum, ex) => sum + ex.sets.filter(s => s.completed).length, 0);
+        const totalVolume = workout.exercises.reduce((sum, ex) => sum + ex.sets.reduce((s, set) => set.completed ? s + (set.weight * set.reps) : s, 0), 0);
+        
+        // Find the global index of this workout in full history
+        const allHistory = getWorkoutHistory();
+        const globalIdx = allHistory.findIndex(w => w.startTime === workout.startTime && w.schemaName === workout.schemaName);
+        
+        html += `
+            <div class="calendar-workout-item">
+                <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; align-items:center;">
+                    <strong>${workout.schemaName}</strong>
+                    <div style="display:flex; gap:0.5rem; align-items:center;">
+                        <span style="font-size:0.85rem; color:var(--text-muted);">${formatDuration(workout.duration)}</span>
+                        <button class="btn-icon delete-btn" onclick="deleteWorkout(${globalIdx})" title="Verwijderen">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14M10 11v6m4-6v6"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.75rem;">
+                    ${completedSets} sets • ${totalVolume.toFixed(0)} kg
+                </div>
+                <button class="btn btn-secondary" style="width:100%; padding:0.5rem; font-size:0.9rem;" onclick="expandWorkoutDetails(${idx}, '${dateStr}')">
+                    Oefeningen tonen
+                </button>
             </div>
+            <div id="workout-details-${idx}" style="display:none; margin-top:0.5rem; padding:0.75rem; background:var(--dark-elevated); border-radius:12px;"></div>
         `;
+    });
+    
+    html += '</div>';
+    historyContainer.innerHTML = html;
+    window.selectedDayWorkouts = dayWorkouts;
+}
+
+function expandWorkoutDetails(workoutIdx, dateStr) {
+    const dayWorkouts = window.selectedDayWorkouts || [];
+    const workout = dayWorkouts[workoutIdx];
+    if (!workout) return;
+    
+    const detailsDiv = document.getElementById(`workout-details-${workoutIdx}`);
+    if (detailsDiv.style.display === 'block') {
+        detailsDiv.style.display = 'none';
         return;
     }
     
-    container.innerHTML = history.map(workout => {
-        const date = new Date(workout.startTime);
-        const completedSets = workout.exercises.reduce((sum, ex) => {
-            return sum + ex.sets.filter(s => s.completed).length;
-        }, 0);
+    let html = '';
+    const groupedByMuscle = {};
+    
+    workout.exercises.forEach(ex => {
+        const mg = ex.muscleGroup || 'Overig';
+        if (!groupedByMuscle[mg]) groupedByMuscle[mg] = [];
+        groupedByMuscle[mg].push(ex);
+    });
+    
+    Object.entries(groupedByMuscle).forEach(([muscle, exercises]) => {
+        html += `<div style="margin-bottom:0.75rem;">
+            <strong style="color:var(--primary); display:block; margin-bottom:0.5rem;">${muscle}</strong>`;
         
-        const totalVolume = workout.exercises.reduce((sum, ex) => {
-            return sum + ex.sets.reduce((setSum, set) => {
-                return set.completed ? setSum + (set.weight * set.reps) : setSum;
-            }, 0);
-        }, 0);
+        exercises.forEach(ex => {
+            const completedSets = ex.sets.filter(s => s.completed).length;
+            const totalSets = ex.sets.length;
+            html += `<div style="font-size:0.85rem; margin-bottom:0.25rem; padding:0.35rem 0;">
+                ${ex.name} • ${completedSets}/${totalSets} sets
+            </div>`;
+            
+            ex.sets.forEach((set, sidx) => {
+                html += `<div style="font-size:0.8rem; color:var(--text-muted); margin-left:1rem; ${set.completed ? 'opacity:0.7;' : ''}">
+                    Set ${sidx + 1}: ${set.reps} × ${set.weight}kg ${set.completed ? '✓' : ''}
+                </div>`;
+            });
+        });
         
-        return `
-            <div class="history-item">
-                <div class="history-header">
-                    <div>
-                        <div class="history-date">${formatDate(date)}</div>
-                        <div class="history-time">${formatTime(date)}</div>
-                    </div>
-                    <div class="history-schema">${workout.schemaName}</div>
+        html += '</div>';
+    });
+    
+    detailsDiv.innerHTML = html;
+    detailsDiv.style.display = 'block';
+}
+
+function renderHistoryList() {
+    const history = getWorkoutHistory();
+    const container = document.getElementById('historyContainer');
+    
+    if (history.length === 0) {
+        if (!document.getElementById('calendarContainer').innerHTML.includes('calendar-workout')) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon"></div>
+                    <h3>Geen Workouts</h3>
+                    <p>Start je eerste workout om geschiedenis te zien!</p>
                 </div>
-                <div class="history-stats">
-                    <div class="history-stat">
-                        <span class="history-stat-value">${formatDuration(workout.duration)}</span>
-                        <span class="history-stat-label">Duur</span>
-                    </div>
-                    <div class="history-stat">
-                        <span class="history-stat-value">${completedSets}</span>
-                        <span class="history-stat-label">Sets</span>
-                    </div>
-                    <div class="history-stat">
-                        <span class="history-stat-value">${totalVolume.toFixed(0)}</span>
-                        <span class="history-stat-label">Volume</span>
-                    </div>
-                </div>
-            </div>
-        `;
-    }).join("");
+            `;
+        }
+        return;
+    }
 }
 
 // PRS RENDERING
@@ -2154,7 +2702,8 @@ function switchView(viewName) {
         "workout": "workoutView",
         "history": "historyView",
         "progress": "progressView",
-        "prs": "prsView"
+        "prs": "prsView",
+        "settings": "settingsView"
     };
     
     document.getElementById(viewMap[viewName]).classList.add("active");
@@ -2163,13 +2712,10 @@ function switchView(viewName) {
     if (viewName === "history") renderHistory();
     if (viewName === "prs") renderPRs();
     if (viewName === "progress") renderProgress();
+    if (viewName === "settings") updateSettingsUI();
 }
 
 // BACKUP & IMPORT
-function openBackup() {
-    openModal("backupModal");
-}
-
 function exportBackup() {
     const data = {
         workouts: getWorkoutHistory(),
@@ -2207,7 +2753,6 @@ function handleImportFile(event) {
             if (data.settings) localStorage.setItem("gym_settings", JSON.stringify(data.settings));
             
             showToast("Backup succesvol geïmporteerd!", "success");
-            closeModal("backupModal");
             
             // Refresh views
             renderHistory();
@@ -2268,6 +2813,66 @@ function loadSettings() {
     const settings = getSettings();
     document.getElementById("bodyWeight").value = settings.bodyWeight;
     document.getElementById("defaultSets").value = settings.defaultSets;
+}
+
+// DARK MODE THEME MANAGEMENT
+function loadTheme() {
+    const savedTheme = localStorage.getItem('gym_theme') || 'dark';
+    applyTheme(savedTheme === 'dark');
+}
+
+function applyTheme(isDarkMode) {
+    document.body.classList.toggle('light-mode', !isDarkMode);
+    updateThemeToggle(isDarkMode);
+}
+
+function toggleDarkMode() {
+    const currentlyDark = !document.body.classList.contains('light-mode');
+    const newIsDark = !currentlyDark; // flip
+    applyTheme(newIsDark);
+    localStorage.setItem('gym_theme', newIsDark ? 'dark' : 'light');
+}
+
+function updateThemeToggle(isDarkMode) {
+    const toggle = document.getElementById('themeToggle');
+    if (toggle) {
+        // active state indicates Dark Mode ON
+        toggle.classList.toggle('active', isDarkMode);
+    }
+}
+
+function updateSettingsUI() {
+    const settings = getSettings();
+    const isDarkMode = !document.body.classList.contains('light-mode');
+    
+    // Update body weight input
+    const bodyWeightInput = document.getElementById('bodyWeightInput');
+    if (bodyWeightInput) {
+        bodyWeightInput.value = settings.bodyWeight;
+    }
+    
+    // Update default sets input
+    const defaultSetsInput = document.getElementById('defaultSetsInput');
+    if (defaultSetsInput) {
+        defaultSetsInput.value = settings.defaultSets;
+    }
+    
+    // Update theme toggle
+    updateThemeToggle(isDarkMode);
+}
+
+function updateBodyWeight(value) {
+    const settings = getSettings();
+    settings.bodyWeight = Math.max(30, Math.min(200, parseInt(value) || 75));
+    saveSettings(settings);
+}
+
+function updateDefaultSets(value) {
+    const sets = Math.max(1, Math.min(10, value));
+    document.getElementById('defaultSetsInput').value = sets;
+    const settings = getSettings();
+    settings.defaultSets = sets;
+    saveSettings(settings);
 }
 
 // Initialize on load

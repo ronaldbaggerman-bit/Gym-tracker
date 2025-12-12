@@ -1720,8 +1720,8 @@ function selectSchema(schemaId) {
             const sets = [];
             for (let i = 0; i < settings.defaultSets; i++) {
                 sets.push({
-                    reps: 0,
-                    weight: 0,
+                    reps: 12,
+                    weight: getLastWeight(exercise.id) || 0,
                     completed: false
                 });
             }
@@ -1811,28 +1811,38 @@ function renderExerciseCard(exercise) {
                     <div class="set-row ${set.completed ? "completed" : ""}">
                         <div class="set-number">${idx + 1}</div>
                         <div class="set-input-group">
-                            <input 
-                                type="number" 
-                                class="set-input" 
-                                placeholder="0" 
-                                value="${set.reps || ""}"
-                                onchange="updateSet(${exercise.id}, ${idx}, 'reps', this.value)"
-                                min="0"
-                                max="100"
-                            >
+                            <div style="display:flex; align-items:center; gap:0.5rem;">
+                                <button class="btn btn-secondary" style="padding:0.4rem 0.6rem" onclick="adjustSet(${exercise.id}, ${idx}, 'reps', -1)">−</button>
+                                <input 
+                                    type="number" 
+                                    class="set-input" 
+                                    placeholder="12" 
+                                    value="${set.reps ?? 12}"
+                                    onchange="updateSet(${exercise.id}, ${idx}, 'reps', this.value)"
+                                    min="0"
+                                    max="100"
+                                    step="1"
+                                >
+                                <button class="btn btn-secondary" style="padding:0.4rem 0.6rem" onclick="adjustSet(${exercise.id}, ${idx}, 'reps', 1)">+</button>
+                            </div>
                             <div class="set-input-label">Reps</div>
                         </div>
                         <div class="set-input-group">
-                            <input 
-                                type="number" 
-                                class="set-input" 
-                                placeholder="0" 
-                                value="${set.weight || ""}"
-                                onchange="updateSet(${exercise.id}, ${idx}, 'weight', this.value)"
-                                min="0"
-                                max="500"
-                                step="0.5"
-                            >
+                            <div style="display:flex; align-items:center; gap:0.5rem;">
+                                <button class="btn btn-secondary" style="padding:0.4rem 0.6rem" onclick="adjustSet(${exercise.id}, ${idx}, 'weight', -1)">−</button>
+                                <input 
+                                    type="number" 
+                                    class="set-input" 
+                                    placeholder="0" 
+                                    value="${set.weight ?? getLastWeight(exercise.id) ?? 0}"
+                                    onchange="updateSet(${exercise.id}, ${idx}, 'weight', this.value)"
+                                    min="0"
+                                    max="500"
+                                    step="1"
+                                    inputmode="numeric"
+                                >
+                                <button class="btn btn-secondary" style="padding:0.4rem 0.6rem" onclick="adjustSet(${exercise.id}, ${idx}, 'weight', 1)">+</button>
+                            </div>
                             <div class="set-input-label">KG</div>
                         </div>
                         <div 
@@ -1850,7 +1860,11 @@ function updateSet(exerciseId, setIndex, field, value) {
     const exercise = currentWorkout.exercises.find(ex => ex.id === exerciseId);
     if (!exercise) return;
     
-    exercise.sets[setIndex][field] = parseFloat(value) || 0;
+    const num = parseFloat(value);
+    exercise.sets[setIndex][field] = isNaN(num) ? 0 : num;
+    if (field === 'weight') {
+        saveLastWeight(exerciseId, exercise.sets[setIndex].weight);
+    }
     updateStats();
     
     // Check for PR
@@ -1885,8 +1899,8 @@ function addSet(exerciseId) {
     if (!exercise) return;
     
     exercise.sets.push({
-        reps: 0,
-        weight: 0,
+        reps: 12,
+        weight: getLastWeight(exerciseId) || 0,
         completed: false
     });
     
@@ -1929,6 +1943,36 @@ function updateStats() {
 function calculateKcal(volume, durationMinutes, bodyWeight) {
     const met = 5.0;
     return (met * bodyWeight * (durationMinutes / 60)) * 1.2;
+}
+
+// SET ADJUST HELPERS & LAST WEIGHT PERSISTENCE
+function adjustSet(exerciseId, setIndex, field, delta) {
+    const exercise = currentWorkout?.exercises.find(ex => ex.id === exerciseId);
+    if (!exercise) return;
+    const set = exercise.sets[setIndex];
+    if (field === 'reps') {
+        const next = Math.max(0, Math.min(100, (parseInt(set.reps || 0) + delta)));
+        set.reps = next;
+    } else if (field === 'weight') {
+        const next = Math.max(0, Math.min(500, (parseInt(set.weight || 0) + delta)));
+        set.weight = next;
+        saveLastWeight(exerciseId, next);
+    }
+    renderExercises();
+    updateStats();
+}
+
+function saveLastWeight(exerciseId, weight) {
+    try {
+        localStorage.setItem(`last_weight_${exerciseId}`, JSON.stringify(weight));
+    } catch (e) {}
+}
+
+function getLastWeight(exerciseId) {
+    try {
+        const v = localStorage.getItem(`last_weight_${exerciseId}`);
+        return v ? JSON.parse(v) : 0;
+    } catch (e) { return 0; }
 }
 
 // TIMER

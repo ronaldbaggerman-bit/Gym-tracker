@@ -1597,10 +1597,6 @@ h1 {
     <div class="header">
         <div class="header-top">
             <h1> Gym Tracker</h1>
-            <div class="icon-group">
-                <button class="icon-btn" onclick="openBackup()" title="Backup & Sync"></button>
-                <button class="icon-btn" onclick="openSettings()" title="Instellingen"></button>
-            </div>
         </div>
         <div class="header-tabs">
             <button class="tab active" data-view="workout" onclick="switchView('workout')"> Workout</button>
@@ -1687,6 +1683,25 @@ h1 {
 
                 <div class="settings-divider"></div>
 
+                <h3 style="margin: 2rem 0 1rem 0; color: var(--text);">📦 Backup & Synchronisatie</h3>
+                
+                <div style="display: grid; gap: 0.75rem; margin-bottom: 1.5rem;">
+                    <button class="btn btn-primary" onclick="exportBackup()" style="width: 100%;">
+                        ⬇️ Download Backup
+                    </button>
+                    <button class="btn btn-secondary" onclick="importBackup()" style="width: 100%;">
+                        ⬆️ Import Backup
+                    </button>
+                    <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="handleImportFile(event)">
+                    <div style="padding: 1rem; background: var(--dark-card); border-radius: 12px; border: 1px solid var(--border);">
+                        <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.5;">
+                            💡 Tip: Backup bevat al je workouts, PRs en instellingen. Bewaar in OneDrive voor sync tussen apparaten.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="settings-divider"></div>
+
                 <div class="settings-item">
                     <div class="settings-label">
                         <span>Lichaamsgewicht (kg)</span>
@@ -1728,52 +1743,7 @@ h1 {
     </div>
 </div>
 
-<div class="modal" id="backupModal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2> Backup & Sync</h2>
-            <button class="close-btn" onclick="closeModal('backupModal')">×</button>
-        </div>
-        <div class="modal-body">
-            <div style="display: grid; gap: 1rem;">
-                <button class="btn btn-primary" onclick="exportBackup()">
-                     Download Backup
-                </button>
-                <button class="btn btn-secondary" onclick="importBackup()">
-                     Import Backup
-                </button>
-                <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="handleImportFile(event)">
-                <div style="padding: 1.25rem; background: var(--dark-card); border-radius: 16px; margin-top: 1rem; border: 1px solid var(--border);">
-                    <p style="color: var(--text-muted); font-size: 0.95rem; text-align: center; line-height: 1.6;">
-                         Backup bevat al je workouts, PRs en instellingen<br>
-                         Bewaar in OneDrive voor sync tussen apparaten
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <div class="modal" id="settingsModal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2> Instellingen</h2>
-            <button class="close-btn" onclick="closeModal('settingsModal')">×</button>
-        </div>
-        <div class="modal-body">
-            <div class="form-group">
-                <label>Lichaamsgewicht (kg)</label>
-                <input type="number" class="form-input" id="bodyWeight" placeholder="75" step="0.1" min="30" max="200">
-            </div>
-            <div class="form-group">
-                <label>Standaard Sets per Oefening</label>
-                <input type="number" class="form-input" id="defaultSets" placeholder="3" step="1" min="1" max="10">
-            </div>
-            <button class="btn btn-primary" style="width: 100%;" onclick="saveSettings()"> Opslaan</button>
-        </div>
-    </div>
-</div>
-
 <div class="toast" id="toast"></div>
 
 <script>// WORKOUT DATA
@@ -1878,32 +1848,6 @@ function getSettings() {
 }
 
 function saveSettings() {
-    const bodyWeight = parseFloat(document.getElementById("bodyWeight").value);
-    const defaultSets = parseInt(document.getElementById("defaultSets").value);
-    
-    if (isNaN(bodyWeight) || bodyWeight < 30 || bodyWeight > 200) {
-        showToast("Ongeldig lichaamsgewicht", "error");
-        return;
-    }
-    
-    if (isNaN(defaultSets) || defaultSets < 1 || defaultSets > 10) {
-        showToast("Ongeldig aantal sets", "error");
-        return;
-    }
-    
-    const settings = { bodyWeight, defaultSets };
-    localStorage.setItem("gym_settings", JSON.stringify(settings));
-    showToast("Instellingen opgeslagen!", "success");
-    closeModal("settingsModal");
-}
-
-function openSettings() {
-    const settings = getSettings();
-    document.getElementById("bodyWeight").value = settings.bodyWeight;
-    document.getElementById("defaultSets").value = settings.defaultSets;
-    openModal("settingsModal");
-}
-
 // INITIALIZATION
 function init() {
     loadTheme();
@@ -2772,10 +2716,6 @@ function switchView(viewName) {
 }
 
 // BACKUP & IMPORT
-function openBackup() {
-    openModal("backupModal");
-}
-
 function exportBackup() {
     const data = {
         workouts: getWorkoutHistory(),
@@ -2813,7 +2753,6 @@ function handleImportFile(event) {
             if (data.settings) localStorage.setItem("gym_settings", JSON.stringify(data.settings));
             
             showToast("Backup succesvol geïmporteerd!", "success");
-            closeModal("backupModal");
             
             // Refresh views
             renderHistory();

@@ -1,5 +1,5 @@
 import { COLORS } from '@/app/styles/colors';
-import { initDatabase } from '@/app/utils/database';
+import { initDatabase } from '@/utils/database';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';

@@ -563,6 +563,52 @@ h1 {
     letter-spacing: 0.5px;
 }
 
+/* Rest Timer */
+.rest-timer-card {
+    background: var(--dark-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    display: none;
+    box-shadow: var(--shadow);
+}
+
+.rest-timer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    gap: 0.75rem;
+}
+
+.rest-timer-title {
+    font-weight: 700;
+    color: var(--text);
+}
+
+.rest-timer-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.rest-timer-progress {
+    position: relative;
+    width: 100%;
+    height: 10px;
+    background: var(--dark-elevated);
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+}
+
+.rest-timer-progress > div {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, var(--primary), #2FAA4E);
+    transition: width 0.25s ease;
+}
+
 /* Muscle Groups */
 .muscle-group {
     margin-bottom: 2rem;
@@ -1645,6 +1691,19 @@ h1 {
                 </div>
             </div>
 
+            <div class="rest-timer-card" id="restTimerCard">
+                <div class="rest-timer-header">
+                    <div class="rest-timer-title" id="restTimerLabel">Rust: 1:30</div>
+                    <div class="rest-timer-actions">
+                        <button class="btn btn-secondary" style="padding:0.35rem 0.75rem; font-size:0.85rem;" onclick="refreshRestTimer()">Refresh</button>
+                        <button class="btn btn-secondary" style="padding:0.35rem 0.75rem; font-size:0.85rem;" onclick="stopRestTimer()">Stop</button>
+                    </div>
+                </div>
+                <div class="rest-timer-progress">
+                    <div id="restTimerProgress"></div>
+                </div>
+            </div>
+
             <div id="exercisesContainer"></div>
         </div>
     </div>
@@ -1836,6 +1895,9 @@ let currentWorkout = null;
 let timerInterval = null;
 let timerSeconds = 0;
 let timerRunning = false;
+let restTimerInterval = null;
+let restTimerRemaining = 0;
+const REST_DURATION_SECONDS = 90;
 
 // SETTINGS
 function getSettings() {
@@ -1942,9 +2004,22 @@ function renderExercises() {
     if (!currentWorkout) return;
     
     const container = document.getElementById("exercisesContainer");
+    const visibleExercises = currentWorkout.exercises.filter(ex => !ex.sets.every(s => s.completed));
+
+    if (visibleExercises.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state" style="margin-top:1rem;">
+                <div class="empty-state-icon"></div>
+                <h3>Alle oefeningen voltooid</h3>
+                <p>Top! Voltooi de workout of voeg een set toe als je wilt doorgaan.</p>
+            </div>
+        `;
+        return;
+    }
+
     const groupedExercises = {};
     
-    currentWorkout.exercises.forEach(ex => {
+    visibleExercises.forEach(ex => {
         if (!groupedExercises[ex.muscleGroup]) {
             groupedExercises[ex.muscleGroup] = {
                 icon: ex.muscleGroupIcon,
@@ -2073,15 +2148,17 @@ function toggleSet(exerciseId, setIndex) {
     if (!exercise) return;
     
     const set = exercise.sets[setIndex];
-    
+
     if (!set.completed && (!set.reps || !set.weight)) {
         showToast("Vul eerst reps en gewicht in", "error");
         return;
     }
-    
+
+    const wasCompleted = set.completed;
     set.completed = !set.completed;
-    
-    if (set.completed) {
+
+    if (set.completed && !wasCompleted) {
+        startRestTimer();
         checkAndShowPR(exercise, setIndex);
     }
     
@@ -2230,6 +2307,55 @@ function updateTimerDisplay() {
         : `${pad(minutes)}:${pad(seconds)}`;
     
     document.getElementById("timer").textContent = display;
+}
+
+// REST TIMER
+function startRestTimer(seconds = REST_DURATION_SECONDS) {
+    stopRestTimer(true);
+    restTimerRemaining = seconds;
+    updateRestTimerUI();
+    const card = document.getElementById("restTimerCard");
+    if (card) card.style.display = "block";
+    restTimerInterval = setInterval(() => {
+        restTimerRemaining = Math.max(0, restTimerRemaining - 1);
+        updateRestTimerUI();
+        if (restTimerRemaining <= 0) {
+            stopRestTimer(true);
+        }
+    }, 1000);
+}
+
+function refreshRestTimer() {
+    startRestTimer(REST_DURATION_SECONDS);
+}
+
+function stopRestTimer(auto = false) {
+    if (restTimerInterval) {
+        clearInterval(restTimerInterval);
+        restTimerInterval = null;
+    }
+    if (!auto) {
+        restTimerRemaining = 0;
+        const card = document.getElementById("restTimerCard");
+        if (card) card.style.display = "none";
+    }
+    updateRestTimerUI();
+}
+
+function updateRestTimerUI() {
+    const progress = document.getElementById("restTimerProgress");
+    const label = document.getElementById("restTimerLabel");
+    const card = document.getElementById("restTimerCard");
+    if (!progress || !label || !card) return;
+    const remaining = Math.max(0, restTimerRemaining || 0);
+    const pct = Math.max(0, Math.min(100, (remaining / REST_DURATION_SECONDS) * 100));
+    progress.style.width = `${pct}%`;
+    const m = Math.floor(remaining / 60);
+    const s = remaining % 60;
+    label.textContent = `Rust: ${m}:${s.toString().padStart(2, '0')}`;
+    if (remaining === 0 && !restTimerInterval) {
+        card.style.display = "none";
+    }
 }
 
 function pad(num) {

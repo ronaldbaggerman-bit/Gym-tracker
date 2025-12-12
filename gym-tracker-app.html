@@ -400,6 +400,12 @@ h1 {
     margin-bottom: 0.75rem;
 }
 
+.timer-meta {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+}
+
 .timer {
     font-size: 4rem;
     font-weight: 800;
@@ -1664,6 +1670,7 @@ h1 {
                 <div class="timer-content">
                     <div class="timer-label">Workout Tijd</div>
                     <div class="timer" id="timer">00:00</div>
+                    <div class="timer-meta" id="exerciseMeta">Oefeningen: 0/0</div>
                     <div class="timer-controls">
                         <button class="btn btn-secondary" onclick="toggleTimer()" id="timerBtn">
                             <span id="timerIcon"></span>
@@ -2002,6 +2009,7 @@ function selectSchema(schemaId) {
 
 function renderExercises() {
     if (!currentWorkout) return;
+    updateExerciseMeta();
     
     const container = document.getElementById("exercisesContainer");
     const visibleExercises = currentWorkout.exercises.filter(ex => !ex.sets.every(s => s.completed));
@@ -2046,6 +2054,18 @@ function renderExercises() {
             </div>
         `;
     }).join("");
+}
+
+function updateExerciseMeta() {
+    const el = document.getElementById("exerciseMeta");
+    if (!el) return;
+    if (!currentWorkout) {
+        el.textContent = "Oefeningen: 0/0";
+        return;
+    }
+    const total = currentWorkout.exercises.length;
+    const completed = currentWorkout.exercises.filter(ex => ex.sets.every(s => s.completed)).length;
+    el.textContent = `Oefeningen: ${completed}/${total}`;
 }
 
 function renderExerciseCard(exercise) {
@@ -2411,6 +2431,7 @@ function resetWorkout() {
     
     updateTimerDisplay();
     updateStats();
+    updateExerciseMeta();
     renderHistory();
     renderPRs();
 }

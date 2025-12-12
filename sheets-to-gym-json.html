@@ -199,6 +199,7 @@ function convertCSVToJSON() {
             const muscleGroup = MUSCLE_GROUP_MAP[exId] || "Overig";
             const reps = parseInt(row.Reps) || 0;
             const weight = parseFloat(row.Gewicht) || 0;
+            const setsCount = parseInt(row.Sets) || 1;
             
             if (!grouped[key].exercises[exId]) {
                 grouped[key].exercises[exId] = {
@@ -211,11 +212,14 @@ function convertCSVToJSON() {
                 };
             }
             
-            grouped[key].exercises[exId].sets.push({
-                reps,
-                weight,
-                completed: reps > 0 && weight > 0
-            });
+            // Add sets based on 'Sets' column count
+            for (let i = 0; i < setsCount; i++) {
+                grouped[key].exercises[exId].sets.push({
+                    reps,
+                    weight,
+                    completed: reps > 0 && weight > 0
+                });
+            }
             
             // Track PR
             const prKey = exId.toString();
@@ -261,10 +265,27 @@ function convertCSVToJSON() {
 }
 
 function parseDate(dateStr) {
-    // Format: "12-11-2025" or "12-11-2025 10:30"
-    const [datePart] = dateStr.split(' ');
-    const [d, m, y] = datePart.split('-');
-    return `${y}-${m}-${d}`;
+    // Handle various formats
+    const cleanDate = dateStr.trim().split(' ')[0]; // Remove time if present
+    
+    // Check for yyyy-mm-dd
+    if (cleanDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        return cleanDate;
+    }
+    
+    // Check for dd-mm-yyyy
+    if (cleanDate.includes('-')) {
+        const [d, m, y] = cleanDate.split('-');
+        return `${y}-${m}-${d}`;
+    }
+    
+    // Check for dd/mm/yyyy
+    if (cleanDate.includes('/')) {
+        const [d, m, y] = cleanDate.split('/');
+        return `${y}-${m}-${d}`;
+    }
+    
+    return cleanDate; // Fallback
 }
 
 function calculateOneRM(weight, reps) {

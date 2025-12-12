@@ -2559,7 +2559,10 @@ function renderCalendarForMonth(year, month) {
 
 function selectCalendarDay(dateStr) {
     const history = getWorkoutHistory();
-    const dayWorkouts = history.filter(w => new Date(w.startTime).toDateString() === dateStr);
+    const dayWorkouts = history.filter(w => {
+        const workoutDate = new Date(w.startTime);
+        return workoutDate.toDateString() === dateStr;
+    });
     
     if (dayWorkouts.length === 0) return;
     
@@ -2570,20 +2573,75 @@ function selectCalendarDay(dateStr) {
             <div class="calendar-workouts-title">${new Date(dateStr).toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
     `;
     
-    dayWorkouts.forEach(workout => {
+    dayWorkouts.forEach((workout, idx) => {
         const completedSets = workout.exercises.reduce((sum, ex) => sum + ex.sets.filter(s => s.completed).length, 0);
         const totalVolume = workout.exercises.reduce((sum, ex) => sum + ex.sets.reduce((s, set) => set.completed ? s + (set.weight * set.reps) : s, 0), 0);
         
         html += `
             <div class="calendar-workout-item">
-                <strong>${workout.schemaName}</strong><br>
-                ${completedSets} sets • ${totalVolume.toFixed(0)} kg • ${formatDuration(workout.duration)}
+                <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+                    <strong>${workout.schemaName}</strong>
+                    <span style="font-size:0.85rem; color:var(--text-muted);">${formatDuration(workout.duration)}</span>
+                </div>
+                <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.75rem;">
+                    ${completedSets} sets • ${totalVolume.toFixed(0)} kg
+                </div>
+                <button class="btn btn-secondary" style="width:100%; padding:0.5rem; font-size:0.9rem;" onclick="expandWorkoutDetails(${idx}, '${dateStr}')">
+                    Oefeningen tonen
+                </button>
             </div>
+            <div id="workout-details-${idx}" style="display:none; margin-top:0.5rem; padding:0.75rem; background:var(--dark-elevated); border-radius:12px;"></div>
         `;
     });
     
     html += '</div>';
     historyContainer.innerHTML = html;
+    window.selectedDayWorkouts = dayWorkouts;
+}
+
+function expandWorkoutDetails(workoutIdx, dateStr) {
+    const dayWorkouts = window.selectedDayWorkouts || [];
+    const workout = dayWorkouts[workoutIdx];
+    if (!workout) return;
+    
+    const detailsDiv = document.getElementById(`workout-details-${workoutIdx}`);
+    if (detailsDiv.style.display === 'block') {
+        detailsDiv.style.display = 'none';
+        return;
+    }
+    
+    let html = '';
+    const groupedByMuscle = {};
+    
+    workout.exercises.forEach(ex => {
+        const mg = ex.muscleGroup || 'Overig';
+        if (!groupedByMuscle[mg]) groupedByMuscle[mg] = [];
+        groupedByMuscle[mg].push(ex);
+    });
+    
+    Object.entries(groupedByMuscle).forEach(([muscle, exercises]) => {
+        html += `<div style="margin-bottom:0.75rem;">
+            <strong style="color:var(--primary); display:block; margin-bottom:0.5rem;">${muscle}</strong>`;
+        
+        exercises.forEach(ex => {
+            const completedSets = ex.sets.filter(s => s.completed).length;
+            const totalSets = ex.sets.length;
+            html += `<div style="font-size:0.85rem; margin-bottom:0.25rem; padding:0.35rem 0;">
+                ${ex.name} • ${completedSets}/${totalSets} sets
+            </div>`;
+            
+            ex.sets.forEach((set, sidx) => {
+                html += `<div style="font-size:0.8rem; color:var(--text-muted); margin-left:1rem; ${set.completed ? 'opacity:0.7;' : ''}">
+                    Set ${sidx + 1}: ${set.reps} × ${set.weight}kg ${set.completed ? '✓' : ''}
+                </div>`;
+            });
+        });
+        
+        html += '</div>';
+    });
+    
+    detailsDiv.innerHTML = html;
+    detailsDiv.style.display = 'block';
 }
 
 function renderHistoryList() {

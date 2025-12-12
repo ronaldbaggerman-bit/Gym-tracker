@@ -2432,14 +2432,20 @@ function renderHistory() {
 
 function renderCalendar() {
     const container = document.getElementById('calendarContainer');
+    if (!container) return;
+    
     const today = new Date();
-    const year = today.getFullYear();
-    const month = today.getMonth();
+    const year = currentCalendarYear || today.getFullYear();
+    const month = currentCalendarMonth !== undefined ? currentCalendarMonth : today.getMonth();
     
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
+    
+    // Start from Monday before first day
     const startDate = new Date(firstDay);
-    startDate.setDate(startDate.getDate() - firstDay.getDay());
+    const dayOfWeek = firstDay.getDay();
+    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    startDate.setDate(startDate.getDate() - daysToSubtract);
     
     const history = getWorkoutHistory();
     const workoutsByDate = {};
@@ -2453,7 +2459,7 @@ function renderCalendar() {
     let html = `
         <div class="calendar-header">
             <button class="calendar-nav-btn" onclick="previousMonth()">◀</button>
-            <div class="calendar-month-year" id="calendarTitle"></div>
+            <div class="calendar-month-year">${firstDay.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' })}</div>
             <button class="calendar-nav-btn" onclick="nextMonth()">▶</button>
         </div>
         <div class="calendar-grid">
@@ -2467,9 +2473,10 @@ function renderCalendar() {
     `;
     
     const currentDate = new Date(startDate);
-    const today_str = new Date().toDateString();
+    const today_str = today.toDateString();
     
-    while (currentDate <= lastDay) {
+    // Render 6 weeks (42 days)
+    for (let i = 0; i < 42; i++) {
         const dateStr = currentDate.toDateString();
         const hasWorkout = workoutsByDate[dateStr] ? true : false;
         const isToday = dateStr === today_str;
@@ -2490,11 +2497,6 @@ function renderCalendar() {
     html += '</div>';
     
     container.innerHTML = html;
-    document.getElementById('calendarTitle').textContent = 
-        firstDay.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' });
-    
-    window.currentCalendarMonth = month;
-    window.currentCalendarYear = year;
 }
 
 let currentCalendarMonth = new Date().getMonth();
@@ -2506,7 +2508,7 @@ function previousMonth() {
         currentCalendarMonth = 11;
         currentCalendarYear--;
     }
-    renderCalendarForMonth(currentCalendarYear, currentCalendarMonth);
+    renderCalendar();
 }
 
 function nextMonth() {
@@ -2515,69 +2517,7 @@ function nextMonth() {
         currentCalendarMonth = 0;
         currentCalendarYear++;
     }
-    renderCalendarForMonth(currentCalendarYear, currentCalendarMonth);
-}
-
-function renderCalendarForMonth(year, month) {
-    const container = document.getElementById('calendarContainer');
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const startDate = new Date(firstDay);
-    startDate.setDate(startDate.getDate() - firstDay.getDay());
-    
-    const history = getWorkoutHistory();
-    const workoutsByDate = {};
-    
-    history.forEach(w => {
-        const date = new Date(w.startTime).toDateString();
-        if (!workoutsByDate[date]) workoutsByDate[date] = [];
-        workoutsByDate[date].push(w);
-    });
-    
-    let html = `
-        <div class="calendar-header">
-            <button class="calendar-nav-btn" onclick="previousMonth()">◀</button>
-            <div class="calendar-month-year" id="calendarTitle"></div>
-            <button class="calendar-nav-btn" onclick="nextMonth()">▶</button>
-        </div>
-        <div class="calendar-grid">
-            <div class="calendar-weekday">Ma</div>
-            <div class="calendar-weekday">Di</div>
-            <div class="calendar-weekday">Wo</div>
-            <div class="calendar-weekday">Do</div>
-            <div class="calendar-weekday">Vr</div>
-            <div class="calendar-weekday">Za</div>
-            <div class="calendar-weekday">Zo</div>
-    `;
-    
-    const currentDate = new Date(startDate);
-    const today = new Date();
-    const today_str = today.toDateString();
-    
-    while (currentDate.getMonth() === month || currentDate < new Date(year, month + 1, 1)) {
-        const dateStr = currentDate.toDateString();
-        const hasWorkout = workoutsByDate[dateStr] ? true : false;
-        const isToday = dateStr === today_str;
-        const isOtherMonth = currentDate.getMonth() !== month;
-        
-        const classes = [
-            'calendar-day',
-            hasWorkout && !isOtherMonth ? 'has-workout' : '',
-            isToday ? 'today' : '',
-            isOtherMonth ? 'other-month' : ''
-        ].filter(c => c).join(' ');
-        
-        html += `<div class="${classes}" onclick="selectCalendarDay('${dateStr}')">${currentDate.getDate()}</div>`;
-        
-        currentDate.setDate(currentDate.getDate() + 1);
-        if (currentDate.getDate() === 1) break;
-    }
-    
-    html += '</div>';
-    
-    container.innerHTML = html;
-    document.getElementById('calendarTitle').textContent = 
-        firstDay.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' });
+    renderCalendar();
 }
 
 function selectCalendarDay(dateStr) {

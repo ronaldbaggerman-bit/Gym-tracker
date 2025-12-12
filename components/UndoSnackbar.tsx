@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, Animated, Dimensions } from 'react-native';
-import { ThemedText } from '@/components/themed-text';
 import { useThemeColors } from '@/app/hooks/useThemeColors';
+import { ThemedText } from '@/components/themed-text';
+import React, { useState } from 'react';
+import { Animated, Dimensions, StyleSheet, View } from 'react-native';
 
 export interface UndoAction {
   label: string;

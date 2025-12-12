@@ -6,10 +6,6 @@ export interface SuccessMessage {
   duration?: number;
 }
 
-/**
- * Show success feedback to user
- * Uses native Alert for simple feedback
- */
 export async function showSuccess(title: string, message?: string) {
   return new Promise<void>((resolve) => {
     Alert.alert(title, message, [
@@ -21,9 +17,6 @@ export async function showSuccess(title: string, message?: string) {
   });
 }
 
-/**
- * Show error feedback
- */
 export async function showError(title: string, message?: string) {
   return new Promise<void>((resolve) => {
     Alert.alert('❌ ' + title, message, [

@@ -1,14 +1,14 @@
-import { Dimensions, View } from 'react-native';
-import Svg, { 
-  Line, 
-  Circle, 
-  Text as SvgText,
-  G,
-  Rect,
-  Path,
-} from 'react-native-svg';
 import { COLORS } from '@/app/styles/colors';
-import type { ProgressionDataPoint } from '@/app/utils/progressionData';
+import type { ProgressionDataPoint } from '@/utils/progressionData';
+import { Dimensions, View } from 'react-native';
+import Svg, {
+    Circle,
+    G,
+    Line,
+    Path,
+    Rect,
+    Text as SvgText,
+} from 'react-native-svg';
 
 interface ProgressLineChartProps {
   data: ProgressionDataPoint[];

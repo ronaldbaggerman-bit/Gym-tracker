@@ -5,7 +5,7 @@ export interface ProgressionDataPoint {
   weight: number;
   reps: number;
   sets: number;
-  timestamp: number; // milliseconds for sorting
+  timestamp: number;
 }
 
 export interface ExerciseProgressionData {
@@ -13,13 +13,6 @@ export interface ExerciseProgressionData {
   dataPoints: ProgressionDataPoint[];
 }
 
-/**
- * Extract progression data for a specific exercise from workout sessions
- * @param sessions Workout sessions to analyze
- * @param exerciseName Name of the exercise to track
- * @param daysBack Number of days back to include (0 = all)
- * @returns Array of progression data points, sorted by date
- */
 export const getExerciseProgressionData = (
   sessions: WorkoutSession[],
   exerciseName: string,
@@ -34,19 +27,16 @@ export const getExerciseProgressionData = (
   const dataPoints: ProgressionDataPoint[] = [];
 
   sessions.forEach(session => {
-    // Parse date - handle both string (YYYY-MM-DD) and Date formats
     let sessionDate: Date;
     if (typeof session.date === 'string') {
       const [year, month, day] = session.date.split('-').map(Number);
-      sessionDate = new Date(year, month - 1, day); // Local timezone
+      sessionDate = new Date(year, month - 1, day);
     } else {
       sessionDate = new Date(session.date);
     }
     
-    // Filter by date range
     if (sessionDate < cutoffDate) return;
 
-    // Find exercises matching the name (case-insensitive)
     const matchingExercises = session.exercises.filter(
       ex => ex.name.toLowerCase() === exerciseName.toLowerCase()
     );
@@ -54,13 +44,11 @@ export const getExerciseProgressionData = (
     matchingExercises.forEach(exercise => {
       if (!exercise.sets || exercise.sets.length === 0) return;
 
-      // Find the maximum weight from sets with weight
       let maxWeight = 0;
       let totalReps = 0;
       let setsWithWeight = 0;
 
       exercise.sets.forEach(set => {
-        // Accept any set with weight data (completed flag may be missing in old data)
         if (set.weight !== undefined && set.weight !== null && set.weight >= 0) {
           maxWeight = Math.max(maxWeight, set.weight);
           totalReps += set.reps || 0;
@@ -72,7 +60,7 @@ export const getExerciseProgressionData = (
         dataPoints.push({
           date: session.date,
           weight: maxWeight,
-          reps: Math.round(totalReps / setsWithWeight), // Average reps
+          reps: Math.round(totalReps / setsWithWeight),
           sets: setsWithWeight,
           timestamp: sessionDate.getTime(),
         });
@@ -80,10 +68,8 @@ export const getExerciseProgressionData = (
     });
   });
 
-  // Sort by date (ascending)
   dataPoints.sort((a, b) => a.timestamp - b.timestamp);
 
-  // Remove duplicates - keep only the heaviest weight per day
   const uniqueByDate = new Map<string, ProgressionDataPoint>();
   dataPoints.forEach(point => {
     const existing = uniqueByDate.get(point.date);
@@ -95,12 +81,6 @@ export const getExerciseProgressionData = (
   return Array.from(uniqueByDate.values()).sort((a, b) => a.timestamp - b.timestamp);
 };
 
-/**
- * Get all exercises that have progression data
- * @param sessions Workout sessions
- * @param schemaId Optional filter by schema
- * @returns Array of unique exercise names with progression data
- */
 export const getExercisesWithProgress = (
   sessions: WorkoutSession[],
   schemaId?: string
@@ -108,8 +88,6 @@ export const getExercisesWithProgress = (
   const exerciseNames = new Set<string>();
 
   sessions.forEach(session => {
-    // Filter by schema if specified
-    // Handle both "schema1" and "schema-1" formats (normalize by removing hyphens)
     if (schemaId) {
       const normalizedSessionId = session.schemaId.replace(/-/g, '');
       const normalizedSchemaId = schemaId.replace(/-/g, '');
@@ -117,7 +95,6 @@ export const getExercisesWithProgress = (
     }
 
     session.exercises.forEach(exercise => {
-      // Accept exercises with any sets that have weight data (completed flag may be missing in old data)
       if (exercise.sets?.some(s => s.weight !== undefined && s.weight !== null)) {
         exerciseNames.add(exercise.name);
       }
@@ -127,18 +104,11 @@ export const getExercisesWithProgress = (
   return Array.from(exerciseNames).sort();
 };
 
-/**
- * Get list of schemas that have any progression data
- * @param sessions Workout sessions
- * @returns Array of schema IDs with data
- */
 export const getSchemasWithProgress = (sessions: WorkoutSession[]): string[] => {
   const schemaIds = new Set<string>();
 
   sessions.forEach(session => {
-    // Accept any session with exercises that have sets with weight data
     if (session.exercises?.some(ex => ex.sets?.some(s => s.weight !== undefined && s.weight !== null))) {
-      // Normalize schema IDs (remove hyphens to match both "schema1" and "schema-1")
       const normalizedId = session.schemaId.replace(/-/g, '');
       schemaIds.add(normalizedId);
     }
@@ -147,9 +117,6 @@ export const getSchemasWithProgress = (sessions: WorkoutSession[]): string[] => 
   return Array.from(schemaIds);
 };
 
-/**
- * Calculate progression metrics for an exercise
- */
 export const calculateProgressionMetrics = (dataPoints: ProgressionDataPoint[]) => {
   if (dataPoints.length === 0) {
     return {

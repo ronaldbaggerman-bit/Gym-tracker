@@ -1,6 +1,28 @@
+import type { DifficultyRating, WorkoutExercise, WorkoutSession } from '@/app/types/workout';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SESSIONS_KEY, loadSessions, saveSessionsList } from './storage';
-import type { WorkoutSession, WorkoutExercise, DifficultyRating } from '@/app/types/workout';
+import type { WorkoutSession as Session } from '@/app/types/workout';
+
+const SESSIONS_KEY = 'workout_sessions_v1';
+
+async function loadSessions(): Promise<Session[]> {
+  try {
+    const raw = await AsyncStorage.getItem(SESSIONS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    console.error('loadSessions error', e);
+    return [];
+  }
+}
+
+async function saveSessionsList(sessions: Session[]): Promise<boolean> {
+  try {
+    await AsyncStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
+    return true;
+  } catch (e) {
+    console.error('saveSessionsList error', e);
+    return false;
+  }
+}
 
 interface ParsedRow {
   date: string;
@@ -14,7 +36,6 @@ interface ParsedRow {
 }
 
 const splitCsvLine = (line: string): string[] => {
-  // Simple CSV splitter supporting quoted commas
   const result: string[] = [];
   let current = '';
   let inQuotes = false;
@@ -49,18 +70,13 @@ const parseNumberList = (value: string | undefined, count: number, fallback: num
 const toSlug = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
 const parseDate = (dateStr: string): string => {
-  // Support both DD-MM-YYYY and YYYY-MM-DD formats
   const trimmed = dateStr.trim();
-  
-  // Check if it's DD-MM-YYYY format (contains dashes)
   if (trimmed.includes('-')) {
     const parts = trimmed.split('-');
     if (parts.length === 3) {
-      // If first part is 1-2 digits, likely DD-MM-YYYY
       if (parts[0].length <= 2 && parts[1].length <= 2 && parts[2].length === 4) {
         return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
       }
-      // Otherwise assume YYYY-MM-DD
       if (parts[0].length === 4) {
         return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
       }
@@ -108,7 +124,7 @@ export async function importCsvSessions(csv: string): Promise<{ imported: number
         exercises: [],
         startTime: start,
         endTime: end,
-        completed: true, // Imported sessions are marked as completed for stats
+        completed: true,
       } as WorkoutSession;
     }
 
@@ -119,7 +135,7 @@ export async function importCsvSessions(csv: string): Promise<{ imported: number
       setNumber: i + 1,
       reps: repsArr[i],
       weight: weightArr[i],
-      completed: true, // Imported sets are marked as completed for stats
+      completed: true,
       difficulty: 'goed' as DifficultyRating,
     }));
 
@@ -129,7 +145,7 @@ export async function importCsvSessions(csv: string): Promise<{ imported: number
       muscleGroup: row.muscleGroup?.trim() || 'Onbekend',
       met: 5,
       sets,
-      completed: true, // Imported exercises are marked as completed for stats
+      completed: true,
     };
 
     grouped[key].exercises.push(exercise);
@@ -138,7 +154,6 @@ export async function importCsvSessions(csv: string): Promise<{ imported: number
   const importedSessions = Object.values(grouped).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   const existing = await loadSessions();
 
-  // merge by id (import overwrites same id)
   const map = new Map<string, WorkoutSession>();
   for (const s of importedSessions) map.set(s.id, s);
   for (const s of existing) if (!map.has(s.id)) map.set(s.id, s);

@@ -1,8 +1,7 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { StyleSheet, View, ScrollView, TouchableOpacity, LayoutAnimation } from 'react-native';
-import { ThemedText } from '@/components/themed-text';
 import { useThemeColors } from '@/app/hooks/useThemeColors';
-import { ProgressLineChart } from '@/components/charts/ProgressLineChart';
+import { ThemedText } from '@/components/themed-text';
+import React, { useMemo } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 interface WeeklyVolume {
   week: string;

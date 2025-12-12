@@ -1,5 +1,5 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Schema } from '@/app/data/workoutData';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CUSTOM_SCHEMAS_KEY = 'custom_schemas_v1';
 const SCHEMA_OVERRIDES_KEY = 'schema_overrides_v1';
@@ -72,47 +72,4 @@ export function mergeSchemas(defaultSchemas: Schema[], customSchemas: Schema[]):
 export async function applyOverrides(schemas: Schema[]): Promise<Schema[]> {
   const overrides = await loadSchemaOverrides();
   return schemas.map(schema => overrides[schema.id] || schema);
-}
-
-export async function removeExerciseFromSchema(
-  schemaId: string,
-  muscleGroupId: string,
-  exerciseId: number,
-  isDefaultSchema: boolean
-): Promise<void> {
-  if (isDefaultSchema) {
-    const overrides = await loadSchemaOverrides();
-    const schema = overrides[schemaId];
-    if (!schema) return;
-    
-    const updatedMuscleGroups = schema.muscleGroups.map(mg => {
-      if (mg.id === muscleGroupId) {
-        return {
-          ...mg,
-          exercises: mg.exercises.filter(ex => ex.id !== exerciseId)
-        };
-      }
-      return mg;
-    }).filter(mg => mg.exercises.length > 0);
-    
-    const updatedSchema = { ...schema, muscleGroups: updatedMuscleGroups };
-    await saveSchemaOverride(schemaId, updatedSchema);
-  } else {
-    const customs = await loadCustomSchemas();
-    const schema = customs.find(s => s.id === schemaId);
-    if (!schema) return;
-    
-    const updatedMuscleGroups = schema.muscleGroups.map(mg => {
-      if (mg.id === muscleGroupId) {
-        return {
-          ...mg,
-          exercises: mg.exercises.filter(ex => ex.id !== exerciseId)
-        };
-      }
-      return mg;
-    }).filter(mg => mg.exercises.length > 0);
-    
-    const updatedSchema = { ...schema, muscleGroups: updatedMuscleGroups };
-    await upsertCustomSchema(updatedSchema);
-  }
 }

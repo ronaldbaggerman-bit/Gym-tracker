@@ -1,24 +1,24 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
-import { StyleSheet, View, ScrollView, TouchableOpacity, ActivityIndicator, Animated } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useFocusEffect } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '@/app/styles/colors';
 import { initDatabase } from '@/app/utils/database';
+import { useFocusEffect } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Animated, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ThemedText } from '@/components/themed-text';
-import { SchemaSelector } from '@/components/SchemaSelector';
-import { ExerciseDetail } from '@/components/ExerciseDetail';
-import { WorkoutPlanningScreen } from '@/components/WorkoutPlanningScreen';
-import { PRCelebration } from '@/components/PRCelebration';
-import { OfflineIndicator } from '@/components/OfflineIndicator';
 import { WORKOUT_DATA, type Schema } from '@/app/data/workoutData';
-import type { WorkoutExercise, ExerciseSet, WorkoutSession } from '@/app/types/workout';
-import { loadSessions, saveSession, loadPRs, savePR } from '@/app/utils/storage';
-import { loadSettings } from '@/app/utils/settingsStorage';
+import type { ExerciseSet, WorkoutExercise, WorkoutSession } from '@/app/types/workout';
 import { calculateSessionKcal, formatKcalDisplay } from '@/app/utils/kcalCalculator';
-import { checkForNewPRs, formatPRMessage } from '@/app/utils/prTracker';
-import { loadCustomSchemas, mergeSchemas, applyOverrides } from '@/app/utils/schemaStorage';
+import { checkForNewPRs } from '@/app/utils/prTracker';
+import { applyOverrides, loadCustomSchemas, mergeSchemas } from '@/app/utils/schemaStorage';
+import { loadSettings } from '@/app/utils/settingsStorage';
+import { loadPRs, loadSessions, savePR, saveSession } from '@/app/utils/storage';
+import { ExerciseDetail } from '@/components/ExerciseDetail';
+import { OfflineIndicator } from '@/components/OfflineIndicator';
+import { PRCelebration } from '@/components/PRCelebration';
+import { SchemaSelector } from '@/components/SchemaSelector';
+import { ThemedText } from '@/components/themed-text';
+import { WorkoutPlanningScreen } from '@/components/WorkoutPlanningScreen';
 
 const createDefaultSets = (numberOfSets: number = 3): ExerciseSet[] => {
   return Array.from({ length: numberOfSets }, (_, i) => ({

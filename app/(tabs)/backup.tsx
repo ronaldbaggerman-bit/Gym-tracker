@@ -1,8 +1,8 @@
-import { StyleSheet, View, ScrollView } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ThemedText } from '@/components/themed-text';
-import { BackupManagement } from '@/components/BackupManagement';
 import { useThemeColors } from '@/app/hooks/useThemeColors';
+import { BackupManagement } from '@/components/BackupManagement';
+import { ThemedText } from '@/components/themed-text';
+import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function BackupScreen() {
   const insets = useSafeAreaInsets();

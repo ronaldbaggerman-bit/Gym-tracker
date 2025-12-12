@@ -1,7 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, StyleSheet, Animated, Dimensions } from 'react-native';
-import { ThemedText } from '@/components/themed-text';
-import { useThemeColors } from '@/app/hooks/useThemeColors';
+import { Animated, Dimensions } from 'react-native';
 
 interface ScreenTransitionProps {
   children: React.ReactNode;

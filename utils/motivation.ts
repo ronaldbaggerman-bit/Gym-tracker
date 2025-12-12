@@ -168,21 +168,16 @@ const TIPS: MotivationTip[] = [
   },
 ];
 
-/**
- * Get today's daily quote
- */
 export async function getTodayQuote(): Promise<DailyQuote> {
   try {
     const today = new Date().toDateString();
     const cacheKey = `${DAILY_QUOTE_KEY}${today}`;
 
-    // Check cache
     const cached = await AsyncStorage.getItem(cacheKey);
     if (cached) {
       return JSON.parse(cached);
     }
 
-    // Get new quote
     const quote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
     await AsyncStorage.setItem(cacheKey, JSON.stringify(quote));
 
@@ -193,56 +188,36 @@ export async function getTodayQuote(): Promise<DailyQuote> {
   }
 }
 
-/**
- * Get a random quote
- */
 export function getRandomQuote(): DailyQuote {
   return QUOTES[Math.floor(Math.random() * QUOTES.length)];
 }
 
-/**
- * Get quotes by category
- */
 export function getQuotesByCategory(category: DailyQuote['category']): DailyQuote[] {
   return QUOTES.filter(q => q.category === category);
 }
 
-/**
- * Get all motivation tips
- */
 export function getAllTips(): MotivationTip[] {
   return TIPS;
 }
 
-/**
- * Get tips by category
- */
 export function getTipsByCategory(category: MotivationTip['category']): MotivationTip[] {
   return TIPS.filter(t => t.category === category);
 }
 
-/**
- * Get a random tip
- */
 export function getRandomTip(): MotivationTip {
   return TIPS[Math.floor(Math.random() * TIPS.length)];
 }
 
-/**
- * Get daily tip (different each day)
- */
 export async function getDailyTip(): Promise<MotivationTip> {
   try {
     const today = new Date().toDateString();
     const cacheKey = `${MOTIVATION_TIPS_KEY}_${today}`;
 
-    // Check cache
     const cached = await AsyncStorage.getItem(cacheKey);
     if (cached) {
       return JSON.parse(cached);
     }
 
-    // Get new tip
     const tip = getRandomTip();
     await AsyncStorage.setItem(cacheKey, JSON.stringify(tip));
 

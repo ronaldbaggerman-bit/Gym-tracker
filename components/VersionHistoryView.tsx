@@ -1,29 +1,44 @@
-import { useState, useEffect } from 'react';
-import {
-  StyleSheet,
-  View,
-  FlatList,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-  Modal,
-  ScrollView,
-} from 'react-native';
-import { ThemedText } from '@/components/themed-text';
 import { COLORS } from '@/app/styles/colors';
+import { saveSession } from '@/utils/storage';
 import {
-  getSessionVersions,
-  restoreSessionVersion,
-  deleteSessionVersion,
-  formatVersionTime,
-  compareVersions,
-  type SessionVersion,
-} from '@/app/utils/versionHistory';
-import { saveSession } from '@/app/utils/storage';
+    deleteSessionVersion,
+    formatVersionTime,
+    getSessionVersions,
+    type SessionVersion
+} from '@/utils/versionHistory';
+import { ThemedText } from '@/components/themed-text';
+import { useEffect, useState } from 'react';
+import {
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+
+type ExerciseSet = {
+  weight?: number;
+  reps?: number;
+  completed?: boolean;
+};
+
+type ExerciseItem = {
+  name: string;
+  sets?: ExerciseSet[];
+  completed?: boolean;
+};
+
+type SessionData = {
+  exercises?: ExerciseItem[];
+  [key: string]: any;
+};
 
 interface VersionHistoryViewProps {
   sessionId: string;
-  onRestore?: (session: any) => void;
+  onRestore?: (session: SessionData) => void;
 }
 
 export function VersionHistoryView({ sessionId, onRestore }: VersionHistoryViewProps) {
@@ -40,7 +55,7 @@ export function VersionHistoryView({ sessionId, onRestore }: VersionHistoryViewP
     try {
       setLoading(true);
       const versionList = await getSessionVersions(sessionId);
-      setVersions(versionList.reverse()); // Most recent first
+      setVersions([...versionList].reverse()); // Most recent first (immutable)
     } catch (error) {
       console.error('Failed to load versions:', error);
     } finally {
@@ -187,14 +202,14 @@ export function VersionHistoryView({ sessionId, onRestore }: VersionHistoryViewP
                 <ThemedText style={[styles.detailLabel, { marginTop: 16 }]}>
                   Description
                 </ThemedText>
-                <ThemedText style={styles.detailValue}>
+                <ThemedText style={styles.detailValue}>y
                   {selectedVersion.changeDescription || 'No description'}
                 </ThemedText>
 
                 <ThemedText style={[styles.detailLabel, { marginTop: 16 }]}>
                   Exercises
                 </ThemedText>
-                {selectedVersion.data.exercises?.map((exercise, idx) => (
+                {selectedVersion.data.exercises?.map((exercise: ExerciseItem, idx: number) => (
                   <View key={idx} style={styles.exerciseItem}>
                     <ThemedText style={styles.exerciseName}>{exercise.name}</ThemedText>
                     <ThemedText style={styles.exerciseMeta}>
@@ -270,13 +285,13 @@ const styles = StyleSheet.create({
   },
   versionActions: {
     flexDirection: 'row',
-    gap: 8,
   },
   actionButton: {
     paddingHorizontal: 8,
     paddingVertical: 6,
     backgroundColor: COLORS.darkCard,
     borderRadius: 6,
+    marginLeft: 8,
   },
   restoreButton: {
     backgroundColor: COLORS.accent,

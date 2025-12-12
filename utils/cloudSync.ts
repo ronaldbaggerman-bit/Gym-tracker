@@ -1,5 +1,5 @@
+import type { PersonalRecord, WorkoutSession } from '@/app/types/workout';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { WorkoutSession, PersonalRecord } from '@/app/types/workout';
 
 const CLOUD_SYNC_KEY = 'cloud_sync_settings';
 const SYNC_STATUS_KEY = 'sync_status';
@@ -13,7 +13,7 @@ interface CloudSyncSettings {
   firebaseProjectId?: string;
   firebaseApiKey?: string;
   autoSync: boolean;
-  syncInterval: number; // in minutes
+  syncInterval: number;
   lastSync?: string;
 }
 
@@ -28,12 +28,9 @@ const DEFAULT_SETTINGS: CloudSyncSettings = {
   enabled: false,
   provider: 'none',
   autoSync: true,
-  syncInterval: 60, // Sync every 60 minutes
+  syncInterval: 60,
 };
 
-/**
- * Get current cloud sync settings
- */
 export async function getCloudSyncSettings(): Promise<CloudSyncSettings> {
   try {
     const stored = await AsyncStorage.getItem(CLOUD_SYNC_KEY);
@@ -44,9 +41,6 @@ export async function getCloudSyncSettings(): Promise<CloudSyncSettings> {
   }
 }
 
-/**
- * Save cloud sync settings
- */
 export async function saveCloudSyncSettings(settings: Partial<CloudSyncSettings>): Promise<void> {
   try {
     const current = await getCloudSyncSettings();
@@ -58,9 +52,6 @@ export async function saveCloudSyncSettings(settings: Partial<CloudSyncSettings>
   }
 }
 
-/**
- * Get current sync status
- */
 export async function getSyncStatus(): Promise<SyncStatus> {
   try {
     const stored = await AsyncStorage.getItem(SYNC_STATUS_KEY);
@@ -71,9 +62,6 @@ export async function getSyncStatus(): Promise<SyncStatus> {
   }
 }
 
-/**
- * Update sync status
- */
 export async function updateSyncStatus(status: Partial<SyncStatus>): Promise<void> {
   try {
     const current = await getSyncStatus();
@@ -84,18 +72,12 @@ export async function updateSyncStatus(status: Partial<SyncStatus>): Promise<voi
   }
 }
 
-/**
- * Initialize Supabase client (stub for implementation)
- */
 export async function initializeSupabaseSync(url: string, key: string): Promise<boolean> {
   try {
-    // Validate URL and key format
     if (!url || !key) {
       throw new Error('Supabase URL and key are required');
     }
 
-    // In a real implementation, this would initialize Supabase client
-    // For now, we'll just validate and store the settings
     await saveCloudSyncSettings({
       enabled: true,
       provider: 'supabase',
@@ -111,9 +93,6 @@ export async function initializeSupabaseSync(url: string, key: string): Promise<
   }
 }
 
-/**
- * Initialize Firebase sync (stub for implementation)
- */
 export async function initializeFirebaseSync(
   projectId: string,
   apiKey: string
@@ -138,9 +117,6 @@ export async function initializeFirebaseSync(
   }
 }
 
-/**
- * Sync sessions to cloud
- */
 export async function syncSessionsToCloud(sessions: WorkoutSession[]): Promise<boolean> {
   try {
     const settings = await getCloudSyncSettings();
@@ -148,10 +124,8 @@ export async function syncSessionsToCloud(sessions: WorkoutSession[]): Promise<b
 
     await updateSyncStatus({ syncing: true });
 
-    // Stub implementation - would integrate with actual cloud provider
     console.log(`Syncing ${sessions.length} sessions to ${settings.provider}`);
 
-    // Simulate sync delay
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     await updateSyncStatus({
@@ -173,9 +147,6 @@ export async function syncSessionsToCloud(sessions: WorkoutSession[]): Promise<b
   }
 }
 
-/**
- * Sync PRs to cloud
- */
 export async function syncPRsToCloud(prs: Record<string, PersonalRecord>): Promise<boolean> {
   try {
     const settings = await getCloudSyncSettings();
@@ -185,7 +156,6 @@ export async function syncPRsToCloud(prs: Record<string, PersonalRecord>): Promi
 
     console.log(`Syncing ${Object.keys(prs).length} PRs to ${settings.provider}`);
 
-    // Simulate sync delay
     await new Promise(resolve => setTimeout(resolve, 800));
 
     await updateSyncStatus({
@@ -204,9 +174,6 @@ export async function syncPRsToCloud(prs: Record<string, PersonalRecord>): Promi
   }
 }
 
-/**
- * Sync all data to cloud
- */
 export async function syncAllToCloud(
   sessions: WorkoutSession[],
   prs: Record<string, PersonalRecord>
@@ -217,7 +184,6 @@ export async function syncAllToCloud(
 
     await updateSyncStatus({ syncing: true });
 
-    // Sync both in parallel
     const [sessionsOk, prsOk] = await Promise.all([
       syncSessionsToCloud(sessions),
       syncPRsToCloud(prs),
@@ -245,9 +211,6 @@ export async function syncAllToCloud(
   }
 }
 
-/**
- * Check if auto-sync should be performed
- */
 export async function shouldAutoSync(): Promise<boolean> {
   try {
     const settings = await getCloudSyncSettings();
@@ -267,9 +230,6 @@ export async function shouldAutoSync(): Promise<boolean> {
   }
 }
 
-/**
- * Get last sync time
- */
 export async function getLastSyncTime(): Promise<string | null> {
   try {
     return await AsyncStorage.getItem(LAST_SYNC_KEY);
@@ -279,9 +239,6 @@ export async function getLastSyncTime(): Promise<string | null> {
   }
 }
 
-/**
- * Disable cloud sync
- */
 export async function disableCloudSync(): Promise<void> {
   try {
     await saveCloudSyncSettings({

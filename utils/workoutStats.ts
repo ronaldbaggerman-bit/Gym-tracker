@@ -1,16 +1,16 @@
-import type { WorkoutSession, WorkoutExercise } from '@/app/types/workout';
+import type { WorkoutExercise, WorkoutSession } from '@/app/types/workout';
 
 export interface WorkoutStats {
   totalWorkouts: number;
-  totalVolume: number; // kg × reps total
+  totalVolume: number;
   totalSets: number;
   totalReps: number;
-  averageWorkoutDuration: number; // minutes
-  currentStreak: number; // days in a row
+  averageWorkoutDuration: number;
+  currentStreak: number;
   longestStreak: number;
-  exerciseFrequency: Record<string, number>; // exercise name -> count
+  exerciseFrequency: Record<string, number>;
   volumeByWeek: Array<{ week: string; volume: number }>;
-  workoutsByMonth: Record<string, number>; // YYYY-MM -> count
+  workoutsByMonth: Record<string, number>;
 }
 
 export interface ExerciseStats {
@@ -39,32 +39,22 @@ export interface ExerciseVolumeEntry {
   volume: number;
 }
 
-/**
- * Calculate total volume (weight × reps) for an exercise
- */
 export function calculateExerciseVolume(exercise: WorkoutExercise): number {
   return exercise.sets
     .filter(s => s.completed)
     .reduce((sum, set) => sum + (set.weight * set.reps), 0);
 }
 
-/**
- * Calculate workout duration in minutes
- */
 export function calculateWorkoutDuration(session: WorkoutSession): number {
   if (!session.startTime || !session.endTime) return 0;
   const start = new Date(session.startTime).getTime();
   const end = new Date(session.endTime).getTime();
-  return Math.round((end - start) / (1000 * 60)); // minutes
+  return Math.round((end - start) / (1000 * 60));
 }
 
-/**
- * Calculate current workout streak (consecutive days)
- */
 export function calculateStreak(sessions: WorkoutSession[]): { current: number; longest: number } {
   if (!sessions || sessions.length === 0) return { current: 0, longest: 0 };
 
-  // Sort by date descending, filter out invalid sessions (if completed doesn't exist, assume completed)
   const sorted = [...sessions]
     .filter(s => s && s.date && (s.completed !== false))
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -83,13 +73,11 @@ export function calculateStreak(sessions: WorkoutSession[]): { current: number; 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Check if last workout was today or yesterday
   const daysSinceLastWorkout = Math.floor((today.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
   if (daysSinceLastWorkout <= 1) {
     currentStreak = 1;
   }
 
-  // Calculate streaks
   for (let i = 1; i < sorted.length; i++) {
     const currentSession = sorted[i];
     if (!currentSession || !currentSession.date) continue;
@@ -119,9 +107,6 @@ export function calculateStreak(sessions: WorkoutSession[]): { current: number; 
   return { current: currentStreak, longest: longestStreak };
 }
 
-/**
- * Get exercise frequency (how many times each exercise was performed)
- */
 export function getExerciseFrequency(sessions: WorkoutSession[]): Record<string, number> {
   const frequency: Record<string, number> = {};
 
@@ -129,7 +114,6 @@ export function getExerciseFrequency(sessions: WorkoutSession[]): Record<string,
 
   sessions.forEach(session => {
     if (!session || !session.exercises || !Array.isArray(session.exercises)) return;
-    // Only count from completed sessions
     if (session.completed === false) return;
     session.exercises
       .filter(ex => ex && (ex.completed !== false))
@@ -141,9 +125,6 @@ export function getExerciseFrequency(sessions: WorkoutSession[]): Record<string,
   return frequency;
 }
 
-/**
- * Calculate volume by week (last 12 weeks)
- */
 export function getVolumeByWeek(sessions: WorkoutSession[]): Array<{ week: string; volume: number }> {
   const weeklyVolume: Record<string, number> = {};
 
@@ -153,23 +134,19 @@ export function getVolumeByWeek(sessions: WorkoutSession[]): Array<{ week: strin
     if (!session || !session.date || !session.exercises || !Array.isArray(session.exercises)) return;
     const date = new Date(session.date);
     const weekStart = new Date(date);
-    weekStart.setDate(date.getDate() - date.getDay()); // Start of week (Sunday)
+    weekStart.setDate(date.getDate() - date.getDay());
     const weekKey = weekStart.toISOString().split('T')[0];
 
     const sessionVolume = session.exercises.reduce((sum, ex) => sum + (ex ? calculateExerciseVolume(ex) : 0), 0);
     weeklyVolume[weekKey] = (weeklyVolume[weekKey] || 0) + sessionVolume;
   });
 
-  // Convert to array and sort by date
   return Object.entries(weeklyVolume)
     .map(([week, volume]) => ({ week, volume }))
     .sort((a, b) => a.week.localeCompare(b.week))
-    .slice(-12); // Last 12 weeks
+    .slice(-12);
 }
 
-/**
- * Get workouts by month
- */
 export function getWorkoutsByMonth(sessions: WorkoutSession[]): Record<string, number> {
   const monthly: Record<string, number> = {};
 
@@ -186,9 +163,6 @@ export function getWorkoutsByMonth(sessions: WorkoutSession[]): Record<string, n
   return monthly;
 }
 
-/**
- * Get detailed stats for a specific exercise across all sessions
- */
 export function getExerciseStats(sessions: WorkoutSession[], exerciseName: string): ExerciseStats | null {
   if (!sessions || !Array.isArray(sessions)) return null;
 
@@ -208,7 +182,6 @@ export function getExerciseStats(sessions: WorkoutSession[], exerciseName: strin
   const maxWeight = weights.length > 0 ? Math.max(...weights) : 0;
   const averageWeight = weights.length > 0 ? weights.reduce((a, b) => a + b, 0) / weights.length : 0;
 
-  // Find last performed date
   const sessionsWithExercise = sessions.filter(s => 
     s && s.exercises && (s.completed !== false) && s.exercises.some(ex => ex && ex.name === exerciseName && (ex.completed !== false))
   );
@@ -228,9 +201,6 @@ export function getExerciseStats(sessions: WorkoutSession[], exerciseName: strin
   };
 }
 
-/**
- * Aggregate volume per exercise across all sessions
- */
 export function getExerciseVolumeSummary(sessions: WorkoutSession[]): ExerciseVolumeSummary[] {
   if (!sessions || !Array.isArray(sessions)) return [];
 
@@ -277,9 +247,6 @@ export function getExerciseVolumeSummary(sessions: WorkoutSession[]): ExerciseVo
     .sort((a, b) => b.totalVolume - a.totalVolume);
 }
 
-/**
- * Get per-session volume history for a specific exercise
- */
 export function getExerciseVolumeHistory(sessions: WorkoutSession[], exerciseName: string): ExerciseVolumeEntry[] {
   if (!sessions || !Array.isArray(sessions) || !exerciseName) return [];
 
@@ -303,9 +270,6 @@ export function getExerciseVolumeHistory(sessions: WorkoutSession[], exerciseNam
   return entries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 }
 
-/**
- * Calculate comprehensive workout statistics
- */
 export function calculateWorkoutStats(sessions: WorkoutSession[]): WorkoutStats {
   if (!sessions || !Array.isArray(sessions)) {
     return {
@@ -322,7 +286,6 @@ export function calculateWorkoutStats(sessions: WorkoutSession[]): WorkoutStats 
     };
   }
 
-  // Filter completed sessions (if completed field doesn't exist, assume it's completed)
   const completedSessions = sessions.filter(s => s && (s.completed !== false));
 
   const totalVolume = completedSessions.reduce((sum, session) => {

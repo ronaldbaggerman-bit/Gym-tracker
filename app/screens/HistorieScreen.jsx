@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { COLORS } from '@/app/styles/colors';
+import React from 'react';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 
 export default function HistorieScreen() {
   const [history] = React.useState([

@@ -1,14 +1,13 @@
-import { useRef, useEffect } from 'react';
-import {
-  View,
-  Animated,
-  PanResponder,
-  StyleSheet,
-  ViewStyle,
-  Text,
-} from 'react-native';
 import { COLORS } from '@/app/styles/colors';
 import { ThemedText } from '@/components/themed-text';
+import { useEffect, useRef } from 'react';
+import {
+    Animated,
+    PanResponder,
+    StyleSheet,
+    View,
+    ViewStyle
+} from 'react-native';
 
 interface SwipeableRowProps {
   children: React.ReactNode;

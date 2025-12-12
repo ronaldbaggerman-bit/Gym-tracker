@@ -1,23 +1,23 @@
-import { useEffect, useState, useMemo } from 'react';
-import { StyleSheet, View, FlatList, TouchableOpacity, TextInput, Alert, RefreshControl, Share, Modal, Animated } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
+import { useEffect, useMemo, useState } from 'react';
+import { Alert, FlatList, Modal, RefreshControl, Share, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ThemedText } from '@/components/themed-text';
-import { SwipeableRow } from '@/components/SwipeableRow';
-import { VersionHistoryView } from '@/components/VersionHistoryView';
-import { UndoSnackbar, type UndoAction } from '@/components/UndoSnackbar';
-import { ScreenTransition } from '@/components/ScreenTransition';
-import { loadSessions, removeSession, saveSessionsList } from '@/app/utils/storage';
-import { importCsvSessions, clearImportedSessions } from '@/app/utils/csvImport';
-import { WORKOUT_DATA } from '@/app/data/workoutData';
-import { loadSettings } from '@/app/utils/settingsStorage';
-import { calculateTotalSessionKcal, formatKcalDisplay } from '@/app/utils/kcalCalculator';
-import { getExerciseVolumeSummary, getExerciseVolumeHistory } from '@/app/utils/workoutStats';
 import { EXERCISE_GUIDES } from '@/app/data/exerciseGuides';
+import { WORKOUT_DATA } from '@/app/data/workoutData';
 import { useThemeColors } from '@/app/hooks/useThemeColors';
+import { clearImportedSessions, importCsvSessions } from '@/utils/csvImport';
+import { calculateTotalSessionKcal, formatKcalDisplay } from '@/utils/kcalCalculator';
+import { loadSettings } from '@/utils/settingsStorage';
+import { loadSessions, removeSession, saveSessionsList } from '@/utils/storage';
+import { getExerciseVolumeHistory, getExerciseVolumeSummary } from '@/utils/workoutStats';
+import { ScreenTransition } from '@/components/ScreenTransition';
+import { SwipeableRow } from '@/components/SwipeableRow';
+import { ThemedText } from '@/components/themed-text';
+import { UndoSnackbar, type UndoAction } from '@/components/UndoSnackbar';
+import { VersionHistoryView } from '@/components/VersionHistoryView';
 
 export default function HistorieScreen() {
   const insets = useSafeAreaInsets();

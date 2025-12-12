@@ -1,14 +1,14 @@
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Dimensions, RefreshControl } from 'react-native';
-import { useState, useEffect, useCallback } from 'react';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
-import Svg, { Defs, Pattern, Rect, Circle } from 'react-native-svg';
-import { loadSessions } from '@/app/utils/storage';
-import { calculateWorkoutStats, getExerciseStats, type WorkoutStats, type ExerciseStats } from '@/app/utils/workoutStats';
 import { EXERCISE_GUIDES } from '@/app/data/exerciseGuides';
-import { WeeklyVolumeChart } from '@/components/WeeklyVolumeChart';
-import { ScreenTransition } from '@/components/ScreenTransition';
 import type { WorkoutSession } from '@/app/types/workout';
+import { loadSessions } from '@/app/utils/storage';
+import { calculateWorkoutStats, getExerciseStats, type ExerciseStats, type WorkoutStats } from '@/app/utils/workoutStats';
+import { ScreenTransition } from '@/components/ScreenTransition';
+import { WeeklyVolumeChart } from '@/components/WeeklyVolumeChart';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useState } from 'react';
+import { ActivityIndicator, Dimensions, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Circle, Defs, Pattern, Rect } from 'react-native-svg';
 
 const { width, height } = Dimensions.get('window');
 

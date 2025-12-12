@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import { StyleSheet, View, Modal, Animated, TouchableOpacity } from 'react-native';
-import { ThemedText } from '@/components/themed-text';
 import { COLORS } from '@/app/styles/colors';
+import { ThemedText } from '@/components/themed-text';
 import * as Haptics from 'expo-haptics';
+import { useEffect, useState } from 'react';
+import { Animated, Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 interface PRCelebrationProps {
   visible: boolean;

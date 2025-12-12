@@ -1,26 +1,24 @@
-import { useState, useEffect } from 'react';
-import {
-  StyleSheet,
-  View,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-  ScrollView,
-  TextInput,
-} from 'react-native';
-import { ThemedText } from '@/components/themed-text';
 import { COLORS } from '@/app/styles/colors';
 import {
-  getCloudSyncSettings,
-  saveCloudSyncSettings,
-  initializeSupabaseSync,
-  initializeFirebaseSync,
-  syncAllToCloud,
-  getSyncStatus,
-  getLastSyncTime,
-  disableCloudSync,
-} from '@/app/utils/cloudSync';
-import { loadSessions, loadPRs } from '@/app/utils/storage';
+    disableCloudSync,
+    getCloudSyncSettings,
+    getSyncStatus,
+    initializeFirebaseSync,
+    initializeSupabaseSync,
+    syncAllToCloud
+} from '@/utils/cloudSync';
+import { loadPRs, loadSessions } from '@/utils/storage';
+import { ThemedText } from '@/components/themed-text';
+import { useEffect, useState } from 'react';
+import {
+    ActivityIndicator,
+    Alert,
+    ScrollView,
+    StyleSheet,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 
 interface CloudSyncSettingsState {
   provider: 'supabase' | 'firebase' | 'none';

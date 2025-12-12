@@ -2,12 +2,12 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 import { ImageBackground, StyleSheet } from 'react-native';
 
+import { useThemeColors } from '@/app/hooks/useThemeColors';
+import { CARBON_SVG_URI } from '@/app/styles/carbonBackground';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { CARBON_SVG_URI } from '@/app/styles/carbonBackground';
-import { useThemeColors } from '@/app/hooks/useThemeColors';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();

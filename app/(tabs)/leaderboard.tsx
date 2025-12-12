@@ -1,8 +1,8 @@
+import { useThemeColors } from '@/app/hooks/useThemeColors';
+import { LeaderboardView } from '@/components/LeaderboardView';
+import { ThemedText } from '@/components/themed-text';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ThemedText } from '@/components/themed-text';
-import { LeaderboardView } from '@/components/LeaderboardView';
-import { useThemeColors } from '@/app/hooks/useThemeColors';
 
 export default function LeaderboardScreen() {
   const insets = useSafeAreaInsets();

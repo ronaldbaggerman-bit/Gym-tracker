@@ -1,15 +1,15 @@
-import { useEffect, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Modal, ScrollView, Alert } from 'react-native';
-import { ThemedText } from '@/components/themed-text';
 import { COLORS } from '@/app/styles/colors';
 import {
-  getOfflineStatus,
-  subscribeToOfflineStatus,
-  formatLastOnlineTime,
-  getPendingData,
-  clearPendingData,
-  type OfflineStatus,
-} from '@/app/utils/offlineManager';
+    clearPendingData,
+    formatLastOnlineTime,
+    getOfflineStatus,
+    getPendingData,
+    subscribeToOfflineStatus,
+    type OfflineStatus,
+} from '@/utils/offlineManager';
+import { ThemedText } from '@/components/themed-text';
+import { useEffect, useState } from 'react';
+import { Alert, Modal, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export function OfflineIndicator() {
   const [status, setStatus] = useState<OfflineStatus>({

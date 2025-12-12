@@ -1,7 +1,7 @@
-import { StyleSheet, View, FlatList, TouchableOpacity } from 'react-native';
-import { ThemedText } from '@/components/themed-text';
-import type { MuscleGroup, Exercise } from '@/app/data/workoutData';
+import type { Exercise, MuscleGroup } from '@/app/data/workoutData';
 import { COLORS } from '@/app/styles/colors';
+import { ThemedText } from '@/components/themed-text';
+import { FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 interface ExerciseListProps {
   muscleGroup: MuscleGroup;

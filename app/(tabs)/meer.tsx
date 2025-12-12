@@ -1,10 +1,10 @@
-import { StyleSheet, View, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Defs, Pattern, Rect, Circle } from 'react-native-svg';
+import { useThemeColors } from '@/app/hooks/useThemeColors';
 import { ThemedText } from '@/components/themed-text';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { useThemeColors } from '@/app/hooks/useThemeColors';
+import { useRouter } from 'expo-router';
+import { Dimensions, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Circle, Defs, Pattern, Rect } from 'react-native-svg';
 
 const { width, height } = Dimensions.get('window');
 

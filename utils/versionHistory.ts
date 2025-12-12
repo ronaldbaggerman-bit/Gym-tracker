@@ -1,10 +1,10 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { WorkoutSession } from '@/app/types/workout';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const VERSION_HISTORY_KEY = 'session_version_history';
-const MAX_VERSIONS_PER_SESSION = 10; // Keep last 10 versions
+const MAX_VERSIONS_PER_SESSION = 10;
 
-interface SessionVersion {
+export interface SessionVersion {
   versionId: string;
   sessionId: string;
   timestamp: string;
@@ -16,9 +16,6 @@ interface SessionVersionHistory {
   [sessionId: string]: SessionVersion[];
 }
 
-/**
- * Get all version history
- */
 export async function getVersionHistory(): Promise<SessionVersionHistory> {
   try {
     const stored = await AsyncStorage.getItem(VERSION_HISTORY_KEY);
@@ -29,9 +26,6 @@ export async function getVersionHistory(): Promise<SessionVersionHistory> {
   }
 }
 
-/**
- * Get versions for a specific session
- */
 export async function getSessionVersions(sessionId: string): Promise<SessionVersion[]> {
   try {
     const history = await getVersionHistory();
@@ -42,9 +36,6 @@ export async function getSessionVersions(sessionId: string): Promise<SessionVers
   }
 }
 
-/**
- * Save a new version of a session
- */
 export async function saveSessionVersion(
   session: WorkoutSession,
   changeDescription?: string
@@ -67,7 +58,6 @@ export async function saveSessionVersion(
 
     history[sessionId].push(version);
 
-    // Keep only last MAX_VERSIONS_PER_SESSION
     if (history[sessionId].length > MAX_VERSIONS_PER_SESSION) {
       history[sessionId] = history[sessionId].slice(-MAX_VERSIONS_PER_SESSION);
     }
@@ -80,9 +70,6 @@ export async function saveSessionVersion(
   }
 }
 
-/**
- * Get a specific version
- */
 export async function getSessionVersion(versionId: string): Promise<SessionVersion | null> {
   try {
     const history = await getVersionHistory();
@@ -97,9 +84,6 @@ export async function getSessionVersion(versionId: string): Promise<SessionVersi
   }
 }
 
-/**
- * Restore a session to a specific version
- */
 export async function restoreSessionVersion(versionId: string): Promise<WorkoutSession | null> {
   try {
     const version = await getSessionVersion(versionId);
@@ -113,9 +97,6 @@ export async function restoreSessionVersion(versionId: string): Promise<WorkoutS
   }
 }
 
-/**
- * Delete a specific version
- */
 export async function deleteSessionVersion(versionId: string): Promise<void> {
   try {
     const history = await getVersionHistory();
@@ -134,9 +115,6 @@ export async function deleteSessionVersion(versionId: string): Promise<void> {
   }
 }
 
-/**
- * Delete all versions for a session
- */
 export async function clearSessionVersions(sessionId: string): Promise<void> {
   try {
     const history = await getVersionHistory();
@@ -148,9 +126,6 @@ export async function clearSessionVersions(sessionId: string): Promise<void> {
   }
 }
 
-/**
- * Compare two versions and return changes
- */
 export function compareVersions(
   v1: WorkoutSession,
   v2: WorkoutSession
@@ -189,54 +164,23 @@ export function compareVersions(
   };
 }
 
-/**
- * Format timestamp for display
- */
 export function formatVersionTime(isoString: string): string {
   try {
     const date = new Date(isoString);
     const now = new Date();
     const diffMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
 
-    if (diffMinutes < 1) return 'Just now';
-    if (diffMinutes < 60) return `${diffMinutes}m ago`;
+    if (diffMinutes < 1) return 'Nu';
+    if (diffMinutes < 60) return `${diffMinutes}m geleden`;
     
     const diffHours = Math.floor(diffMinutes / 60);
-    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffHours < 24) return `${diffHours}u geleden`;
 
     const diffDays = Math.floor(diffHours / 24);
-    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffDays < 7) return `${diffDays}d geleden`;
 
-    return date.toLocaleDateString('nl-NL', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    return date.toLocaleDateString('nl-NL');
   } catch {
     return isoString;
-  }
-}
-
-/**
- * Clear old version history (keep last N days)
- */
-export async function pruneVersionHistory(daysToKeep: number = 30): Promise<void> {
-  try {
-    const history = await getVersionHistory();
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
-
-    for (const sessionId of Object.keys(history)) {
-      history[sessionId] = history[sessionId].filter(v => new Date(v.timestamp) > cutoffDate);
-      if (history[sessionId].length === 0) {
-        delete history[sessionId];
-      }
-    }
-
-    await AsyncStorage.setItem(VERSION_HISTORY_KEY, JSON.stringify(history));
-  } catch (error) {
-    console.error('Failed to prune version history:', error);
-    throw error;
   }
 }

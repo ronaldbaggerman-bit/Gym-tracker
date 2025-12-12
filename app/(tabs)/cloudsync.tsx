@@ -1,8 +1,8 @@
-import { StyleSheet, View, ScrollView } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ThemedText } from '@/components/themed-text';
-import { CloudSyncSettings } from '@/components/CloudSyncSettings';
 import { useThemeColors } from '@/app/hooks/useThemeColors';
+import { CloudSyncSettings } from '@/components/CloudSyncSettings';
+import { ThemedText } from '@/components/themed-text';
+import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function CloudSyncScreen() {
   const insets = useSafeAreaInsets();

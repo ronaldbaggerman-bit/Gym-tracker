@@ -1,9 +1,9 @@
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
-import { useMemo } from 'react';
-import { ThemedText } from '@/components/themed-text';
 import type { Schema } from '@/app/data/workoutData';
 import { useThemeColors } from '@/app/hooks/useThemeColors';
 import { getColors } from '@/app/styles/colors';
+import { ThemedText } from '@/components/themed-text';
+import { useMemo } from 'react';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 interface SchemaSelectorProps {
   schemas: Schema[];

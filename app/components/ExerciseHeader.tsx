@@ -1,14 +1,14 @@
-import React, { memo, useMemo } from 'react';
-import { View, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
-import { ThemedText } from '@/components/themed-text';
-import type { WorkoutExercise, DifficultyRating } from '@/app/types/workout';
 import { EXERCISE_GUIDES } from '@/app/data/exerciseGuides';
-import { getPRDisplay } from '@/app/utils/prTracker';
-import { calculateProgressiveOverload, formatProgressiveSuggestion } from '@/app/utils/progressiveOverload';
-import { calculate1RMFromPR, format1RMDisplay } from '@/app/utils/oneRepMaxCalculator';
-import { calculateExerciseKcal, formatKcalDisplay } from '@/app/utils/kcalCalculator';
 import { useThemeColors } from '@/app/hooks/useThemeColors';
 import { getColors } from '@/app/styles/colors';
+import type { WorkoutExercise } from '@/app/types/workout';
+import { calculateExerciseKcal, formatKcalDisplay } from '@/utils/kcalCalculator';
+import { calculate1RMFromPR, format1RMDisplay } from '@/utils/oneRepMaxCalculator';
+import { getPRDisplay } from '@/utils/prTracker';
+import { calculateProgressiveOverload, formatProgressiveSuggestion } from '@/utils/progressiveOverload';
+import { ThemedText } from '@/components/themed-text';
+import React, { memo, useMemo } from 'react';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 interface ExerciseHeaderProps {
   exercise: WorkoutExercise;

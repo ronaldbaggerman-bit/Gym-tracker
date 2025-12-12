@@ -1,9 +1,9 @@
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
-import { useMemo } from 'react';
-import { ThemedText } from '@/components/themed-text';
-import type { ExerciseSet, DifficultyRating } from '@/app/types/workout';
 import { useThemeColors } from '@/app/hooks/useThemeColors';
 import { getColors } from '@/app/styles/colors';
+import type { ExerciseSet } from '@/app/types/workout';
+import { ThemedText } from '@/components/themed-text';
+import { useMemo } from 'react';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 interface SetRowProps {
   set: ExerciseSet;

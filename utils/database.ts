@@ -3,26 +3,19 @@ import * as SQLite from 'expo-sqlite';
 const DATABASE_NAME = 'gym_track.db';
 let db: SQLite.SQLiteDatabase | null = null;
 
-// Query result caching
 interface CacheEntry {
   data: any;
   timestamp: number;
-  ttl: number; // Time to live in milliseconds
+  ttl: number;
 }
 
 const queryCache: Record<string, CacheEntry> = {};
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes default
+const CACHE_TTL = 5 * 60 * 1000;
 
-/**
- * Check if cached data is still valid
- */
 function isCacheValid(entry: CacheEntry): boolean {
   return Date.now() - entry.timestamp < entry.ttl;
 }
 
-/**
- * Get from cache if valid
- */
 function getFromCache(key: string): any | null {
   const entry = queryCache[key];
   if (entry && isCacheValid(entry)) {
@@ -32,9 +25,6 @@ function getFromCache(key: string): any | null {
   return null;
 }
 
-/**
- * Store in cache
- */
 function setCache(key: string, data: any, ttl: number = CACHE_TTL): void {
   queryCache[key] = {
     data,
@@ -43,9 +33,6 @@ function setCache(key: string, data: any, ttl: number = CACHE_TTL): void {
   };
 }
 
-/**
- * Clear cache for specific pattern
- */
 function clearCache(pattern?: string): void {
   if (!pattern) {
     Object.keys(queryCache).forEach(key => delete queryCache[key]);
@@ -64,7 +51,6 @@ export async function initDatabase() {
     
     db = await SQLite.openDatabaseAsync(DATABASE_NAME);
     
-    // Create sessions table with indexes for performance
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS sessions (
         id TEXT PRIMARY KEY,
@@ -82,9 +68,6 @@ export async function initDatabase() {
       CREATE INDEX IF NOT EXISTS idx_updatedAt ON sessions(updatedAt DESC);
     `);
     
-    // Create personal records table
-    await db.execAsync(`DROP TABLE IF EXISTS personal_records;`);
-    
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS personal_records (
         exerciseName TEXT PRIMARY KEY,
@@ -97,7 +80,6 @@ export async function initDatabase() {
       CREATE INDEX IF NOT EXISTS idx_pr_updatedAt ON personal_records(updatedAt DESC);
     `);
     
-    // Optimize database performance
     await db.execAsync(`
       PRAGMA journal_mode = WAL;
       PRAGMA synchronous = NORMAL;
@@ -120,7 +102,6 @@ export async function getDatabase() {
   return db;
 }
 
-// Session operations with pagination
 export async function saveSessionToDB(session: any) {
   try {
     const database = await getDatabase();
@@ -146,11 +127,6 @@ export async function saveSessionToDB(session: any) {
   }
 }
 
-/**
- * Load sessions with pagination for better performance on large datasets
- * @param limit Number of records per page
- * @param offset Starting position
- */
 export async function loadSessionsFromDB(limit: number = 100, offset: number = 0) {
   try {
     const database = await getDatabase();
@@ -175,7 +151,7 @@ export async function loadSessionsFromDB(limit: number = 100, offset: number = 0
       endTime: row.endTime ? new Date(row.endTime) : null,
     }));
 
-    setCache(cacheKey, parsed, 2 * 60 * 1000); // Cache for 2 minutes
+    setCache(cacheKey, parsed, 2 * 60 * 1000);
     return parsed;
   } catch (e) {
     console.error('[Database] loadSessionsFromDB error:', e);
@@ -183,9 +159,6 @@ export async function loadSessionsFromDB(limit: number = 100, offset: number = 0
   }
 }
 
-/**
- * Get total session count for pagination
- */
 export async function getSessionCountFromDB(): Promise<number> {
   try {
     const database = await getDatabase();
@@ -202,7 +175,7 @@ export async function getSessionCountFromDB(): Promise<number> {
     );
 
     const count = result?.count || 0;
-    setCache(cacheKey, count, 1 * 60 * 1000); // Cache for 1 minute
+    setCache(cacheKey, count, 1 * 60 * 1000);
     return count;
   } catch (e) {
     console.error('[Database] getSessionCountFromDB error:', e);
@@ -210,10 +183,6 @@ export async function getSessionCountFromDB(): Promise<number> {
   }
 }
 
-/**
- * Get all sessions without pagination (for reports/export)
- * Use with caution on large datasets
- */
 export async function loadAllSessionsFromDB() {
   try {
     const database = await getDatabase();
@@ -237,7 +206,7 @@ export async function loadAllSessionsFromDB() {
       endTime: row.endTime ? new Date(row.endTime) : null,
     }));
 
-    setCache(cacheKey, parsed, 5 * 60 * 1000); // Cache for 5 minutes
+    setCache(cacheKey, parsed, 5 * 60 * 1000);
     return parsed;
   } catch (e) {
     console.error('[Database] loadAllSessionsFromDB error:', e);
@@ -275,9 +244,6 @@ export async function clearAllSessionsFromDB() {
   }
 }
 
-/**
- * Optimized bulk insert with transaction
- */
 export async function bulkInsertSessionsToDB(sessions: any[]) {
   try {
     const database = await getDatabase();
@@ -306,7 +272,6 @@ export async function bulkInsertSessionsToDB(sessions: any[]) {
   }
 }
 
-// Personal Records operations with caching
 export async function savePRToDB(exerciseName: string, pr: any) {
   try {
     const database = await getDatabase();
@@ -333,9 +298,6 @@ export async function savePRToDB(exerciseName: string, pr: any) {
   }
 }
 
-/**
- * Load all PRs with caching
- */
 export async function loadPRsFromDB() {
   try {
     const database = await getDatabase();
@@ -360,7 +322,7 @@ export async function loadPRsFromDB() {
       };
     });
 
-    setCache(cacheKey, prs, 5 * 60 * 1000); // Cache for 5 minutes
+    setCache(cacheKey, prs, 5 * 60 * 1000);
     return prs;
   } catch (e) {
     console.error('[Database] loadPRsFromDB error:', e);
@@ -368,9 +330,6 @@ export async function loadPRsFromDB() {
   }
 }
 
-/**
- * Get specific PR with caching
- */
 export async function getPRFromDB(exerciseName: string) {
   try {
     const database = await getDatabase();
@@ -394,42 +353,10 @@ export async function getPRFromDB(exerciseName: string) {
       maxRepsDate: result.maxRepsDate,
     } : null;
 
-    setCache(cacheKey, pr, 5 * 60 * 1000); // Cache for 5 minutes
+    setCache(cacheKey, pr, 5 * 60 * 1000);
     return pr;
   } catch (e) {
     console.error('[Database] getPRFromDB error:', e);
     return null;
   }
-}
-
-/**
- * Get database statistics for debugging
- */
-export async function getDatabaseStats() {
-  try {
-    const database = await getDatabase();
-    if (!database) throw new Error('Database not initialized');
-
-    const sessionCount = await getSessionCountFromDB();
-    const prResult: any = await database.getFirstAsync('SELECT COUNT(*) as count FROM personal_records');
-    const prCount = prResult?.count || 0;
-
-    return {
-      sessionCount,
-      prCount,
-      cacheSize: Object.keys(queryCache).length,
-      cacheTTL: CACHE_TTL,
-    };
-  } catch (e) {
-    console.error('[Database] getDatabaseStats error:', e);
-    return null;
-  }
-}
-
-/**
- * Clear all caches manually
- */
-export function clearAllCaches() {
-  clearCache();
-  console.log('[Database] All caches cleared');
 }

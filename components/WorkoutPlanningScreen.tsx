@@ -1,17 +1,16 @@
-import { useState, useMemo, useCallback } from 'react';
-import {
-  View,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  Dimensions,
-  TextInput,
-  Alert,
-} from 'react-native';
-import { ThemedText } from '@/components/themed-text';
-import { COLORS } from '@/app/styles/colors';
 import { EXERCISE_GUIDES } from '@/app/data/exerciseGuides';
 import type { Schema } from '@/app/data/workoutData';
+import { COLORS } from '@/app/styles/colors';
+import { ThemedText } from '@/components/themed-text';
+import { useCallback, useMemo, useState } from 'react';
+import {
+    Alert,
+    ScrollView,
+    StyleSheet,
+    TextInput,
+    TouchableOpacity,
+    View
+} from 'react-native';
 
 interface WorkoutPlanEntry {
   exerciseName: string;

@@ -1,15 +1,15 @@
-import { useState, useEffect, useMemo } from 'react';
-import { StyleSheet, View, FlatList, TouchableOpacity, Share, ActivityIndicator } from 'react-native';
-import { ThemedText } from '@/components/themed-text';
 import { useThemeColors } from '@/app/hooks/useThemeColors';
 import {
-  getUserAchievements,
-  getLeaderboard,
-  formatRank,
-  getAchievementShareText,
-  type UserAchievement,
-  type LeaderboardEntry,
-} from '@/app/utils/leaderboard';
+    formatRank,
+    getAchievementShareText,
+    getLeaderboard,
+    getUserAchievements,
+    type LeaderboardEntry,
+    type UserAchievement,
+} from '@/utils/leaderboard';
+import { ThemedText } from '@/components/themed-text';
+import { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, FlatList, Share, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 interface LeaderboardViewProps {
   userId?: string;

@@ -1,21 +1,20 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
-import { StyleSheet, View, ScrollView, TouchableOpacity, Dimensions, RefreshControl, FlatList, Modal } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
-import Svg, { Defs, Pattern, Rect, Circle } from 'react-native-svg';
-import { ThemedText } from '@/components/themed-text';
-import { ProgressLineChart } from '@/components/ProgressLineChart';
-import { loadSessions } from '@/app/utils/storage';
-import { loadSettings, updateSetting } from '@/app/utils/settingsStorage';
 import { WORKOUT_DATA } from '@/app/data/workoutData';
-import { 
-  getExerciseProgressionData, 
-  getExercisesWithProgress,
-  getSchemasWithProgress,
-  calculateProgressionMetrics,
-  type ProgressionDataPoint 
-} from '@/app/utils/progressionData';
 import { COLORS } from '@/app/styles/colors';
+import {
+    calculateProgressionMetrics,
+    getExerciseProgressionData,
+    getExercisesWithProgress,
+    getSchemasWithProgress
+} from '@/app/utils/progressionData';
+import { loadSettings, updateSetting } from '@/app/utils/settingsStorage';
+import { loadSessions } from '@/app/utils/storage';
+import { ProgressLineChart } from '@/components/ProgressLineChart';
+import { ThemedText } from '@/components/themed-text';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Dimensions, FlatList, Modal, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Circle, Defs, Pattern, Rect } from 'react-native-svg';
 
 const { width, height } = Dimensions.get('window');
 

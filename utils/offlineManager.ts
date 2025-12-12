@@ -13,23 +13,17 @@ interface OfflineStatus {
 let offlineStatusListeners: ((status: OfflineStatus) => void)[] = [];
 let offlineCheckInterval: NodeJS.Timeout | null = null;
 
-/**
- * Initialize offline detection
- */
 export async function initializeOfflineDetection(callback?: (status: OfflineStatus) => void): Promise<void> {
   try {
-    // Add listener callback if provided
     if (callback) {
       offlineStatusListeners.push(callback);
     }
 
-    // Set initial online time
     const lastOnline = await AsyncStorage.getItem(LAST_ONLINE_TIME_KEY);
     if (!lastOnline) {
       await AsyncStorage.setItem(LAST_ONLINE_TIME_KEY, new Date().toISOString());
     }
 
-    // Periodic check (every 30 seconds)
     if (offlineCheckInterval) clearInterval(offlineCheckInterval);
     
     offlineCheckInterval = setInterval(() => {
@@ -42,17 +36,13 @@ export async function initializeOfflineDetection(callback?: (status: OfflineStat
   }
 }
 
-/**
- * Get current offline status
- */
 export async function getOfflineStatus(): Promise<OfflineStatus> {
   try {
     const lastOnlineTime = await AsyncStorage.getItem(LAST_ONLINE_TIME_KEY);
     const offlineData = await AsyncStorage.getItem(OFFLINE_DATA_KEY);
     const pendingData = offlineData ? JSON.parse(offlineData) : [];
 
-    // Simple check: assume online (in real app, would use device network state)
-    const isOffline = false; // Default to online unless explicitly set
+    const isOffline = false;
 
     return {
       isOffline,
@@ -69,9 +59,6 @@ export async function getOfflineStatus(): Promise<OfflineStatus> {
   }
 }
 
-/**
- * Mark as offline
- */
 export async function setOfflineMode(isOffline: boolean): Promise<void> {
   try {
     await AsyncStorage.setItem(OFFLINE_MODE_KEY, JSON.stringify(isOffline));
@@ -80,21 +67,14 @@ export async function setOfflineMode(isOffline: boolean): Promise<void> {
   }
 }
 
-/**
- * Subscribe to offline status changes
- */
 export function subscribeToOfflineStatus(callback: (status: OfflineStatus) => void): () => void {
   offlineStatusListeners.push(callback);
 
-  // Return unsubscribe function
   return () => {
     offlineStatusListeners = offlineStatusListeners.filter(l => l !== callback);
   };
 }
 
-/**
- * Add pending data for offline sync
- */
 export async function addPendingData(dataType: string, data: any): Promise<void> {
   try {
     const offlineData = await AsyncStorage.getItem(OFFLINE_DATA_KEY);
@@ -113,9 +93,6 @@ export async function addPendingData(dataType: string, data: any): Promise<void>
   }
 }
 
-/**
- * Get pending data for sync
- */
 export async function getPendingData(): Promise<any[]> {
   try {
     const offlineData = await AsyncStorage.getItem(OFFLINE_DATA_KEY);
@@ -126,9 +103,6 @@ export async function getPendingData(): Promise<any[]> {
   }
 }
 
-/**
- * Clear pending data after successful sync
- */
 export async function clearPendingData(): Promise<void> {
   try {
     await AsyncStorage.removeItem(OFFLINE_DATA_KEY);
@@ -137,9 +111,6 @@ export async function clearPendingData(): Promise<void> {
   }
 }
 
-/**
- * Cleanup offline detection
- */
 export function cleanupOfflineDetection(): void {
   if (offlineCheckInterval) {
     clearInterval(offlineCheckInterval);
@@ -148,9 +119,6 @@ export function cleanupOfflineDetection(): void {
   offlineStatusListeners = [];
 }
 
-/**
- * Format last online time for display
- */
 export function formatLastOnlineTime(isoString: string | null): string {
   if (!isoString) return 'Never';
 

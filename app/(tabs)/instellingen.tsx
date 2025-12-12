@@ -1,11 +1,11 @@
 // Rewritten after merge conflict to restore full instellingen screen with theme toggle
-import { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View, Switch, ScrollView, Dimensions, TextInput, Alert, DeviceEventEmitter, TouchableOpacity } from 'react-native';
-import Svg, { Defs, Pattern, Rect, Circle } from 'react-native-svg';
-import { ThemedText } from '@/components/themed-text';
-import { loadSettings, saveSettings, type AppSettings } from '@/app/utils/settingsStorage';
 import { useThemeColors } from '@/app/hooks/useThemeColors';
 import { getColors } from '@/app/styles/colors';
+import { loadSettings, saveSettings, type AppSettings } from '@/app/utils/settingsStorage';
+import { ThemedText } from '@/components/themed-text';
+import { useEffect, useMemo, useState } from 'react';
+import { Alert, DeviceEventEmitter, Dimensions, ScrollView, StyleSheet, Switch, TextInput, TouchableOpacity, View } from 'react-native';
+import Svg, { Circle, Defs, Pattern, Rect } from 'react-native-svg';
 
 const { width, height } = Dimensions.get('window');
 

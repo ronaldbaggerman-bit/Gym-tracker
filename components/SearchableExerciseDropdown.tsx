@@ -1,18 +1,17 @@
-import { useState, useMemo, useCallback } from 'react';
-import {
-  View,
-  FlatList,
-  TouchableOpacity,
-  TextInput,
-  Modal,
-  ScrollView,
-  Dimensions,
-} from 'react-native';
-import { ThemedText } from '@/components/themed-text';
 import { EXERCISE_GUIDES } from '@/app/data/exerciseGuides';
+import type { MuscleGroup } from '@/app/data/workoutData';
 import { COLORS } from '@/app/styles/colors';
-import type { MuscleGroup, Exercise } from '@/app/data/workoutData';
-import { StyleSheet } from 'react-native';
+import { ThemedText } from '@/components/themed-text';
+import { useCallback, useMemo, useState } from 'react';
+import {
+    Dimensions,
+    FlatList,
+    Modal,
+    StyleSheet,
+    TextInput,
+    TouchableOpacity,
+    View
+} from 'react-native';
 
 interface SearchableExerciseDropdownProps {
   muscleGroups: MuscleGroup[];

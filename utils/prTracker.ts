@@ -1,4 +1,4 @@
-import type { WorkoutExercise, PersonalRecord, ExerciseSet } from '@/app/types/workout';
+import type { PersonalRecord, WorkoutExercise } from '@/app/types/workout';
 
 interface PRCheckResult {
   newMaxWeight: boolean;
@@ -6,10 +6,6 @@ interface PRCheckResult {
   updatedPR: PersonalRecord;
 }
 
-/**
- * Check if exercise sets contain new personal records
- * Compares completed sets against existing PR data
- */
 export function checkForNewPRs(
   exercise: WorkoutExercise,
 ): PRCheckResult | null {
@@ -36,7 +32,7 @@ export function checkForNewPRs(
   const newMaxReps = maxRepsInSets > currentPR.maxReps;
 
   if (!newMaxWeight && !newMaxReps) {
-    return null; // No new PRs
+    return null;
   }
 
   const today = new Date().toISOString();
@@ -54,9 +50,6 @@ export function checkForNewPRs(
   };
 }
 
-/**
- * Apply PR data to exercise if new records are found
- */
 export function applyPRToExercise(
   exercise: WorkoutExercise,
 ): WorkoutExercise {
@@ -71,9 +64,6 @@ export function applyPRToExercise(
   };
 }
 
-/**
- * Format PR display text
- */
 export function formatPRMessage(result: PRCheckResult): string {
   const parts = [];
   if (result.newMaxWeight) {
@@ -85,9 +75,6 @@ export function formatPRMessage(result: PRCheckResult): string {
   return parts.join('\n');
 }
 
-/**
- * Get PR display string for exercise
- */
 export function getPRDisplay(exercise: WorkoutExercise): string | null {
   if (!exercise.personalRecord) {
     return null;

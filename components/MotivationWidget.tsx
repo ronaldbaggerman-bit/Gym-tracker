@@ -1,29 +1,38 @@
-import { useState, useEffect, useMemo } from 'react';
-import { StyleSheet, View, TouchableOpacity, ScrollView, Modal } from 'react-native';
-import { ThemedText } from '@/components/themed-text';
 import { useThemeColors } from '@/app/hooks/useThemeColors';
 import {
-  getTodayQuote,
+  getAllTips,
   getDailyTip,
   getRandomQuote,
   getRandomTip,
-  getAllTips,
-  getQuotesByCategory,
-  getTipsByCategory,
-} from '@/app/utils/motivation';
+  getTodayQuote
+} from '@/utils/motivation';
+import { ThemedText } from '@/components/themed-text';
+import { useEffect, useMemo, useState } from 'react';
+import { Modal, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 interface MotivationWidgetProps {
   compact?: boolean;
 }
 
+interface Quote {
+  quote: string;
+  author: string;
+}
+
+interface Tip {
+  id?: string | number;
+  icon?: string;
+  title: string;
+  description: string;
+}
+
 export function MotivationWidget({ compact = false }: MotivationWidgetProps) {
   const COLORS = useThemeColors();
   const styles = useMemo(() => createStyles(COLORS), [COLORS]);
-  const [quote, setQuote] = useState<any>(null);
-  const [tip, setTip] = useState<any>(null);
+  const [quote, setQuote] = useState<Quote | null>(null);
+  const [tip, setTip] = useState<Tip | null>(null);
   const [showDetails, setShowDetails] = useState(false);
-  const [allQuotes, setAllQuotes] = useState<any[]>([]);
-  const [allTips, setAllTips] = useState<any[]>([]);
+  
 
   useEffect(() => {
     loadContent();
@@ -32,22 +41,20 @@ export function MotivationWidget({ compact = false }: MotivationWidgetProps) {
   const loadContent = async () => {
     try {
       const [dailyQuote, dailyTip] = await Promise.all([getTodayQuote(), getDailyTip()]);
-      setQuote(dailyQuote);
-      setTip(dailyTip);
-      setAllQuotes([dailyQuote]);
-      setAllTips([dailyTip]);
+      setQuote(dailyQuote as Quote);
+      setTip(dailyTip as Tip);
     } catch (error) {
       console.error('Failed to load motivation content:', error);
     }
   };
 
   const refreshQuote = () => {
-    const newQuote = getRandomQuote();
+    const newQuote = getRandomQuote() as Quote;
     setQuote(newQuote);
   };
 
   const refreshTip = () => {
-    const newTip = getRandomTip();
+    const newTip = getRandomTip() as Tip;
     setTip(newTip);
   };
 
@@ -138,10 +145,10 @@ export function MotivationWidget({ compact = false }: MotivationWidgetProps) {
             {/* All Quotes */}
             <View style={styles.section}>
               <ThemedText style={styles.sectionTitle}>📚 All Quotes</ThemedText>
-              {[quote, ...getRandomQuote ? [getRandomQuote()] : []].map((q, idx) => (
+              {[quote].filter(Boolean).map((q, idx) => (
                 <View key={idx} style={styles.quoteItem}>
-                  <ThemedText style={styles.quoteItemText}>"{q.quote}"</ThemedText>
-                  <ThemedText style={styles.quoteItemAuthor}>— {q.author}</ThemedText>
+                  <ThemedText style={styles.quoteItemText}>"{(q as Quote).quote}"</ThemedText>
+                  <ThemedText style={styles.quoteItemAuthor}>— {(q as Quote).author}</ThemedText>
                 </View>
               ))}
             </View>
@@ -149,9 +156,9 @@ export function MotivationWidget({ compact = false }: MotivationWidgetProps) {
             {/* All Tips */}
             <View style={styles.section}>
               <ThemedText style={styles.sectionTitle}>🎯 All Tips</ThemedText>
-              {getAllTips().map((t) => (
-                <View key={t.id} style={styles.tipItem}>
-                  <ThemedText style={styles.tipItemEmoji}>{t.icon}</ThemedText>
+              {getAllTips().map((t: Tip, idx: number) => (
+                <View key={t.id ?? idx} style={styles.tipItem}>
+                  <ThemedText style={styles.tipItemEmoji}>{t.icon ?? '💡'}</ThemedText>
                   <View style={styles.tipItemContent}>
                     <ThemedText style={styles.tipItemTitle}>{t.title}</ThemedText>
                     <ThemedText style={styles.tipItemDesc}>{t.description}</ThemedText>

@@ -1,8 +1,8 @@
+import { useThemeColors } from '@/app/hooks/useThemeColors';
+import { MotivationWidget } from '@/components/MotivationWidget';
+import { ThemedText } from '@/components/themed-text';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ThemedText } from '@/components/themed-text';
-import { MotivationWidget } from '@/components/MotivationWidget';
-import { useThemeColors } from '@/app/hooks/useThemeColors';
 
 export default function MotivationScreen() {
   const insets = useSafeAreaInsets();

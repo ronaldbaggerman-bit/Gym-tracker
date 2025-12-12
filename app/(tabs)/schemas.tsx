@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, TextInput, TouchableOpacity, View, Alert } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
-import { ThemedText } from '@/components/themed-text';
-import { COLORS } from '@/app/styles/colors';
 import { WORKOUT_DATA, type Schema } from '@/app/data/workoutData';
-import { addCustomSchema, deleteCustomSchema, loadCustomSchemas, upsertCustomSchema, applyOverrides, saveSchemaOverride, removeExerciseFromSchema } from '@/app/utils/schemaStorage';
+import { COLORS } from '@/app/styles/colors';
+import { addCustomSchema, applyOverrides, deleteCustomSchema, loadCustomSchemas, removeExerciseFromSchema, saveSchemaOverride, upsertCustomSchema } from '@/app/utils/schemaStorage';
+import { ThemedText } from '@/components/themed-text';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Alert, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function SchemasScreen() {
   const [customSchemas, setCustomSchemas] = useState<Schema[]>([]);

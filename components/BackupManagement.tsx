@@ -1,28 +1,26 @@
-import { useState, useEffect } from 'react';
-import {
-  StyleSheet,
-  View,
-  FlatList,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-  ScrollView,
-} from 'react-native';
-import { ThemedText } from '@/components/themed-text';
 import { COLORS } from '@/app/styles/colors';
 import {
-  getBackupSchedule,
-  saveBackupSchedule,
-  performBackup,
-  listBackups,
-  getLastBackupTime,
-  formatBackupDate,
-  formatFileSize,
-  restoreFromBackup,
-  shouldPerformBackup,
-} from '@/app/utils/backupManager';
-import { saveSessionsList, savePR, loadPRs } from '@/app/utils/storage';
+    formatBackupDate,
+    formatFileSize,
+    getBackupSchedule,
+    getLastBackupTime,
+    listBackups,
+    performBackup,
+    restoreFromBackup,
+    saveBackupSchedule
+} from '@/utils/backupManager';
+import { savePR, saveSessionsList } from '@/utils/storage';
+import { ThemedText } from '@/components/themed-text';
 import * as FileSystem from 'expo-file-system/legacy';
+import { useEffect, useState } from 'react';
+import {
+    ActivityIndicator,
+    Alert,
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity,
+    View
+} from 'react-native';
 
 interface BackupFile {
   filename: string;

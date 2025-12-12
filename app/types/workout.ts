@@ -1,4 +1,4 @@
-import type { ViewStyle, TextStyle } from 'react-native';
+import type { TextStyle, ViewStyle } from 'react-native';
 
 export type DifficultyRating = 'licht' | 'goed' | 'zwaar';
 
@@ -52,4 +52,4 @@ export const DIFFICULTY_COLORS: Record<DifficultyRating, string> = {
 };
 
 // Re-export React Native types
-export type { ViewStyle, TextStyle };
+export type { TextStyle, ViewStyle };

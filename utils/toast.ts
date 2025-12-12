@@ -9,10 +9,6 @@ interface ToastOptions {
 
 let toastTimer: NodeJS.Timeout | null = null;
 
-/**
- * Simple toast notification via Alert (can be replaced with react-native-toast-message later)
- * For now, we use Alert with auto-dismiss for UX polish
- */
 export function showToast(
   message: string,
   type: ToastType = 'info',
@@ -20,7 +16,6 @@ export function showToast(
 ) {
   const { duration = 2000 } = options;
 
-  // Clear previous toast if exists
   if (toastTimer) {
     clearTimeout(toastTimer);
   }
@@ -34,22 +29,15 @@ export function showToast(
 
   const title = `${icons[type]} ${type.charAt(0).toUpperCase() + type.slice(1)}`;
 
-  // Show alert
   Alert.alert(title, message, [
     {
       text: 'OK',
       style: 'default',
-      onPress: () => {
-        // Auto close
-      },
+      onPress: () => {},
     },
   ]);
 
-  // Auto-dismiss after duration
-  toastTimer = setTimeout(() => {
-    // In a real app with react-native-toast-message, this would dismiss properly
-    // For now, Alert.alert doesn't support auto-dismiss, so we use a simple alert
-  }, duration);
+  toastTimer = setTimeout(() => {}, duration);
 }
 
 export const Toast = {

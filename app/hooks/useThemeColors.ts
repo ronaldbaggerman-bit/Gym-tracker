@@ -1,7 +1,7 @@
-import { useColorScheme, DeviceEventEmitter } from 'react-native';
-import { useEffect, useState } from 'react';
 import { getColors } from '@/app/styles/colors';
-import { loadSettings } from '@/app/utils/settingsStorage';
+import { loadSettings } from '@/utils/settingsStorage';
+import { useEffect, useState } from 'react';
+import { DeviceEventEmitter, useColorScheme } from 'react-native';
 
 /**
  * Hook om dynamische kleuren te krijgen gebaseerd op device theme (light/dark mode)

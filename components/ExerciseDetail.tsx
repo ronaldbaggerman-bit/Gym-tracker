@@ -1,18 +1,18 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
-import { StyleSheet, View, TouchableOpacity, TextInput, ImageBackground } from 'react-native';
-import { ThemedText } from '@/components/themed-text';
-import { SearchableExerciseDropdown } from '@/components/SearchableExerciseDropdown';
-import { DIFFICULTY_COLORS } from '@/app/types/workout';
-import { COLORS } from '@/app/styles/colors';
-import * as Haptics from 'expo-haptics';
-import { getPRDisplay } from '@/app/utils/prTracker';
-import { calculateProgressiveOverload, formatProgressiveSuggestion } from '@/app/utils/progressiveOverload';
-import { calculate1RMFromPR, format1RMDisplay } from '@/app/utils/oneRepMaxCalculator';
-import { loadSettings } from '@/app/utils/settingsStorage';
-import { calculateExerciseKcal, formatKcalDisplay } from '@/app/utils/kcalCalculator';
-import type { WorkoutExercise, DifficultyRating } from '@/app/types/workout';
 import { EXERCISE_GUIDES } from '@/app/data/exerciseGuides';
 import type { Schema } from '@/app/data/workoutData';
+import { COLORS } from '@/app/styles/colors';
+import type { DifficultyRating, WorkoutExercise } from '@/app/types/workout';
+import { DIFFICULTY_COLORS } from '@/app/types/workout';
+import { calculateExerciseKcal, formatKcalDisplay } from '@/utils/kcalCalculator';
+import { calculate1RMFromPR, format1RMDisplay } from '@/utils/oneRepMaxCalculator';
+import { getPRDisplay } from '@/utils/prTracker';
+import { calculateProgressiveOverload, formatProgressiveSuggestion } from '@/utils/progressiveOverload';
+import { loadSettings } from '@/utils/settingsStorage';
+import { SearchableExerciseDropdown } from '@/components/SearchableExerciseDropdown';
+import { ThemedText } from '@/components/themed-text';
+import * as Haptics from 'expo-haptics';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ImageBackground, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 
 interface ExerciseDetailProps {
   exercise: WorkoutExercise;

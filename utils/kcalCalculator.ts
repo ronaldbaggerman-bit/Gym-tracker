@@ -1,16 +1,4 @@
-/**
- * Kilocalories (kcal) Calculator for Workout Sessions
- * 
- * Formula: kcal = MET × body weight (kg) × duration (hours)
- * 
- * MET (Metabolic Equivalent) values by exercise type:
- * - General strength training: 5-6 MET
- * - Intense strength training: 6-8 MET
- * - Moderate intensity: 4-5 MET
- * - Light intensity: 2-3 MET
- */
-
-import type { WorkoutSession, WorkoutExercise } from '@/app/types/workout';
+import type { WorkoutExercise, WorkoutSession } from '@/app/types/workout';
 
 export interface KcalStats {
   totalKcal: number;
@@ -19,13 +7,6 @@ export interface KcalStats {
   perMinute: number;
 }
 
-/**
- * Calculate total kcal burned during a workout session
- * @param bodyWeightKg User's body weight in kilograms
- * @param durationMinutes Total workout duration in minutes
- * @param metValue Metabolic Equivalent value (default 5 for strength training)
- * @returns KcalStats with total kcal and breakdown
- */
 export const calculateSessionKcal = (
   bodyWeightKg: number,
   durationMinutes: number,
@@ -52,14 +33,6 @@ export const calculateSessionKcal = (
   };
 };
 
-/**
- * Calculate kcal per exercise based on sets and reps
- * Estimates duration: ~3-4 seconds per rep + rest between sets
- * @param exercise WorkoutExercise with sets and completed status
- * @param bodyWeightKg User's body weight
- * @param metValue MET value (can vary by exercise intensity)
- * @returns Estimated kcal burned for this exercise
- */
 export const calculateExerciseKcal = (
   exercise: WorkoutExercise,
   bodyWeightKg: number,
@@ -69,12 +42,9 @@ export const calculateExerciseKcal = (
     return 0;
   }
 
-  // Estimate duration per set:
-  // - Reps: ~3 seconds per rep
-  // - Rest: ~90 seconds per set (except last)
   const avgReps = exercise.sets.reduce((sum, s) => sum + s.reps, 0) / exercise.sets.length;
-  const repsTime = avgReps * 3; // seconds per rep
-  const restTime = 90; // seconds between sets
+  const repsTime = avgReps * 3;
+  const restTime = 90;
   const estimatedSecPerSet = repsTime + restTime;
   const totalSeconds = estimatedSecPerSet * exercise.sets.length;
   const durationHours = totalSeconds / 3600;
@@ -82,52 +52,32 @@ export const calculateExerciseKcal = (
   return Math.round(metValue * bodyWeightKg * durationHours);
 };
 
-/**
- * Format kcal display
- * @param kcal Kilocalories value
- * @returns Formatted string like "245 kcal"
- */
 export const formatKcalDisplay = (kcal: number): string => {
   return `${Math.round(kcal)} kcal`;
 };
 
-/**
- * Get MET value adjustment based on exercise difficulty
- * @param difficulty Exercise difficulty rating ('licht', 'goed', 'zwaar')
- * @param baseMET Base MET value
- * @returns Adjusted MET value
- */
 export const getMetAdjustment = (
   difficulty: string | null | undefined,
   baseMET: number = 5
 ): number => {
   switch (difficulty) {
     case 'licht':
-      return baseMET * 0.8; // 20% lower for light difficulty
+      return baseMET * 0.8;
     case 'goed':
-      return baseMET; // Standard
+      return baseMET;
     case 'zwaar':
-      return baseMET * 1.3; // 30% higher for heavy difficulty
+      return baseMET * 1.3;
     default:
       return baseMET;
   }
 };
 
-/**
- * Calculate total kcal for entire workout session
- * Takes into account session start/end times
- * @param session WorkoutSession
- * @param bodyWeightKg User's body weight
- * @param defaultMET Default MET value
- * @returns Total kcal burned
- */
 export const calculateTotalSessionKcal = (
   session: WorkoutSession,
   bodyWeightKg: number,
   defaultMET: number = 5
 ): number => {
   if (!session.startTime || !session.endTime) {
-    // Fallback to exercise-based calculation
     if (!session.exercises || session.exercises.length === 0) return 0;
     
     return session.exercises.reduce((total, exercise) => {
@@ -135,7 +85,6 @@ export const calculateTotalSessionKcal = (
     }, 0);
   }
 
-  // Calculate from actual duration
   const startTime = new Date(session.startTime);
   const endTime = new Date(session.endTime);
   const durationMinutes = (endTime.getTime() - startTime.getTime()) / (1000 * 60);

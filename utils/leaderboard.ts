@@ -1,5 +1,5 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { PersonalRecord } from '@/app/types/workout';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ACHIEVEMENTS_KEY = 'user_achievements';
 const LEADERBOARD_KEY = 'leaderboard_data';
@@ -76,9 +76,6 @@ const ACHIEVEMENT_DEFINITIONS: UserAchievement[] = [
   },
 ];
 
-/**
- * Get user achievements
- */
 export async function getUserAchievements(): Promise<UserAchievement[]> {
   try {
     const stored = await AsyncStorage.getItem(ACHIEVEMENTS_KEY);
@@ -89,9 +86,6 @@ export async function getUserAchievements(): Promise<UserAchievement[]> {
   }
 }
 
-/**
- * Unlock an achievement
- */
 export async function unlockAchievement(achievementId: string): Promise<UserAchievement | null> {
   try {
     const achievements = await getUserAchievements();
@@ -100,7 +94,7 @@ export async function unlockAchievement(achievementId: string): Promise<UserAchi
     if (!definition) return null;
 
     const existing = achievements.find(a => a.id === achievementId);
-    if (existing) return existing; // Already unlocked
+    if (existing) return existing;
 
     const achievement: UserAchievement = {
       ...definition,
@@ -117,9 +111,6 @@ export async function unlockAchievement(achievementId: string): Promise<UserAchi
   }
 }
 
-/**
- * Get leaderboard entries
- */
 export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
   try {
     const stored = await AsyncStorage.getItem(LEADERBOARD_KEY);
@@ -130,9 +121,6 @@ export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
   }
 }
 
-/**
- * Update leaderboard entry (local)
- */
 export async function updateLeaderboardEntry(entry: Omit<LeaderboardEntry, 'rank'>): Promise<void> {
   try {
     const leaderboard = await getLeaderboard();
@@ -149,7 +137,6 @@ export async function updateLeaderboardEntry(entry: Omit<LeaderboardEntry, 'rank
       leaderboard.push(newEntry);
     }
 
-    // Sort by score and assign ranks
     leaderboard.sort((a, b) => b.score - a.score);
     leaderboard.forEach((entry, idx) => {
       entry.rank = idx + 1;
@@ -161,26 +148,18 @@ export async function updateLeaderboardEntry(entry: Omit<LeaderboardEntry, 'rank
   }
 }
 
-/**
- * Calculate user score based on PRs
- */
 export function calculateUserScore(prs: Record<string, PersonalRecord>): number {
   if (!prs || Object.keys(prs).length === 0) return 0;
 
   let score = 0;
   for (const pr of Object.values(prs)) {
-    // Weight score: 1 point per kg
     score += pr.maxWeight || 0;
-    // Reps score: 10 points per rep
     score += (pr.maxReps || 0) * 10;
   }
 
   return Math.round(score);
 }
 
-/**
- * Format leaderboard rank display
- */
 export function formatRank(rank: number): string {
   if (rank === 1) return '🥇 1st';
   if (rank === 2) return '🥈 2nd';
@@ -188,16 +167,10 @@ export function formatRank(rank: number): string {
   return `#${rank}`;
 }
 
-/**
- * Share achievement
- */
 export function getAchievementShareText(achievement: UserAchievement): string {
   return `🎉 I just unlocked "${achievement.title}" on Gym-Track!\n${achievement.icon} ${achievement.description}\n\nJoin me and track your fitness journey!`;
 }
 
-/**
- * Check and award achievements based on PRs
- */
 export async function checkAndAwardAchievements(
   prs: Record<string, PersonalRecord>,
   totalWorkouts: number,
@@ -205,31 +178,26 @@ export async function checkAndAwardAchievements(
 ): Promise<UserAchievement[]> {
   const unlockedAchievements: UserAchievement[] = [];
 
-  // Check first workout
   if (totalWorkouts === 1) {
     const unlocked = await unlockAchievement('first_workout');
     if (unlocked) unlockedAchievements.push(unlocked);
   }
 
-  // Check ten workouts
   if (totalWorkouts === 10) {
     const unlocked = await unlockAchievement('ten_workouts');
     if (unlocked) unlockedAchievements.push(unlocked);
   }
 
-  // Check hundred workouts
   if (totalWorkouts === 100) {
     const unlocked = await unlockAchievement('hundred_workouts');
     if (unlocked) unlockedAchievements.push(unlocked);
   }
 
-  // Check century volume
   if (totalVolume >= 100) {
     const unlocked = await unlockAchievement('century_volume');
     if (unlocked) unlockedAchievements.push(unlocked);
   }
 
-  // Check max weight PRs (5 total)
   if (Object.keys(prs).length >= 5) {
     const unlocked = await unlockAchievement('max_weight_pr');
     if (unlocked) unlockedAchievements.push(unlocked);

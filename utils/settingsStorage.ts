@@ -5,18 +5,18 @@ const SETTINGS_KEY = 'app_settings_v1';
 export interface AppSettings {
   csvImportEnabled: boolean;
   showExerciseImages: boolean;
-  bodyWeightKg: number; // User's body weight in kg
-  defaultMET: number;   // Default metabolic equivalent for exercises
-  progressDaysBack: number; // Days back to show in progression graph (180 default)
-  themePreference?: 'system' | 'light' | 'dark'; // Optional theme preference
+  bodyWeightKg: number;
+  defaultMET: number;
+  progressDaysBack: number;
+  themePreference?: 'system' | 'light' | 'dark';
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
   csvImportEnabled: true,
   showExerciseImages: true,
-  bodyWeightKg: 75, // Default 75 kg
-  defaultMET: 5,    // Default MET value
-  progressDaysBack: 180, // Default 180 days
+  bodyWeightKg: 75,
+  defaultMET: 5,
+  progressDaysBack: 180,
   themePreference: 'dark',
 };
 

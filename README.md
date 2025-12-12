@@ -1,5 +1,9 @@
 # Gym-Track 💪
 
+[![CI](https://github.com/ronaldbaggerman-bit/Gym-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/ronaldbaggerman-bit/Gym-tracker/actions/workflows/ci.yml)
+
+Stable release: [v0.1.0](https://github.com/ronaldbaggerman-bit/Gym-tracker/releases/tag/v0.1.0)
+
 Een fitness tracking app gebouwd met React Native en Expo, ontworpen om op Windows te worden ontwikkeld en getest met Expo Go op je telefoon.
 
 ## Functies
@@ -57,6 +61,12 @@ app/
 - [Expo Documentation](https://docs.expo.dev/)
 - [React Native Documentation](https://reactnative.dev/)
 - [Expo Router](https://docs.expo.dev/router/introduction/)
+
+## Releases
+
+Zie `CHANGELOG.md` voor volledige release notes.
+
+- v0.1.0 (2025-12-12): utilities verplaatst naar `utils/`, imports gefixt naar `@/utils/*`, debug logs toegevoegd, CI workflow toegevoegd.
 
 
 ```bash

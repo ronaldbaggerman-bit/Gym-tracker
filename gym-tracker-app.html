@@ -1721,7 +1721,7 @@ function selectSchema(schemaId) {
             for (let i = 0; i < settings.defaultSets; i++) {
                 sets.push({
                     reps: 12,
-                    weight: getLastWeight(exercise.id) || 0,
+                    weight: getInitialWeight(exercise.id),
                     completed: false
                 });
             }
@@ -1900,7 +1900,7 @@ function addSet(exerciseId) {
     
     exercise.sets.push({
         reps: 12,
-        weight: getLastWeight(exerciseId) || 0,
+        weight: getInitialWeight(exerciseId),
         completed: false
     });
     
@@ -1973,6 +1973,13 @@ function getLastWeight(exerciseId) {
         const v = localStorage.getItem(`last_weight_${exerciseId}`);
         return v ? JSON.parse(v) : 0;
     } catch (e) { return 0; }
+}
+
+function getInitialWeight(exerciseId) {
+    const last = getLastWeight(exerciseId);
+    if (last && last > 0) return last;
+    const prev = getPreviousBest(exerciseId);
+    return prev ? prev.weight : 0;
 }
 
 // TIMER
@@ -2458,13 +2465,8 @@ function loadTheme() {
 }
 
 function applyTheme(isDarkMode) {
-    if (isDarkMode) {
-        document.body.classList.remove('light-mode');
-        updateThemeToggle(true);
-    } else {
-        document.body.classList.add('light-mode');
-        updateThemeToggle(false);
-    }
+    document.body.classList.toggle('light-mode', !isDarkMode);
+    updateThemeToggle(isDarkMode);
 }
 
 function toggleDarkMode() {

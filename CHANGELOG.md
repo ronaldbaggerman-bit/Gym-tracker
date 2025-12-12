@@ -2,6 +2,22 @@
 
 Alle belangrijke wijzigingen aan dit project worden in dit bestand gedocumenteerd.
 
+## [v0.1.0] - 2025-12-12 (Stable Snapshot)
+
+### Fixes & Refactor
+- Moved utilities from `app/utils/` to root `utils/` to prevent Expo Router from treating them as routes.
+- Updated imports across tabs and components from `@/app/utils/*` to `@/utils/*`.
+- Cleared Expo/Metro caches and restarted bundler for clean state.
+
+### Debug & Observability
+- Added detailed logs in `utils/database.ts`, `utils/storage.ts`, and workout boot sequence for easier runtime monitoring.
+
+### CI
+- Added GitHub Actions workflow to run TypeScript compile checks, ESLint, and `expo doctor` on push/PR.
+
+### Impact
+- Resolves bundling errors like `Unable to resolve "@/app/utils/storage"`.
+- Improves type safety and stability during initialization and data operations.
 ## [1.2.0] - 2025-12-10 (Adjustable Rest Timers)
 
 ### Feature: Adjustable Rest Timers ⏱️

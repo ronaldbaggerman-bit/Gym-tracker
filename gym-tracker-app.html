@@ -37,6 +37,18 @@
     --shadow: 0 10px 40px rgba(0,0,0,0.3);
 }
 
+/* Light Mode Colors */
+body.light-mode {
+    --dark: #FFFFFF;
+    --dark-lighter: #F5F5F7;
+    --dark-card: #FFFFFF;
+    --dark-elevated: #F9F9FB;
+    --text: #000000;
+    --text-muted: #6B6B6F;
+    --border: #D5D5D7;
+    --shadow: 0 10px 40px rgba(0,0,0,0.1);
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background: var(--dark);
@@ -1255,7 +1267,85 @@ h1 {
     .schema-card h3 {
         font-size: 1.5rem;
     }
-}
+
+    /* Settings Styles */
+    .settings-container {
+        padding: 2rem 1.5rem;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .settings-section {
+        background: var(--dark-card);
+        border-radius: 1.25rem;
+        padding: 1.5rem;
+        border: 1px solid var(--border);
+    }
+
+    .settings-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        gap: 1.5rem;
+    }
+
+    .settings-label {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .settings-label > span:first-child {
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    .settings-description {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+
+    .settings-divider {
+        height: 1px;
+        background: var(--border);
+        margin: 1rem 0;
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+        position: relative;
+        width: 60px;
+        height: 34px;
+        background: var(--dark-elevated);
+        border-radius: 17px;
+        cursor: pointer;
+        border: 1px solid var(--border);
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        padding: 2px;
+        flex-shrink: 0;
+    }
+
+    .toggle-switch.active {
+        background: var(--primary);
+        border-color: var(--primary);
+    }
+
+    .toggle-slider {
+        width: 30px;
+        height: 30px;
+        background: var(--text);
+        border-radius: 13px;
+        transition: transform 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .toggle-switch.active .toggle-slider {
+        transform: translateX(26px);
+    }
+
 </style>
 
 <div class="container">
@@ -1272,6 +1362,7 @@ h1 {
             <button class="tab" data-view="history" onclick="switchView('history')"> Historie</button>
             <button class="tab" data-view="progress" onclick="switchView('progress')"> Progressie</button>
             <button class="tab" data-view="prs" onclick="switchView('prs')"> PRs</button>
+            <button class="tab" data-view="settings" onclick="switchView('settings')"> ⚙️ Instellingen</button>
         </div>
     </div>
 
@@ -1330,6 +1421,49 @@ h1 {
     <!-- PRs View -->
     <div id="prsView" class="view">
         <div id="prsContainer"></div>
+    </div>
+
+    <!-- Settings View -->
+    <div id="settingsView" class="view">
+        <div class="settings-container">
+            <div class="settings-section">
+                <h2 style="margin-bottom: 2rem;">⚙️ Instellingen</h2>
+                
+                <div class="settings-item">
+                    <div class="settings-label">
+                        <span>Donker Thema</span>
+                        <span class="settings-description">Schakel donker/licht thema in</span>
+                    </div>
+                    <div class="toggle-switch" id="themeToggle" onclick="toggleDarkMode()" title="Toggle dark/light mode">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+
+                <div class="settings-divider"></div>
+
+                <div class="settings-item">
+                    <div class="settings-label">
+                        <span>Lichaamsgewicht (kg)</span>
+                        <span class="settings-description">Gebruikt voor calorieberekening</span>
+                    </div>
+                    <input type="number" id="bodyWeightInput" min="30" max="200" value="75" 
+                           onchange="updateBodyWeight(this.value)" style="width: 100px; padding: 0.5rem; border-radius: 0.5rem; border: 1px solid var(--border); background: var(--dark-card); color: var(--text);">
+                </div>
+
+                <div class="settings-item">
+                    <div class="settings-label">
+                        <span>Standaard Sets</span>
+                        <span class="settings-description">Aantal sets per oefening</span>
+                    </div>
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <button class="btn btn-secondary" style="padding: 0.5rem 1rem;" onclick="updateDefaultSets(parseInt(document.getElementById('defaultSetsInput').value) - 1)">−</button>
+                        <input type="number" id="defaultSetsInput" min="1" max="10" value="3" 
+                               style="width: 60px; text-align: center; padding: 0.5rem; border-radius: 0.5rem; border: 1px solid var(--border); background: var(--dark-card); color: var(--text);">
+                        <button class="btn btn-secondary" style="padding: 0.5rem 1rem;" onclick="updateDefaultSets(parseInt(document.getElementById('defaultSetsInput').value) + 1)">+</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -1526,6 +1660,7 @@ function openSettings() {
 
 // INITIALIZATION
 function init() {
+    loadTheme();
     renderSchemaSelection();
     loadSettings();
     renderHistory();
@@ -2154,7 +2289,8 @@ function switchView(viewName) {
         "workout": "workoutView",
         "history": "historyView",
         "progress": "progressView",
-        "prs": "prsView"
+        "prs": "prsView",
+        "settings": "settingsView"
     };
     
     document.getElementById(viewMap[viewName]).classList.add("active");
@@ -2163,6 +2299,7 @@ function switchView(viewName) {
     if (viewName === "history") renderHistory();
     if (viewName === "prs") renderPRs();
     if (viewName === "progress") renderProgress();
+    if (viewName === "settings") updateSettingsUI();
 }
 
 // BACKUP & IMPORT
@@ -2268,6 +2405,73 @@ function loadSettings() {
     const settings = getSettings();
     document.getElementById("bodyWeight").value = settings.bodyWeight;
     document.getElementById("defaultSets").value = settings.defaultSets;
+}
+
+// DARK MODE THEME MANAGEMENT
+function loadTheme() {
+    const savedTheme = localStorage.getItem('gym_theme') || 'dark';
+    applyTheme(savedTheme === 'dark');
+}
+
+function applyTheme(isDarkMode) {
+    if (isDarkMode) {
+        document.body.classList.remove('light-mode');
+        updateThemeToggle(true);
+    } else {
+        document.body.classList.add('light-mode');
+        updateThemeToggle(false);
+    }
+}
+
+function toggleDarkMode() {
+    const isDarkMode = !document.body.classList.contains('light-mode');
+    applyTheme(isDarkMode);
+    localStorage.setItem('gym_theme', isDarkMode ? 'dark' : 'light');
+}
+
+function updateThemeToggle(isDarkMode) {
+    const toggle = document.getElementById('themeToggle');
+    if (toggle) {
+        if (isDarkMode) {
+            toggle.classList.remove('active');
+        } else {
+            toggle.classList.add('active');
+        }
+    }
+}
+
+function updateSettingsUI() {
+    const settings = getSettings();
+    const isDarkMode = !document.body.classList.contains('light-mode');
+    
+    // Update body weight input
+    const bodyWeightInput = document.getElementById('bodyWeightInput');
+    if (bodyWeightInput) {
+        bodyWeightInput.value = settings.bodyWeight;
+    }
+    
+    // Update default sets input
+    const defaultSetsInput = document.getElementById('defaultSetsInput');
+    if (defaultSetsInput) {
+        defaultSetsInput.value = settings.defaultSets;
+    }
+    
+    // Update theme toggle
+    updateThemeToggle(isDarkMode);
+}
+
+function updateBodyWeight(value) {
+    const settings = getSettings();
+    settings.bodyWeight = Math.max(30, Math.min(200, parseInt(value) || 75));
+    saveSettings(settings);
+}
+
+function updateDefaultSets(value) {
+    const sets = Math.max(1, Math.min(10, value));
+    document.getElementById('defaultSetsInput').value = sets;
+    const settings = getSettings();
+    settings.defaultSets = sets;
+    saveSettings(settings);
 }
 
 // Initialize on load

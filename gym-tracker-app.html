@@ -1268,6 +1268,86 @@ h1 {
         font-size: 1.5rem;
     }
 
+    /* Sets Layout */
+    .sets-container {
+        display: grid;
+        gap: 0.75rem;
+    }
+
+    .set-row {
+        display: grid;
+        grid-template-columns: 52px 1fr 1fr 40px;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 0.75rem 0.75rem 1.25rem; /* extra left space */
+        background: var(--dark-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+    }
+
+    .set-row.completed {
+        opacity: 0.9;
+        background: var(--dark-elevated);
+    }
+
+    .set-number {
+        width: 52px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--dark-elevated);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        font-weight: 700;
+    }
+
+    .set-input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+    }
+
+    .set-input-group > div {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .set-input {
+        flex: 1 1 auto;
+        min-width: 64px;
+        width: auto;
+        text-align: center;
+        padding: 0.4rem 0.6rem;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: var(--dark-elevated);
+        color: var(--text);
+        font-weight: 700;
+    }
+
+    .set-input-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        font-weight: 600;
+    }
+
+    .checkbox {
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        border: 2px solid var(--border);
+        background: transparent;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .checkbox.checked {
+        background: var(--primary);
+        border-color: var(--primary);
+    }
+
     /* Settings Styles */
     .settings-container {
         padding: 2rem 1.5rem;

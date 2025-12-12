@@ -1925,6 +1925,7 @@ let timerRunning = false;
 let restTimerInterval = null;
 let restTimerRemaining = 0;
 const REST_DURATION_SECONDS = 90;
+let progressState = { schemaId: null, exerciseId: null };
 
 // SETTINGS
 function getSettings() {
@@ -2834,26 +2835,179 @@ function renderPRs() {
 function renderProgress() {
     const container = document.getElementById("progressContainer");
     const history = getWorkoutHistory();
+    if (!container) return;
     
-    if (history.length < 2) {
+    if (history.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
                 <div class="empty-state-icon"></div>
-                <h3>Niet Genoeg Data</h3>
-                <p>Voltooi meer workouts om progressie te zien!</p>
+                <h3>Geen data</h3>
+                <p>Importeer of voltooi workouts om progressie te zien.</p>
             </div>
         `;
         return;
     }
     
-    // For now, show simple stats - can be extended with Chart.js later
+    // Verzamel schema's
+    const schemas = [];
+    const schemaMap = {};
+    history.forEach(w => {
+        if (!schemaMap[w.schemaId]) {
+            schemaMap[w.schemaId] = { id: w.schemaId, name: w.schemaName };
+            schemas.push(schemaMap[w.schemaId]);
+        }
+    });
+    if (schemas.length === 0) {
+        container.innerHTML = `<div class="empty-state"><div class="empty-state-icon"></div><h3>Geen schema's</h3><p>Workouts missen schema-informatie.</p></div>`;
+        return;
+    }
+    
+    // Default selectie
+    if (!progressState.schemaId || !schemaMap[progressState.schemaId]) {
+        progressState.schemaId = schemas[0].id;
+    }
+    
+    // Exercises per schema
+    const exerciseMap = {};
+    history.filter(w => w.schemaId === progressState.schemaId).forEach(w => {
+        w.exercises.forEach(ex => {
+            if (!exerciseMap[ex.id]) {
+                exerciseMap[ex.id] = { id: ex.id, name: ex.name };
+            }
+        });
+    });
+    const exercises = Object.values(exerciseMap);
+    if (exercises.length === 0) {
+        container.innerHTML = `<div class="empty-state"><div class="empty-state-icon"></div><h3>Geen oefeningen</h3><p>Geen oefeningen gevonden voor dit schema.</p></div>`;
+        return;
+    }
+    if (!progressState.exerciseId || !exerciseMap[progressState.exerciseId]) {
+        progressState.exerciseId = exercises[0].id;
+    }
+    
     container.innerHTML = `
-        <div class="empty-state">
-            <div class="empty-state-icon"></div>
-            <h3>Progressie Grafieken</h3>
-            <p>Binnenkort beschikbaar met gedetailleerde analyses!</p>
+        <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1rem;">
+            <div style="flex:1; min-width:200px;">
+                <label style="font-weight:700; display:block; margin-bottom:0.35rem;">Schema</label>
+                <select id="progressSchemaSelect" style="width:100%; padding:0.65rem; border-radius:12px; border:1px solid var(--border); background:var(--dark-card); color:var(--text);">
+                    ${schemas.map(s => `<option value="${s.id}" ${s.id === progressState.schemaId ? 'selected' : ''}>${s.name}</option>`).join('')}
+                </select>
+            </div>
+            <div style="flex:1; min-width:200px;">
+                <label style="font-weight:700; display:block; margin-bottom:0.35rem;">Oefening</label>
+                <select id="progressExerciseSelect" style="width:100%; padding:0.65rem; border-radius:12px; border:1px solid var(--border); background:var(--dark-card); color:var(--text);">
+                    ${exercises.map(ex => `<option value="${ex.id}" ${ex.id === progressState.exerciseId ? 'selected' : ''}>${ex.name}</option>`).join('')}
+                </select>
+            </div>
+        </div>
+
+        <div style="background:var(--dark-card); border:1px solid var(--border); border-radius:16px; padding:1rem; box-shadow:var(--shadow);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                <div>
+                    <div style="font-weight:800;">Progressie</div>
+                    <div style="color:var(--text-muted); font-size:0.9rem;">Gewicht (kg) over tijd</div>
+                </div>
+                <div id="progressLegend" style="color:var(--text-muted); font-size:0.9rem;"></div>
+            </div>
+            <div id="progressChart" style="width:100%; height:260px;">
+                <div style="text-align:center; color:var(--text-muted); padding:2rem;">Grafiek wordt geladen…</div>
+            </div>
         </div>
     `;
+    
+    document.getElementById('progressSchemaSelect').addEventListener('change', (e) => {
+        progressState.schemaId = e.target.value;
+        progressState.exerciseId = null;
+        renderProgress();
+    });
+    document.getElementById('progressExerciseSelect').addEventListener('change', (e) => {
+        progressState.exerciseId = parseInt(e.target.value, 10);
+        updateProgressChart();
+    });
+    
+    // Initial render
+    updateProgressChart();
+}
+
+function updateProgressChart() {
+    const container = document.getElementById('progressChart');
+    const legend = document.getElementById('progressLegend');
+    if (!container) return;
+    const history = getWorkoutHistory();
+    if (!progressState.schemaId || !progressState.exerciseId) {
+        container.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:2rem;">Selecteer een schema en oefening.</div>`;
+        return;
+    }
+    
+    const points = [];
+    history.filter(w => w.schemaId === progressState.schemaId).forEach(w => {
+        const ex = w.exercises.find(e => e.id === progressState.exerciseId);
+        if (!ex) return;
+        // Neem hoogste gewicht van voltooide sets; fallback op max weight
+        let maxSet = ex.sets.reduce((best, s) => {
+            const weight = parseFloat(s.weight || 0);
+            const completed = !!s.completed;
+            if (completed && weight > (best.weight || 0)) return { weight, reps: s.reps || 0 };
+            if (!best.weight || weight > best.weight) return { weight, reps: s.reps || 0 };
+            return best;
+        }, { weight: 0, reps: 0 });
+        points.push({
+            date: new Date(w.startTime),
+            weight: maxSet.weight || 0,
+            reps: maxSet.reps || 0
+        });
+    });
+    points.sort((a,b) => a.date - b.date);
+    
+    if (points.length === 0) {
+        container.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:2rem;">Geen data voor deze oefening.</div>`;
+        if (legend) legend.textContent = '';
+        return;
+    }
+    
+    // Y-bounds
+    const weights = points.map(p => p.weight);
+    const minY = Math.max(0, Math.min(...weights) - 5);
+    const maxY = Math.max(...weights) + 5;
+    const height = 200;
+    const width = 100 * Math.max(points.length - 1, 1);
+    const xStep = points.length > 1 ? width / (points.length - 1) : 0;
+    
+    const yScale = (w) => {
+        if (maxY === minY) return height / 2;
+        return height - ((w - minY) / (maxY - minY)) * height;
+    };
+    const xScale = (i) => i * xStep;
+    
+    // PR detection
+    const prs = getPRs();
+    const pr = prs[progressState.exerciseId?.toString()] || null;
+    const hasPR = !!pr;
+    const prWeight = pr?.weight || 0;
+    
+    const polylinePoints = points.map((p,i) => `${xScale(i)},${yScale(p.weight)}`).join(' ');
+    const circles = points.map((p,i) => {
+        const isPR = hasPR && p.weight >= prWeight;
+        return `<circle cx="${xScale(i)}" cy="${yScale(p.weight)}" r="4" fill="${isPR ? '#FFCC00' : '#34C759'}" stroke="${isPR ? '#FF9500' : 'none'}" />`;
+    }).join('');
+    
+    const labels = points.map((p,i) => {
+        const dateStr = `${p.date.getDate()}-${p.date.getMonth()+1}-${p.date.getFullYear()}`;
+        const isPR = hasPR && p.weight >= prWeight;
+        return `<text x="${xScale(i)}" y="${yScale(p.weight)-10}" fill="${isPR ? '#FFCC00' : '#8E8E93'}" font-size="10" text-anchor="middle">${p.weight}kg</text>
+                <text x="${xScale(i)}" y="${height+18}" fill="#8E8E93" font-size="10" text-anchor="middle">${dateStr}</text>`;
+    }).join('');
+    
+    container.innerHTML = `
+        <svg viewBox="0 0 ${width} ${height+30}" preserveAspectRatio="xMidYMax meet" style="width:100%; height:240px;">
+            <polyline fill="none" stroke="#34C759" stroke-width="3" points="${polylinePoints}" stroke-linecap="round" stroke-linejoin="round"></polyline>
+            ${circles}
+            ${labels}
+        </svg>
+    `;
+    if (legend) {
+        legend.innerHTML = hasPR ? `PR: ${prWeight}kg <span style="color:#FFCC00; margin-left:0.5rem;">★</span>` : '';
+    }
 }
 
 // VIEW SWITCHING

@@ -483,6 +483,30 @@ h1 {
     border-radius: 50%;
 }
 
+.btn-icon.delete-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.35rem;
+    border-radius: 8px;
+    width: auto;
+    height: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.btn-icon.delete-btn:hover {
+    background: var(--dark-elevated);
+    color: #FF3B30;
+}
+
+.btn-icon.delete-btn:active {
+    transform: scale(0.95);
+}
+
 /* Stats Card */
 .stats-card {
     background: linear-gradient(135deg, var(--dark-card) 0%, var(--dark-elevated) 100%);
@@ -2334,6 +2358,22 @@ function getWorkoutHistory() {
     return stored ? JSON.parse(stored) : [];
 }
 
+function deleteWorkout(index) {
+    if (!confirm('Weet je zeker dat je deze workout wilt verwijderen?')) {
+        return;
+    }
+    
+    const history = getWorkoutHistory();
+    if (index < 0 || index >= history.length) return;
+    
+    history.splice(index, 1);
+    localStorage.setItem("workout_history", JSON.stringify(history));
+    
+    showToast("Workout verwijderd", "success");
+    renderHistory();
+    renderPRs();
+}
+
 // PR TRACKING
 function getPRs() {
     const stored = localStorage.getItem("workout_prs");
@@ -2540,11 +2580,22 @@ function selectCalendarDay(dateStr) {
         const completedSets = workout.exercises.reduce((sum, ex) => sum + ex.sets.filter(s => s.completed).length, 0);
         const totalVolume = workout.exercises.reduce((sum, ex) => sum + ex.sets.reduce((s, set) => set.completed ? s + (set.weight * set.reps) : s, 0), 0);
         
+        // Find the global index of this workout in full history
+        const allHistory = getWorkoutHistory();
+        const globalIdx = allHistory.findIndex(w => w.startTime === workout.startTime && w.schemaName === workout.schemaName);
+        
         html += `
             <div class="calendar-workout-item">
-                <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; align-items:center;">
                     <strong>${workout.schemaName}</strong>
-                    <span style="font-size:0.85rem; color:var(--text-muted);">${formatDuration(workout.duration)}</span>
+                    <div style="display:flex; gap:0.5rem; align-items:center;">
+                        <span style="font-size:0.85rem; color:var(--text-muted);">${formatDuration(workout.duration)}</span>
+                        <button class="btn-icon delete-btn" onclick="deleteWorkout(${globalIdx})" title="Verwijderen">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14M10 11v6m4-6v6"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.75rem;">
                     ${completedSets} sets • ${totalVolume.toFixed(0)} kg

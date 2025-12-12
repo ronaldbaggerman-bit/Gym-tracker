@@ -1847,7 +1847,12 @@ function getSettings() {
     return stored ? { ...defaults, ...JSON.parse(stored) } : defaults;
 }
 
-function saveSettings() {
+function saveSettings(settings) {
+    try {
+        localStorage.setItem("gym_settings", JSON.stringify(settings));
+    } catch (e) {}
+}
+
 // INITIALIZATION
 function init() {
     loadTheme();
@@ -2811,8 +2816,11 @@ function formatDuration(seconds) {
 
 function loadSettings() {
     const settings = getSettings();
-    document.getElementById("bodyWeight").value = settings.bodyWeight;
-    document.getElementById("defaultSets").value = settings.defaultSets;
+    const bodyWeightInput = document.getElementById("bodyWeightInput");
+    const defaultSetsInput = document.getElementById("defaultSetsInput");
+
+    if (bodyWeightInput) bodyWeightInput.value = settings.bodyWeight;
+    if (defaultSetsInput) defaultSetsInput.value = settings.defaultSets;
 }
 
 // DARK MODE THEME MANAGEMENT

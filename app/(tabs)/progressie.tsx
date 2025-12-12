@@ -5,9 +5,9 @@ import {
     getExerciseProgressionData,
     getExercisesWithProgress,
     getSchemasWithProgress
-} from '@/app/utils/progressionData';
-import { loadSettings, updateSetting } from '@/app/utils/settingsStorage';
-import { loadSessions } from '@/app/utils/storage';
+} from '@/utils/progressionData';
+import { loadSettings, updateSetting } from '@/utils/settingsStorage';
+import { loadSessions } from '@/utils/storage';
 import { ProgressLineChart } from '@/components/ProgressLineChart';
 import { ThemedText } from '@/components/themed-text';
 import { useFocusEffect } from '@react-navigation/native';
@@ -74,7 +74,7 @@ export default function ProgressieScreen() {
 
   const loadData = async () => {
     try {
-      const { loadPRs } = await import('@/app/utils/storage');
+      const { loadPRs } = await import('@/utils/storage');
       const loadedSessions = await loadSessions();
       setSessions(loadedSessions || []);
       

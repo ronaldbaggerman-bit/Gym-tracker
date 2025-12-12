@@ -1,7 +1,7 @@
 import { EXERCISE_GUIDES } from '@/app/data/exerciseGuides';
 import type { WorkoutSession } from '@/app/types/workout';
-import { loadSessions } from '@/app/utils/storage';
-import { calculateWorkoutStats, getExerciseStats, type ExerciseStats, type WorkoutStats } from '@/app/utils/workoutStats';
+import { loadSessions } from '@/utils/storage';
+import { calculateWorkoutStats, getExerciseStats, type ExerciseStats, type WorkoutStats } from '@/utils/workoutStats';
 import { ScreenTransition } from '@/components/ScreenTransition';
 import { WeeklyVolumeChart } from '@/components/WeeklyVolumeChart';
 import { useFocusEffect } from '@react-navigation/native';

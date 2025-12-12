@@ -50,24 +50,32 @@ async function migrateToDatabase() {
 }
 
 export async function saveSession(session: any) {
+  console.log(`💾 [STORAGE] Saving session: ${session?.name || session?.id}`);
   try {
     await migrateToDatabase();
-    return await saveSessionToDB(session);
+    const result = await saveSessionToDB(session);
+    console.log('✅ [STORAGE] Session saved successfully');
+    return result;
   } catch (e) {
-    console.error('saveSession error', e);
+    console.error('❌ [STORAGE] saveSession error', e);
     return false;
   }
 }
 
 export async function loadSessions(limit?: number, offset?: number) {
+  console.log(`📖 [STORAGE] Loading sessions (limit: ${limit || 'all'}, offset: ${offset || 0})`);
   try {
     await migrateToDatabase();
     if (limit !== undefined && offset !== undefined) {
-      return await loadSessionsFromDB(limit, offset);
+      const sessions = await loadSessionsFromDB(limit, offset);
+      console.log(`✅ [STORAGE] Loaded ${sessions.length} sessions with pagination`);
+      return sessions;
     }
-    return await loadAllSessionsFromDB();
+    const sessions = await loadAllSessionsFromDB();
+    console.log(`✅ [STORAGE] Loaded ${sessions.length} sessions total`);
+    return sessions;
   } catch (e) {
-    console.error('loadSessions error', e);
+    console.error('❌ [STORAGE] loadSessions error', e);
     return [];
   }
 }

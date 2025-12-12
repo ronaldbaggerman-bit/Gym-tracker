@@ -1,7 +1,7 @@
 // Rewritten after merge conflict to restore full instellingen screen with theme toggle
 import { useThemeColors } from '@/app/hooks/useThemeColors';
 import { getColors } from '@/app/styles/colors';
-import { loadSettings, saveSettings, type AppSettings } from '@/app/utils/settingsStorage';
+import { loadSettings, saveSettings, type AppSettings } from '@/utils/settingsStorage';
 import { ThemedText } from '@/components/themed-text';
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, DeviceEventEmitter, Dimensions, ScrollView, StyleSheet, Switch, TextInput, TouchableOpacity, View } from 'react-native';
@@ -310,7 +310,7 @@ export default function InstellingenScreen() {
           <TouchableOpacity
             style={[styles.inputItem, { marginBottom: 8 }]}
             onPress={async () => {
-              const { loadSessionsFromDB } = await import('@/app/utils/database');
+              const { loadSessionsFromDB } = await import('@/utils/database');
               const sessions = await loadSessionsFromDB();
               const msg = `SQLite sessies: ${sessions.length}\n\nExercises per sessie:\n${sessions.slice(0, 3).map(s => `- ${s.date}: ${s.schemaName} (${s.exercises?.length || 0} oefeningen)`).join('\n')}${sessions.length > 3 ? '\n...' : ''}`;
               Alert.alert('Database Info', msg);

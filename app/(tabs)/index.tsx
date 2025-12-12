@@ -8,11 +8,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { WORKOUT_DATA, type Schema } from '@/app/data/workoutData';
 import type { ExerciseSet, WorkoutExercise, WorkoutSession } from '@/app/types/workout';
-import { calculateSessionKcal, formatKcalDisplay } from '@/app/utils/kcalCalculator';
-import { checkForNewPRs } from '@/app/utils/prTracker';
-import { applyOverrides, loadCustomSchemas, mergeSchemas } from '@/app/utils/schemaStorage';
-import { loadSettings } from '@/app/utils/settingsStorage';
-import { loadPRs, loadSessions, savePR, saveSession } from '@/app/utils/storage';
+import { calculateSessionKcal, formatKcalDisplay } from '@/utils/kcalCalculator';
+import { checkForNewPRs } from '@/utils/prTracker';
+import { applyOverrides, loadCustomSchemas, mergeSchemas } from '@/utils/schemaStorage';
+import { loadSettings } from '@/utils/settingsStorage';
+import { loadPRs, loadSessions, savePR, saveSession } from '@/utils/storage';
 import { ExerciseDetail } from '@/components/ExerciseDetail';
 import { OfflineIndicator } from '@/components/OfflineIndicator';
 import { PRCelebration } from '@/components/PRCelebration';
@@ -117,9 +117,14 @@ export default function WorkoutScreen() {
     let isActive = true;
 
     const boot = async () => {
+      console.log('🚀 [WORKOUTSCREEN] Boot starting...');
       setIsBooting(true);
       try {
+        console.log('📦 [WORKOUTSCREEN] Initializing database...');
         await initDatabase();
+        console.log('✅ [WORKOUTSCREEN] Database initialized');
+        
+        console.log('📥 [WORKOUTSCREEN] Loading PRs, settings, sessions...');
         const [prData, settings, sessions] = await Promise.all([
           loadPRs(),
           loadSettings(),
@@ -127,12 +132,13 @@ export default function WorkoutScreen() {
         ]);
 
         if (!isActive) return;
+        console.log('✅ [WORKOUTSCREEN] Loaded data - PRs:', Object.keys(prData || {}).length, 'Sessions:', sessions?.length);
         setPRs(prData || {});
         setBodyWeightKg(settings?.bodyWeightKg ?? 75);
         setDefaultMET(settings?.defaultMET ?? 5);
         setPreviousSessions(sessions || []);
       } catch (err) {
-        console.warn('Boot load failed', err);
+        console.error('❌ [WORKOUTSCREEN] Boot load failed', err);
       } finally {
         if (isActive) {
           setIsBooting(false);

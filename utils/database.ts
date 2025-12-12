@@ -87,10 +87,10 @@ export async function initDatabase() {
       PRAGMA foreign_keys = ON;
     `);
     
-    console.log('[Database] Initialized successfully with optimizations');
+    console.log('✅ [DATABASE] Initialized successfully with optimizations');
     return db;
   } catch (e) {
-    console.error('[Database] Init error:', e);
+    console.error('❌ [DATABASE] Init error:', e);
     throw e;
   }
 }

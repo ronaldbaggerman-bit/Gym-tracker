@@ -13,6 +13,12 @@
 			"type": "shell",
 			"command": "npx expo start",
 			"isBackground": true
+		},
+		{
+			"label": "Expo Start",
+			"type": "shell",
+			"command": "npx expo start",
+			"isBackground": true
 		}
 	]
 }

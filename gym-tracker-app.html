@@ -806,6 +806,122 @@ h1 {
     font-weight: 700;
 }
 
+/* Calendar Styles */
+.calendar-container {
+    padding: 1rem 0;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+}
+
+.calendar-month-year {
+    font-size: 1.25rem;
+    font-weight: 700;
+    text-align: center;
+    flex: 1;
+}
+
+.calendar-nav-btn {
+    background: var(--dark-card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.calendar-nav-btn:active {
+    transform: scale(0.92);
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.calendar-weekday {
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    padding: 0.5rem 0;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--dark-card);
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.calendar-day:active {
+    transform: scale(0.95);
+}
+
+.calendar-day.other-month {
+    color: var(--text-muted);
+    opacity: 0.4;
+}
+
+.calendar-day.has-workout {
+    background: var(--primary);
+    color: #000;
+    box-shadow: 0 0 12px rgba(52, 199, 89, 0.3);
+}
+
+.calendar-day.has-workout::after {
+    content: "";
+    position: absolute;
+    bottom: 4px;
+    width: 4px;
+    height: 4px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 50%;
+}
+
+.calendar-day.today {
+    border: 2px solid var(--primary);
+}
+
+.calendar-workouts {
+    background: var(--dark-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.calendar-workouts-title {
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--text);
+}
+
+.calendar-workout-item {
+    background: var(--dark-elevated);
+    padding: 0.75rem;
+    border-radius: 12px;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
 /* Bottom Actions */
 .bottom-actions {
     position: fixed;
@@ -1492,6 +1608,7 @@ h1 {
 
     <!-- History View -->
     <div id="historyView" class="view">
+        <div class="calendar-container" id="calendarContainer"></div>
         <div id="historyContainer"></div>
     </div>
 
@@ -2286,58 +2403,205 @@ function closePRCelebration() {
 
 // HISTORY RENDERING
 function renderHistory() {
-    const history = getWorkoutHistory();
-    const container = document.getElementById("historyContainer");
+    renderCalendar();
+    renderHistoryList();
+}
+
+function renderCalendar() {
+    const container = document.getElementById('calendarContainer');
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
     
-    if (history.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon"></div>
-                <h3>Geen Workouts</h3>
-                <p>Start je eerste workout om geschiedenis te zien!</p>
-            </div>
-        `;
-        return;
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay());
+    
+    const history = getWorkoutHistory();
+    const workoutsByDate = {};
+    
+    history.forEach(w => {
+        const date = new Date(w.startTime).toDateString();
+        if (!workoutsByDate[date]) workoutsByDate[date] = [];
+        workoutsByDate[date].push(w);
+    });
+    
+    let html = `
+        <div class="calendar-header">
+            <button class="calendar-nav-btn" onclick="previousMonth()">◀</button>
+            <div class="calendar-month-year" id="calendarTitle"></div>
+            <button class="calendar-nav-btn" onclick="nextMonth()">▶</button>
+        </div>
+        <div class="calendar-grid">
+            <div class="calendar-weekday">Ma</div>
+            <div class="calendar-weekday">Di</div>
+            <div class="calendar-weekday">Wo</div>
+            <div class="calendar-weekday">Do</div>
+            <div class="calendar-weekday">Vr</div>
+            <div class="calendar-weekday">Za</div>
+            <div class="calendar-weekday">Zo</div>
+    `;
+    
+    const currentDate = new Date(startDate);
+    const today_str = new Date().toDateString();
+    
+    while (currentDate <= lastDay) {
+        const dateStr = currentDate.toDateString();
+        const hasWorkout = workoutsByDate[dateStr] ? true : false;
+        const isToday = dateStr === today_str;
+        const isOtherMonth = currentDate.getMonth() !== month;
+        
+        const classes = [
+            'calendar-day',
+            hasWorkout && !isOtherMonth ? 'has-workout' : '',
+            isToday ? 'today' : '',
+            isOtherMonth ? 'other-month' : ''
+        ].filter(c => c).join(' ');
+        
+        html += `<div class="${classes}" onclick="selectCalendarDay('${dateStr}')">${currentDate.getDate()}</div>`;
+        
+        currentDate.setDate(currentDate.getDate() + 1);
     }
     
-    container.innerHTML = history.map(workout => {
-        const date = new Date(workout.startTime);
-        const completedSets = workout.exercises.reduce((sum, ex) => {
-            return sum + ex.sets.filter(s => s.completed).length;
-        }, 0);
+    html += '</div>';
+    
+    container.innerHTML = html;
+    document.getElementById('calendarTitle').textContent = 
+        firstDay.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' });
+    
+    window.currentCalendarMonth = month;
+    window.currentCalendarYear = year;
+}
+
+let currentCalendarMonth = new Date().getMonth();
+let currentCalendarYear = new Date().getFullYear();
+
+function previousMonth() {
+    currentCalendarMonth--;
+    if (currentCalendarMonth < 0) {
+        currentCalendarMonth = 11;
+        currentCalendarYear--;
+    }
+    renderCalendarForMonth(currentCalendarYear, currentCalendarMonth);
+}
+
+function nextMonth() {
+    currentCalendarMonth++;
+    if (currentCalendarMonth > 11) {
+        currentCalendarMonth = 0;
+        currentCalendarYear++;
+    }
+    renderCalendarForMonth(currentCalendarYear, currentCalendarMonth);
+}
+
+function renderCalendarForMonth(year, month) {
+    const container = document.getElementById('calendarContainer');
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay());
+    
+    const history = getWorkoutHistory();
+    const workoutsByDate = {};
+    
+    history.forEach(w => {
+        const date = new Date(w.startTime).toDateString();
+        if (!workoutsByDate[date]) workoutsByDate[date] = [];
+        workoutsByDate[date].push(w);
+    });
+    
+    let html = `
+        <div class="calendar-header">
+            <button class="calendar-nav-btn" onclick="previousMonth()">◀</button>
+            <div class="calendar-month-year" id="calendarTitle"></div>
+            <button class="calendar-nav-btn" onclick="nextMonth()">▶</button>
+        </div>
+        <div class="calendar-grid">
+            <div class="calendar-weekday">Ma</div>
+            <div class="calendar-weekday">Di</div>
+            <div class="calendar-weekday">Wo</div>
+            <div class="calendar-weekday">Do</div>
+            <div class="calendar-weekday">Vr</div>
+            <div class="calendar-weekday">Za</div>
+            <div class="calendar-weekday">Zo</div>
+    `;
+    
+    const currentDate = new Date(startDate);
+    const today = new Date();
+    const today_str = today.toDateString();
+    
+    while (currentDate.getMonth() === month || currentDate < new Date(year, month + 1, 1)) {
+        const dateStr = currentDate.toDateString();
+        const hasWorkout = workoutsByDate[dateStr] ? true : false;
+        const isToday = dateStr === today_str;
+        const isOtherMonth = currentDate.getMonth() !== month;
         
-        const totalVolume = workout.exercises.reduce((sum, ex) => {
-            return sum + ex.sets.reduce((setSum, set) => {
-                return set.completed ? setSum + (set.weight * set.reps) : setSum;
-            }, 0);
-        }, 0);
+        const classes = [
+            'calendar-day',
+            hasWorkout && !isOtherMonth ? 'has-workout' : '',
+            isToday ? 'today' : '',
+            isOtherMonth ? 'other-month' : ''
+        ].filter(c => c).join(' ');
         
-        return `
-            <div class="history-item">
-                <div class="history-header">
-                    <div>
-                        <div class="history-date">${formatDate(date)}</div>
-                        <div class="history-time">${formatTime(date)}</div>
-                    </div>
-                    <div class="history-schema">${workout.schemaName}</div>
-                </div>
-                <div class="history-stats">
-                    <div class="history-stat">
-                        <span class="history-stat-value">${formatDuration(workout.duration)}</span>
-                        <span class="history-stat-label">Duur</span>
-                    </div>
-                    <div class="history-stat">
-                        <span class="history-stat-value">${completedSets}</span>
-                        <span class="history-stat-label">Sets</span>
-                    </div>
-                    <div class="history-stat">
-                        <span class="history-stat-value">${totalVolume.toFixed(0)}</span>
-                        <span class="history-stat-label">Volume</span>
-                    </div>
-                </div>
+        html += `<div class="${classes}" onclick="selectCalendarDay('${dateStr}')">${currentDate.getDate()}</div>`;
+        
+        currentDate.setDate(currentDate.getDate() + 1);
+        if (currentDate.getDate() === 1) break;
+    }
+    
+    html += '</div>';
+    
+    container.innerHTML = html;
+    document.getElementById('calendarTitle').textContent = 
+        firstDay.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' });
+}
+
+function selectCalendarDay(dateStr) {
+    const history = getWorkoutHistory();
+    const dayWorkouts = history.filter(w => new Date(w.startTime).toDateString() === dateStr);
+    
+    if (dayWorkouts.length === 0) return;
+    
+    const historyContainer = document.getElementById('historyContainer');
+    
+    let html = `
+        <div class="calendar-workouts">
+            <div class="calendar-workouts-title">${new Date(dateStr).toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+    `;
+    
+    dayWorkouts.forEach(workout => {
+        const completedSets = workout.exercises.reduce((sum, ex) => sum + ex.sets.filter(s => s.completed).length, 0);
+        const totalVolume = workout.exercises.reduce((sum, ex) => sum + ex.sets.reduce((s, set) => set.completed ? s + (set.weight * set.reps) : s, 0), 0);
+        
+        html += `
+            <div class="calendar-workout-item">
+                <strong>${workout.schemaName}</strong><br>
+                ${completedSets} sets • ${totalVolume.toFixed(0)} kg • ${formatDuration(workout.duration)}
             </div>
         `;
-    }).join("");
+    });
+    
+    html += '</div>';
+    historyContainer.innerHTML = html;
+}
+
+function renderHistoryList() {
+    const history = getWorkoutHistory();
+    const container = document.getElementById('historyContainer');
+    
+    if (history.length === 0) {
+        if (!document.getElementById('calendarContainer').innerHTML.includes('calendar-workout')) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon"></div>
+                    <h3>Geen Workouts</h3>
+                    <p>Start je eerste workout om geschiedenis te zien!</p>
+                </div>
+            `;
+        }
+        return;
+    }
 }
 
 // PRS RENDERING

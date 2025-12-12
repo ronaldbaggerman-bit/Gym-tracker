@@ -2468,19 +2468,17 @@ function applyTheme(isDarkMode) {
 }
 
 function toggleDarkMode() {
-    const isDarkMode = !document.body.classList.contains('light-mode');
-    applyTheme(isDarkMode);
-    localStorage.setItem('gym_theme', isDarkMode ? 'dark' : 'light');
+    const currentlyDark = !document.body.classList.contains('light-mode');
+    const newIsDark = !currentlyDark; // flip
+    applyTheme(newIsDark);
+    localStorage.setItem('gym_theme', newIsDark ? 'dark' : 'light');
 }
 
 function updateThemeToggle(isDarkMode) {
     const toggle = document.getElementById('themeToggle');
     if (toggle) {
-        if (isDarkMode) {
-            toggle.classList.remove('active');
-        } else {
-            toggle.classList.add('active');
-        }
+        // active state indicates Dark Mode ON
+        toggle.classList.toggle('active', isDarkMode);
     }
 }
 

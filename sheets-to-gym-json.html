@@ -113,10 +113,37 @@ f678eedc;12-11-2025;Schema 1;104;;3;10;45;Goed;8"></textarea>
         <button class="copy-btn" style="background: #ff9500;" onclick="downloadJSON()">⬇️ Download als JSON</button>
     </div>
 
+    <div id="validationPanel" style="margin-top:1.5rem; padding:1rem; border:1px solid #ddd; border-radius:8px; background:#fafafa; display:none;">
+        <h3 style="margin-top:0;">CSV Validatie & Voorbeeld</h3>
+        <div style="display:flex; gap:1.5rem; flex-wrap:wrap;">
+            <div>
+                <div><strong>Gedetecteerde scheider:</strong> <span id="detectedSeparator">-</span></div>
+                <div><strong>Rijen ingelezen:</strong> <span id="rowCount">0</span></div>
+            </div>
+            <div>
+                <div><strong>Workouts:</strong> <span id="workoutCount">0</span></div>
+                <div><strong>Oefeningen:</strong> <span id="exerciseCount">0</span></div>
+            </div>
+        </div>
+        <div id="errorList" style="margin-top:0.75rem; color:#b00020; display:none;"></div>
+        <div id="previewTableWrapper" style="margin-top:1rem; overflow:auto; max-height:240px; border-top:1px solid #eee;">
+            <table id="previewTable" style="width:100%; border-collapse:collapse;">
+                <thead></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
     <div id="message"></div>
 </div>
 
 <script>
+const previewState = {
+    separator: null,
+    rows: [],
+    errors: [],
+    summary: { workouts: 0, exercises: 0 }
+};
 const EXERCISE_MAP = {
     101: "Chest Press",
     102: "DB Press",
@@ -151,7 +178,9 @@ function parseCSV(csv) {
     
     // Detect separator
     const headerLine = lines[0];
-    const separator = headerLine.includes(';') ? ';' : ',';
+    const semicolons = (headerLine.match(/;/g) || []).length;
+    const commas = (headerLine.match(/,/g) || []).length;
+    const separator = semicolons >= commas ? ';' : ',';
     console.log(`Detected separator: '${separator}'`);
     
     const header = headerLine.split(separator).map(h => h.trim());
@@ -164,7 +193,48 @@ function parseCSV(csv) {
         });
         return obj;
     });
+    previewState.separator = separator;
+    previewState.rows = rows;
     return rows;
+}
+
+function renderPreview(headers, rows) {
+    const panel = document.getElementById('validationPanel');
+    if (!panel) return;
+    panel.style.display = 'block';
+    document.getElementById('detectedSeparator').textContent = previewState.separator === ';' ? 'puntkomma (;)' : 'komma (,)';
+    document.getElementById('rowCount').textContent = String(rows.length);
+    const thead = document.querySelector('#previewTable thead');
+    const tbody = document.querySelector('#previewTable tbody');
+    thead.innerHTML = '';
+    tbody.innerHTML = '';
+    if (headers.length) {
+        const tr = document.createElement('tr');
+        headers.forEach(h => {
+            const th = document.createElement('th');
+            th.textContent = h;
+            th.style.borderBottom = '1px solid #ddd';
+            th.style.textAlign = 'left';
+            th.style.padding = '6px 8px';
+            tr.appendChild(th);
+        });
+        thead.appendChild(tr);
+    }
+    rows.slice(0, 10).forEach(r => {
+        const tr = document.createElement('tr');
+        headers.forEach(h => {
+            const td = document.createElement('td');
+            td.textContent = r[h] ?? '';
+            td.style.borderBottom = '1px solid #f0f0f0';
+            td.style.padding = '6px 8px';
+            tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+    });
+    previewState.errors = [];
+    const errEl = document.getElementById('errorList');
+    errEl.style.display = 'none';
+    errEl.innerHTML = '';
 }
 
 function convertCSVToJSON() {
@@ -177,7 +247,14 @@ function convertCSVToJSON() {
     }
 
     try {
+        const lines = csvText.trim().split('\n');
+        const headerLine = lines[0];
+        const semicolons = (headerLine.match(/;/g) || []).length;
+        const commas = (headerLine.match(/,/g) || []).length;
+        const separator = semicolons >= commas ? ';' : ',';
+        const header = headerLine.split(separator).map(h => h.trim());
         const rows = parseCSV(csvText);
+        renderPreview(header, rows);
         
         // Group by date + schema
         const grouped = {};
@@ -187,6 +264,10 @@ function convertCSVToJSON() {
             if (!row.DatumTijd || !row.GekozenSchema) return;
             
             const date = parseDate(row.DatumTijd);
+            if (!date) {
+                previewState.errors.push(`Ongeldige datum: "${row.DatumTijd}"`);
+                return;
+            }
             const key = `${date}|${row.GekozenSchema}`;
             
             if (!grouped[key]) {
@@ -214,6 +295,7 @@ function convertCSVToJSON() {
 
             if (exId === 0) {
                 console.warn("Skipping row due to missing ID and Name:", row);
+                previewState.errors.push(`Rij overgeslagen: ontbrekende OefeningID en Oefeningnaam`);
                 return;
             }
             
@@ -267,6 +349,20 @@ function convertCSVToJSON() {
             duration: g.duration,
             exercises: Object.values(g.exercises)
         }));
+        let exerciseTotal = 0;
+        workouts.forEach(w => w.exercises.forEach(e => exerciseTotal++));
+        previewState.summary.workouts = workouts.length;
+        previewState.summary.exercises = exerciseTotal;
+        document.getElementById('workoutCount').textContent = String(previewState.summary.workouts);
+        document.getElementById('exerciseCount').textContent = String(previewState.summary.exercises);
+        const errEl = document.getElementById('errorList');
+        if (previewState.errors.length) {
+            errEl.style.display = 'block';
+            errEl.innerHTML = previewState.errors.map(e => `<div>• ${e}</div>`).join('');
+        } else {
+            errEl.style.display = 'none';
+            errEl.innerHTML = '';
+        }
         
         const output = {
             workouts,

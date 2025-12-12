@@ -149,12 +149,18 @@ function parseCSV(csv) {
     const lines = csv.trim().split('\n');
     if (lines.length < 2) throw new Error("CSV moet minstens header + 1 rij bevatten");
     
-    const header = lines[0].split(';');
+    // Detect separator
+    const headerLine = lines[0];
+    const separator = headerLine.includes(';') ? ';' : ',';
+    console.log(`Detected separator: '${separator}'`);
+    
+    const header = headerLine.split(separator).map(h => h.trim());
     const rows = lines.slice(1).map(line => {
-        const cells = line.split(';');
+        // Handle quoted values if necessary (simple split for now)
+        const cells = line.split(separator);
         const obj = {};
         header.forEach((h, i) => {
-            obj[h.trim()] = (cells[i] || '').trim();
+            obj[h] = (cells[i] || '').trim();
         });
         return obj;
     });
@@ -192,10 +198,26 @@ function convertCSVToJSON() {
                 };
             }
             
-            const exId = parseInt(row.OefeningID) || 0;
-            if (exId === 0) return;
+            let exId = parseInt(row.OefeningID) || 0;
+            let exName = (row.Oefeningnaam && row.Oefeningnaam.trim()) ? row.Oefeningnaam.trim() : "";
+
+            // Try to find ID by name if missing
+            if (exId === 0 && exName) {
+                const foundId = Object.keys(EXERCISE_MAP).find(key => EXERCISE_MAP[key].toLowerCase() === exName.toLowerCase());
+                if (foundId) exId = parseInt(foundId);
+            }
+
+            // If still no ID but we have a name, generate a temporary one based on name hash
+            if (exId === 0 && exName) {
+                exId = 9000 + exName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 1000;
+            }
+
+            if (exId === 0) {
+                console.warn("Skipping row due to missing ID and Name:", row);
+                return;
+            }
             
-            const exName = (row.Oefeningnaam && row.Oefeningnaam.trim()) ? row.Oefeningnaam : EXERCISE_MAP[exId] || `Exercise ${exId}`;
+            if (!exName) exName = EXERCISE_MAP[exId] || `Exercise ${exId}`;
             const muscleGroup = MUSCLE_GROUP_MAP[exId] || "Overig";
             const reps = parseInt(row.Reps) || 0;
             const weight = parseFloat(row.Gewicht) || 0;

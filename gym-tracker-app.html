@@ -1612,37 +1612,50 @@ h1 {
     /* Toggle Switch */
     .toggle-switch {
         position: relative;
-        width: 64px;
-        height: 34px;
+        width: 88px;
+        height: 38px;
         background: var(--dark-elevated);
-        border-radius: 17px;
+        border-radius: 19px;
         cursor: pointer;
         border: 1px solid var(--border);
-        box-shadow: 0 0 0 1px rgba(255,255,255,0.05);
+        box-shadow: 0 0 0 1px rgba(255,255,255,0.08);
         transition: all 0.25s ease;
         display: flex;
         align-items: center;
-        padding: 2px;
+        justify-content: space-between;
+        padding: 4px;
+        gap: 4px;
         flex-shrink: 0;
     }
 
     .toggle-switch.active {
         background: var(--primary);
         border-color: var(--primary);
-        box-shadow: 0 0 0 2px rgba(52,199,89,0.25);
+        box-shadow: 0 0 0 2px rgba(52,199,89,0.3);
     }
 
     .toggle-slider {
         width: 30px;
         height: 30px;
         background: var(--text);
-        border-radius: 13px;
+        border-radius: 14px;
         transition: transform 0.3s ease;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.25);
     }
 
     .toggle-switch.active .toggle-slider {
         transform: translateX(26px);
+    }
+
+    .toggle-icon {
+        font-size: 1rem;
+        color: var(--text-muted);
+        line-height: 1;
+    }
+
+    .toggle-switch.active .toggle-icon {
+        color: var(--dark);
+        opacity: 0.9;
     }
 
 </style>
@@ -1744,8 +1757,13 @@ h1 {
                         <span>Donker Thema</span>
                         <span class="settings-description">Schakel donker/licht thema in</span>
                     </div>
-                    <div class="toggle-switch" id="themeToggle" onclick="toggleDarkMode()" title="Toggle dark/light mode">
-                        <div class="toggle-slider"></div>
+                    <div style="display:flex; flex-direction:column; gap:0.35rem; align-items:flex-end;">
+                        <div class="toggle-switch" id="themeToggle" onclick="toggleDarkMode()" title="Toggle dark/light mode">
+                            <span class="toggle-icon">🌙</span>
+                            <div class="toggle-slider"></div>
+                            <span class="toggle-icon">☀️</span>
+                        </div>
+                        <button class="btn btn-secondary" style="padding:0.35rem 0.75rem; font-size:0.85rem;" onclick="toggleDarkMode()">Toggle thema</button>
                     </div>
                 </div>
 

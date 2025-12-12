@@ -1729,6 +1729,9 @@ h1 {
                 <div class="rest-timer-header">
                     <div class="rest-timer-title" id="restTimerLabel">Rust: 1:30</div>
                     <div class="rest-timer-actions">
+                        <button class="btn btn-secondary" style="padding:0.35rem 0.75rem; font-size:0.85rem;" onclick="startRestTimer(30)">30s</button>
+                        <button class="btn btn-secondary" style="padding:0.35rem 0.75rem; font-size:0.85rem;" onclick="startRestTimer(60)">60s</button>
+                        <button class="btn btn-secondary" style="padding:0.35rem 0.75rem; font-size:0.85rem;" onclick="startRestTimer(90)">90s</button>
                         <button class="btn btn-secondary" style="padding:0.35rem 0.75rem; font-size:0.85rem;" onclick="refreshRestTimer()">Refresh</button>
                         <button class="btn btn-secondary" style="padding:0.35rem 0.75rem; font-size:0.85rem;" onclick="stopRestTimer()">Stop</button>
                     </div>
@@ -1820,6 +1823,33 @@ h1 {
                         <input type="number" id="defaultSetsInput" min="1" max="10" value="3" 
                                style="width: 60px; text-align: center; padding: 0.5rem; border-radius: 0.5rem; border: 1px solid var(--border); background: var(--dark-card); color: var(--text);">
                         <button class="btn btn-secondary" style="padding: 0.5rem 1rem;" onclick="updateDefaultSets(parseInt(document.getElementById('defaultSetsInput').value) + 1)">+</button>
+                    </div>
+                </div>
+
+                <div class="settings-item">
+                    <div class="settings-label">
+                        <span>Standaard Rustduur</span>
+                        <span class="settings-description">Rusttijd na voltooien van een set</span>
+                    </div>
+                    <select id="restDurationSelect" onchange="updateRestDuration(parseInt(this.value,10))" style="width: 140px; padding: 0.5rem; border-radius: 0.5rem; border: 1px solid var(--border); background: var(--dark-card); color: var(--text);">
+                        <option value="30">30 sec</option>
+                        <option value="60">60 sec</option>
+                        <option value="90" selected>90 sec</option>
+                        <option value="120">120 sec</option>
+                    </select>
+                </div>
+
+                <div class="settings-item">
+                    <div class="settings-label">
+                        <span>Rust Beep</span>
+                        <span class="settings-description">Geluid bij einde rust</span>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:0.35rem; align-items:flex-end;">
+                        <div class="toggle-switch" id="restBeepToggle" onclick="toggleRestBeep()" role="switch" aria-label="Rust beep" aria-checked="false">
+                            <span class="toggle-icon">🔈</span>
+                            <div class="toggle-slider"></div>
+                            <span class="toggle-icon">🔕</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1937,14 +1967,16 @@ let timerSeconds = 0;
 let timerRunning = false;
 let restTimerInterval = null;
 let restTimerRemaining = 0;
-const REST_DURATION_SECONDS = 90;
+let REST_DURATION_SECONDS = getSettings().restDuration || 90;
 let progressState = { schemaId: null, exerciseId: null, metric: 'weight' };
 
 // SETTINGS
 function getSettings() {
     const defaults = {
         bodyWeight: 75,
-        defaultSets: 3
+        defaultSets: 3,
+        restDuration: 90,
+        restBeep: true
     };
     const stored = localStorage.getItem("gym_settings");
     return stored ? { ...defaults, ...JSON.parse(stored) } : defaults;
@@ -2375,6 +2407,7 @@ function startRestTimer(seconds = REST_DURATION_SECONDS) {
         updateRestTimerUI();
         if (restTimerRemaining <= 0) {
             stopRestTimer(true);
+            playEndBeep();
         }
     }, 1000);
 }
@@ -2410,6 +2443,24 @@ function updateRestTimerUI() {
     if (remaining === 0 && !restTimerInterval) {
         card.style.display = "none";
     }
+}
+
+// Simple end beep using Web Audio API
+let beepContext = null;
+function playEndBeep() {
+    try {
+        beepContext = beepContext || new (window.AudioContext || window.webkitAudioContext)();
+        const duration = 0.3;
+        const oscillator = beepContext.createOscillator();
+        const gainNode = beepContext.createGain();
+        oscillator.type = 'sine';
+        oscillator.frequency.value = 880; // A5
+        gainNode.gain.value = 0.04; // low volume
+        oscillator.connect(gainNode);
+        gainNode.connect(beepContext.destination);
+        oscillator.start();
+        oscillator.stop(beepContext.currentTime + duration);
+    } catch (e) { /* noop */ }
 }
 
 function pad(num) {
@@ -3193,9 +3244,17 @@ function loadSettings() {
     const settings = getSettings();
     const bodyWeightInput = document.getElementById("bodyWeightInput");
     const defaultSetsInput = document.getElementById("defaultSetsInput");
+    const restDurationSelect = document.getElementById("restDurationSelect");
+    const restBeepToggle = document.getElementById("restBeepToggle");
 
     if (bodyWeightInput) bodyWeightInput.value = settings.bodyWeight;
     if (defaultSetsInput) defaultSetsInput.value = settings.defaultSets;
+    if (restDurationSelect) restDurationSelect.value = String(settings.restDuration || 90);
+    if (restBeepToggle) {
+        restBeepToggle.classList.toggle('active', !!settings.restBeep);
+        restBeepToggle.setAttribute('aria-checked', settings.restBeep ? 'true' : 'false');
+    }
+    REST_DURATION_SECONDS = settings.restDuration || 90;
 }
 
 // DARK MODE THEME MANAGEMENT
@@ -3242,6 +3301,13 @@ function updateSettingsUI() {
     if (defaultSetsInput) {
         defaultSetsInput.value = settings.defaultSets;
     }
+    const restDurationSelect = document.getElementById('restDurationSelect');
+    if (restDurationSelect) restDurationSelect.value = String(settings.restDuration || 90);
+    const restBeepToggle = document.getElementById('restBeepToggle');
+    if (restBeepToggle) {
+        restBeepToggle.classList.toggle('active', !!settings.restBeep);
+        restBeepToggle.setAttribute('aria-checked', settings.restBeep ? 'true' : 'false');
+    }
     
     // Update theme toggle
     updateThemeToggle(isDarkMode);
@@ -3261,6 +3327,24 @@ function updateDefaultSets(value) {
     const settings = getSettings();
     settings.defaultSets = sets;
     saveSettings(settings);
+}
+
+function updateRestDuration(value) {
+    const settings = getSettings();
+    settings.restDuration = Math.max(15, Math.min(300, value || 90));
+    saveSettings(settings);
+    REST_DURATION_SECONDS = settings.restDuration;
+}
+
+function toggleRestBeep() {
+    const settings = getSettings();
+    settings.restBeep = !settings.restBeep;
+    saveSettings(settings);
+    const el = document.getElementById('restBeepToggle');
+    if (el) {
+        el.classList.toggle('active', settings.restBeep);
+        el.setAttribute('aria-checked', settings.restBeep ? 'true' : 'false');
+    }
 }
 
 // Initialize on load

@@ -1796,6 +1796,9 @@ h1 {
                     <button class="btn btn-secondary" onclick="importBackup()" style="width: 100%;">
                         ⬆️ Import Backup
                     </button>
+                    <button class="btn" onclick="restoreLastBackup()" style="width: 100%;">
+                        🧩 Herstel Laatste Backup
+                    </button>
                     <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="handleImportFile(event)">
                     <div style="padding: 1rem; background: var(--dark-card); border-radius: 12px; border: 1px solid var(--border);">
                         <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.5;">
@@ -3195,6 +3198,11 @@ function exportBackup() {
         const prsCount = Object.keys(data.prs || {}).length;
         status.textContent = `Export: ${workoutsCount} workouts, ${prsCount} PRs, instellingen opgeslagen.`;
     }
+    // Persist last backup for quick restore
+    try {
+        localStorage.setItem('last_backup_json', JSON.stringify(data));
+        localStorage.setItem('last_backup_date', new Date().toISOString());
+    } catch (e) {}
     showToast("Backup gedownload!", "success");
 }
 
@@ -3229,6 +3237,11 @@ function handleImportFile(event) {
                 const prsCount = Object.keys(data.prs || {}).length;
                 status.textContent = `Import: ${workoutsCount} workouts, ${prsCount} PRs, instellingen geladen.`;
             }
+            // Save last backup raw for restore
+            try {
+                localStorage.setItem('last_backup_json', JSON.stringify(data));
+                localStorage.setItem('last_backup_date', new Date().toISOString());
+            } catch (e) {}
             showToast("Backup succesvol geïmporteerd!", "success");
             
             // Refresh views
@@ -3245,6 +3258,39 @@ function handleImportFile(event) {
     
     // Reset input
     event.target.value = "";
+}
+
+function restoreLastBackup() {
+    const status = document.getElementById('backupStatus');
+    try {
+        const raw = localStorage.getItem('last_backup_json');
+        const when = localStorage.getItem('last_backup_date');
+        if (!raw) {
+            if (status) status.textContent = 'Geen eerdere backup gevonden om te herstellen.';
+            showToast('Geen eerdere backup gevonden', 'error');
+            return;
+        }
+        const data = JSON.parse(raw);
+        const workoutsValid = Array.isArray(data.workouts);
+        const prsValid = typeof data.prs === 'object' && data.prs !== null;
+        const settingsValid = typeof data.settings === 'object' && data.settings !== null;
+        if (!workoutsValid && !prsValid && !settingsValid) {
+            throw new Error('Laatste backup heeft ongeldige inhoud');
+        }
+        if (workoutsValid) localStorage.setItem("workout_history", JSON.stringify(data.workouts));
+        if (prsValid) localStorage.setItem("workout_prs", JSON.stringify(data.prs));
+        if (settingsValid) localStorage.setItem("gym_settings", JSON.stringify(data.settings));
+        const workoutsCount = (data.workouts || []).length;
+        const prsCount = Object.keys(data.prs || {}).length;
+        if (status) status.textContent = `Herstel: ${workoutsCount} workouts, ${prsCount} PRs, instellingen toegepast (${when ? new Date(when).toLocaleString() : 'onbekend'})`;
+        showToast('Laatste backup hersteld', 'success');
+        renderHistory();
+        renderPRs();
+        loadSettings();
+    } catch (error) {
+        if (status) status.textContent = `Fout bij herstel: ${error.message}`;
+        showToast('Herstel mislukt', 'error');
+    }
 }
 
 // MODALS

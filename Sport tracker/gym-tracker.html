@@ -8,6 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Gym Tracker">
     <meta name="theme-color" content="#000000">
     <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiR3ltIFRyYWNrZXIiLCJzaG9ydF9uYW1lIjoiR3ltIiwic3RhcnRfdXJsIjoiLiIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiMwMDAwMDAiLCJ0aGVtZV9jb2xvciI6IiMzNEM3NTkifQ==">
     <title> Gym Tracker Pro</title>
@@ -64,6 +65,24 @@ body {
     position: relative;
     padding-bottom: 100px;
 }
+
+/* iOS Safari standalone viewport fixes */
+html { height: -webkit-fill-available; }
+body { min-height: -webkit-fill-available; }
+
+/* Prevent white flashes during load and show boot errors */
+#boot-error-overlay {
+    position: fixed;
+    inset: 0;
+    background: #000000;
+    color: #FF3B30;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    z-index: 9999;
+}
+#boot-error-overlay .content { max-width: 640px; text-align: center; }
 
 body::before {
     content: "";
@@ -2153,6 +2172,31 @@ h1 {
     }
 
 </style>
+
+<!-- Boot error overlay for diagnosing iOS white screens -->
+<div id="boot-error-overlay"><div class="content">
+        <h2>Er is een fout opgetreden bij het laden</h2>
+        <p id="boot-error-text">Onbekende fout. Probeer de app te herladen.</p>
+        <button onclick="location.reload()" style="margin-top:12px;padding:10px 16px;background:#FF3B30;color:#fff;border:none;border-radius:8px;">Herladen</button>
+</div></div>
+
+<script>
+// Basic boot error capture to reveal white-screen causes
+(function(){
+    function showBootError(msg){
+        var el = document.getElementById('boot-error-overlay');
+        var txt = document.getElementById('boot-error-text');
+        if(el && txt){ txt.textContent = String(msg || 'Onbekende fout'); el.style.display = 'flex'; }
+    }
+    window.addEventListener('error', function(e){
+        // Only show early boot errors (first 5s)
+        if(performance.now() < 5000){ showBootError(e.message || 'Scriptfout'); }
+    });
+    window.addEventListener('unhandledrejection', function(e){
+        if(performance.now() < 5000){ showBootError((e.reason && e.reason.message) || 'Promise fout'); }
+    });
+})();
+</script>
 
 <div class="container">
     <div class="header">

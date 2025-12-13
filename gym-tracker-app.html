@@ -2148,7 +2148,7 @@ function renderExerciseCard(exercise) {
     const hasPR = checkIfPR(exercise);
     
     return `
-        <div class="exercise-card">
+        <div class="exercise-card" data-ex-id="${exercise.id}">
             <div class="exercise-header">
                 <div class="exercise-title">
                     <div class="exercise-name">
@@ -2268,10 +2268,10 @@ function toggleSet(exerciseId, setIndex) {
 
 function handleExerciseCompleted(exerciseId) {
     try {
-        // Add collapsing class briefly before rerender to show animation on next render
+        // Add collapsing class to the specific exercise card
         requestAnimationFrame(() => {
-            const cards = document.querySelectorAll('.exercise-card');
-            cards.forEach(card => card.classList.add('collapsing'));
+            const card = document.querySelector(`.exercise-card[data-ex-id="${exerciseId}"]`);
+            if (card) card.classList.add('collapsing');
             setTimeout(() => {
                 // Show undo toast; will revert last set to incomplete
                 showToastWithUndo('Oefening voltooid', () => {

@@ -2287,6 +2287,16 @@ function renderExercises() {
             </div>
         `;
     }).join("");
+    
+    // Add "Voeg oefening toe" button at the end
+    container.innerHTML += `
+        <div style="margin-top:2rem; padding:1rem; background:var(--dark-card); border:2px dashed var(--border); border-radius:16px; text-align:center;">
+            <button class="btn btn-secondary" onclick="openAddExerciseToWorkoutModal()" style="width:100%;">
+                ➕ Voeg oefening toe
+            </button>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.75rem;">Voeg spontaan een extra oefening toe aan deze workout</p>
+        </div>
+    `;
 }
 
 function updateExerciseMeta() {
@@ -2533,6 +2543,97 @@ function getInitialWeight(exerciseId) {
     if (last && last > 0) return last;
     const prev = getPreviousBest(exerciseId);
     return prev ? prev.weight : 0;
+}
+
+// MID-WORKOUT ADD EXERCISE
+function openAddExerciseToWorkoutModal() {
+    if (!currentWorkout) return;
+    
+    // Collect all available exercises (built-in + custom)
+    const allExercises = [];
+    WORKOUT_DATA.schemas.forEach(s => {
+        s.muscleGroups.forEach(g => {
+            g.exercises.forEach(ex => {
+                if (!allExercises.find(e => e.id === ex.id)) {
+                    allExercises.push(ex);
+                }
+            });
+        });
+    });
+    const customExercises = getCustomExercises();
+    const availableExercises = [...allExercises, ...customExercises];
+    
+    // Filter out exercises already in workout
+    const alreadyAdded = currentWorkout.exercises.map(e => e.id);
+    const newExercises = availableExercises.filter(ex => !alreadyAdded.includes(ex.id));
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.id = 'addExerciseWorkoutModal';
+    modal.style.zIndex = '3000';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:500px;">
+            <div class="modal-header">
+                <h2>Voeg Oefening Toe</h2>
+                <button class="close-btn" onclick="document.getElementById('addExerciseWorkoutModal').remove()">×</button>
+            </div>
+            <div class="modal-body">
+                <div style="display:grid; gap:0.5rem; max-height:400px; overflow-y:auto; margin-bottom:1rem;">
+                    ${newExercises.map((ex, idx) => `
+                        <button class="btn btn-secondary" style="text-align:left; padding:1rem; justify-content:space-between; display:flex; align-items:center;" onclick="addExerciseToWorkout(${ex.id}, '${ex.name}', ${ex.met || 5.0}); document.getElementById('addExerciseWorkoutModal').remove();">
+                            <span>${ex.name}</span>
+                            <span style="color:var(--text-muted); font-size:0.85rem;">MET ${ex.met?.toFixed(1) || '5.0'}</span>
+                        </button>
+                    `).join('')}
+                    <button class="btn btn-primary" style="width:100%;" onclick="openQuickAddExerciseModal()">➕ Nieuwe Oefening Toevoegen</button>
+                </div>
+                <button class="btn btn-secondary" style="width:100%;" onclick="document.getElementById('addExerciseWorkoutModal').remove()">Annuleren</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+function addExerciseToWorkout(exerciseId, exerciseName, met = 5.0) {
+    if (!currentWorkout) return;
+    
+    const settings = getSettings();
+    const sets = [];
+    for (let i = 0; i < settings.defaultSets; i++) {
+        sets.push({
+            reps: 12,
+            weight: getInitialWeight(exerciseId),
+            completed: false
+        });
+    }
+    
+    currentWorkout.exercises.push({
+        id: exerciseId,
+        name: exerciseName,
+        met,
+        muscleGroup: "Extra",
+        muscleGroupIcon: "⭐",
+        sets
+    });
+    
+    scheduleRender('renderExercises', () => renderExercises());
+    scheduleRender('updateStats', () => updateStats());
+    showToast(`${exerciseName} toegevoegd!`, "success");
+}
+
+function openQuickAddExerciseModal() {
+    const name = prompt("Nieuwe oefening naam:");
+    if (!name) return;
+    const met = parseFloat(prompt("MET waarde (standaard 5.0):", "5.0")) || 5.0;
+    
+    // Add to database
+    const exercise = addCustomExercise(name, met);
+    
+    // Add to workout
+    addExerciseToWorkout(exercise.id, exercise.name, exercise.met);
+    
+    document.getElementById('addExerciseWorkoutModal')?.remove();
 }
 
 // TIMER

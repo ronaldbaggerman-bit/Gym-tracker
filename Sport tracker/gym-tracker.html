@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#000000">
@@ -1825,6 +1828,19 @@ h1 {
 <div class="toast" id="toast"></div>
 
 <script>// WORKOUT DATA
+// App version for cache-busting
+const APP_VERSION = "2025-12-13-1";
+try {
+    const lastVersion = localStorage.getItem("app_version");
+    if (lastVersion !== APP_VERSION) {
+        localStorage.setItem("app_version", APP_VERSION);
+        // Force reload once when version changes
+        if (lastVersion !== null) {
+            location.replace(location.href.split("?")[0] + "?v=" + APP_VERSION);
+        }
+    }
+} catch (e) {}
+
 const WORKOUT_DATA = {
     schemas: [
         {

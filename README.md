@@ -1,81 +1,127 @@
 # Gym-Track 💪
 
-[![CI](https://github.com/ronaldbaggerman-bit/Gym-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/ronaldbaggerman-bit/Gym-tracker/actions/workflows/ci.yml)
+Een fitness tracking app gebouwd met HTML5 en JavaScript, geoptimaliseerd voor mobiel gebruik.
 
-Stable release: [v0.1.0](https://github.com/ronaldbaggerman-bit/Gym-tracker/releases/tag/v0.1.0)
+## 📱 Beschikbare Applicaties
 
-Een fitness tracking app gebouwd met React Native en Expo, ontworpen om op Windows te worden ontwikkeld en getest met Expo Go op je telefoon.
+### 1. **Gym Tracker App** - `gym-tracker-app.html`
+De hoofdapplicatie voor fitness tracking met:
+- **Workout Tracking**: Log je workouts met oefeningen en sets
+- **Schema Management**: Beheer workout schema's (Push, Legs, etc.)
+- **History**: Bekijk je workout geschiedenis
+- **Statistics**: Visualiseer je trainingsstatistieken
+- **Offline Support**: Werkt ook zonder internet verbinding
+- **Mobile Optimized**: Fully responsive voor telefoon en tablet
 
-## Functies
+### 2. **Personal Dashboard** - `personal-index/` folder
+Diverse tools voor productiviteit:
+- Actielijst (task management)
+- Vakantieplanning
+- Werknemerplanning (met OneDrive sync)
 
-- **Workout**: Beheer en track je workouts
-- **Historie**: Bekijk je workout geschiedenis
-- **Grafieken**: Visualiseer je training statistieken
+## 🚀 Hoe te Gebruiken
 
-## Vereisten
+### Lokaal Testen
+1. Download `gym-tracker-app.html` 
+2. Open het bestand in je browser (Chrome, Firefox, Safari, Edge)
+3. Voeg aan je telefoon toe als web app (iOS/Android)
 
-- Node.js (v16+)
-- npm of yarn
-- [Expo Go](https://expo.dev/go) app op je telefoon (iOS of Android)
+### Op GitHub Pages
+De app is beschikbaar op: `https://ronaldbaggerman-bit.github.io/Gym-tracker/`
 
-## Aan de slag
+## 💾 Data Opslag
 
-### 1. Installeer dependencies
+- **LocalStorage**: Alle data wordt lokaal opgeslagen in je browser
+- **Backup**: Exporteer je data als JSON
+- **Import**: Importeer eerder geëxporteerde data
 
-```bash
-npm install
+## 🎯 Functies
+
+### Workout Tracking
+- Log workouts met datum, duur en oefeningen
+- Beheer sets, herhalingen en gewicht per oefening
+- Voeg custom oefeningen toe
+- Pas je schema aan naar je behoeften
+
+### Schema's
+- Voorgedefinieerde schema's: Push, Legs, Pull
+- Custom schema's maken
+- Kleur-coded per schema type
+- Dynamische oefeningen per schema
+
+### Statistieken
+- Volume tracking per oefening
+- PR (Personal Record) monitoring
+- Progressie over tijd
+- Weekly/monthly statistieken
+
+### Cloud Sync (optioneel)
+- OneDrive backup support
+- JSONBin cloud sync
+- Automatische synchronisatie
+
+## 📋 Browser Support
+
+- ✅ Chrome/Chromium
+- ✅ Firefox
+- ✅ Safari (iOS en macOS)
+- ✅ Edge
+- ✅ Mobile browsers
+
+## 🛠️ Ontwikkeling
 ```
 
-### 2. Start de development server
+## 🛠️ Lokale Wijzigingen
 
-```bash
-npx expo start
-```
+De HTML bestanden kunnen direct bewerkt worden in elke teksteditor. Voor live preview:
 
-### 3. Open in Expo Go
+1. Open het HTML bestand in je browser
+2. Wijzigingen opslaan in je editor
+3. Refresh de browser om wijzigingen te zien
 
-- Android: Scan de QR code met je camera of Expo Go app
-- iOS: Open de link in Safari en klik op "Open in Expo Go"
-
-## Project Structuur
+## 📁 Projectstructuur
 
 ```
-app/
-├── (tabs)/              # Tab navigator screens
-│   ├── index.tsx       # Workout screen
-│   ├── explore.tsx     # Historie screen
-│   ├── grafieken.tsx   # Grafieken screen
-│   └── _layout.tsx     # Tab navigator setup
-├── navigation/         # Navigation configuratie
-└── screens/            # Reusable screen componenten
+.
+├── gym-tracker-app.html           # Hoofd fitness app
+├── Sport tracker/
+│   └── gym-tracker.html           # Backup van werkende versie
+├── personal-index/
+│   ├── index.html                 # Personal dashboard
+│   ├── vakantieplanning.html      # Vacation planning
+│   └── werknemerplanning.html     # Employee planning + OneDrive sync
+├── README.md                      # Deze file
+└── .git/                          # Git repository
 ```
 
-## Commando's
+## 🔄 Backup & Restore
 
-- `npm run android` - Bouw voor Android
-- `npm run ios` - Bouw voor iOS (macOS vereist)
-- `npm run web` - Start web versie
+Alle data wordt lokaal opgeslagen in je browser's LocalStorage. Om je data te behouden:
 
-## Documentatie
+1. **Backup maken**: Gebruik de "Export" knop in de app
+2. **Data terugzetten**: Gebruik de "Import" knop en selecteer je backup bestand
 
-- [Expo Documentation](https://docs.expo.dev/)
-- [React Native Documentation](https://reactnative.dev/)
-- [Expo Router](https://docs.expo.dev/router/introduction/)
+## 📝 Changelog
 
-## Releases
+### v1.0.0 (2025-12-13)
+- Converted from React Native/Expo to standalone HTML5
+- Full offline support
+- LocalStorage data persistence
+- Optional cloud sync features
+- Mobile optimized UI
+- Personal dashboard tools
 
-Zie `CHANGELOG.md` voor volledige release notes.
+## 🐛 Known Issues & Fixes
 
-- v0.1.0 (2025-12-12): utilities verplaatst naar `utils/`, imports gefixt naar `@/utils/*`, debug logs toegevoegd, CI workflow toegevoegd.
+- Feature branch merge reverted (2025-12-13) - Restored working version from Sport tracker folder
 
+## 👤 Author
 
-```bash
-npm run reset-project
-```
+Ronald Baggerman
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## 📄 Licentie
 
-## Learn more
+MIT
 
 To learn more about developing your project with Expo, look at the following resources:
 

@@ -1878,7 +1878,7 @@ h1 {
 
 <script>// WORKOUT DATA
 // App version for cache-busting (always bump by 1)
-const APP_VERSION = "2025-12-13-6";
+const APP_VERSION = "2025-12-13-7";
 // Enforce versioned URL so clients always fetch the latest build
 (function enforceVersionedUrl() {
     try {
@@ -2051,6 +2051,7 @@ function init() {
     renderSchemaSelection();
     loadSettings();
     migrateHackSquatToHackSquadToday();
+    migratePRsHackSquatToHackSquad();
     renderHistory();
     renderPRs();
 }
@@ -2742,6 +2743,27 @@ function deleteWorkout(index) {
 function getPRs() {
     const stored = localStorage.getItem("workout_prs");
     return stored ? JSON.parse(stored) : {};
+}
+
+// DATA MIGRATION: Rename PR entries from "Hack Squat" to "Hack Squad"
+function migratePRsHackSquatToHackSquad() {
+    try {
+        const prs = getPRs();
+        if (!prs || typeof prs !== 'object') return;
+        let changed = false;
+        Object.keys(prs).forEach(key => {
+            const pr = prs[key];
+            if (!pr || typeof pr.exerciseName !== 'string') return;
+            if (pr.exerciseName.trim().toLowerCase() === 'hack squat') {
+                pr.exerciseName = 'Hack Squad';
+                if (!pr.exerciseId) pr.exerciseId = 111;
+                changed = true;
+            }
+        });
+        if (changed) {
+            localStorage.setItem('workout_prs', JSON.stringify(prs));
+        }
+    } catch (e) { /* ignore */ }
 }
 
 function updatePRs(workout) {

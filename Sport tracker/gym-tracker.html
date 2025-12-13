@@ -2604,9 +2604,11 @@ function saveCustomExercise() {
     }
     showToast(`✅ Oefening '${name}' opgeslagen in bibliotheek!`);
     closeAddExerciseModal();
+
 }
 
-
+// App initialisatie
+function init() {
     loadTheme();
     setAppVersionLabel();
     renderSchemaSelection();
@@ -2619,6 +2621,8 @@ function saveCustomExercise() {
     renderHistory();
     renderPRs();
 }
+
+document.addEventListener("DOMContentLoaded", init);
 
 function setAppVersionLabel() {
     try {

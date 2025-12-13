@@ -1877,18 +1877,23 @@ h1 {
 <div class="toast" id="toast"></div>
 
 <script>// WORKOUT DATA
-// App version for cache-busting
-const APP_VERSION = "2025-12-13-3";
-try {
-    const lastVersion = localStorage.getItem("app_version");
-    if (lastVersion !== APP_VERSION) {
-        localStorage.setItem("app_version", APP_VERSION);
-        // Force reload once when version changes
-        if (lastVersion !== null) {
-            location.replace(location.href.split("?")[0] + "?v=" + APP_VERSION);
+// App version for cache-busting (always bump by 1)
+const APP_VERSION = "2025-12-13-4";
+// Enforce versioned URL so clients always fetch the latest build
+(function enforceVersionedUrl() {
+    try {
+        const url = new URL(location.href);
+        const currentV = url.searchParams.get("v");
+        if (currentV !== APP_VERSION) {
+            url.searchParams.set("v", APP_VERSION);
+            url.searchParams.set("t", Date.now().toString());
+            localStorage.setItem("app_version", APP_VERSION);
+            location.replace(url.toString());
+            return; // stop further execution on this load
         }
-    }
-} catch (e) {}
+        localStorage.setItem("app_version", APP_VERSION);
+    } catch (e) {}
+})();
 
 const WORKOUT_DATA = {
     schemas: [

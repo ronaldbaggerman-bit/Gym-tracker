@@ -2541,10 +2541,13 @@ function getAllMuscleGroups() {
 }
 
 function openAddExerciseModal() {
-    alert('FAB clicked!'); // Temporary debug
+    alert('FAB clicked! Opening modal...'); // Temporary debug
     console.log('openAddExerciseModal called');
     const modal = document.getElementById('addExerciseModal');
+    console.log('Modal element:', modal);
+    
     const selectEl = document.getElementById('customMuscleGroup');
+    console.log('Select element:', selectEl);
     
     // Populate muscle groups
     selectEl.innerHTML = '<option value="">-- Selecteer spiergroep --</option>';
@@ -2556,6 +2559,7 @@ function openAddExerciseModal() {
     });
     
     modal.classList.add('active');
+    console.log('Modal should now be visible');
 }
 
 function closeAddExerciseModal() {
@@ -2568,6 +2572,7 @@ function closeAddExerciseModal() {
 }
 
 function saveCustomExercise() {
+    alert('Save button clicked!'); // Temporary debug
     console.log('saveCustomExercise called');
     const name = document.getElementById('customExerciseName').value.trim();
     const muscleGroupId = document.getElementById('customMuscleGroup').value;

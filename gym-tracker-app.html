@@ -2096,7 +2096,14 @@ function saveSettings(settings) {
 // CUSTOM EXERCISES & SCHEMAS DATABASE
 function getCustomExercises() {
     const stored = localStorage.getItem("custom_exercises");
-    return stored ? JSON.parse(stored) : [];
+    if (!stored) return [];
+    try {
+        const parsed = JSON.parse(stored);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+        console.warn("custom_exercises parse error", e);
+        return [];
+    }
 }
 
 function saveCustomExercises(exercises) {
@@ -2120,7 +2127,14 @@ function deleteCustomExercise(id) {
 
 function getCustomSchemas() {
     const stored = localStorage.getItem("custom_schemas");
-    return stored ? JSON.parse(stored) : [];
+    if (!stored) return [];
+    try {
+        const parsed = JSON.parse(stored);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+        console.warn("custom_schemas parse error", e);
+        return [];
+    }
 }
 
 function saveCustomSchemas(schemas) {

@@ -2176,7 +2176,9 @@ function renderSchemaSelection() {
     const allSchemas = getAllSchemas();
     
     container.innerHTML = allSchemas.map(schema => {
-        const totalExercises = schema.muscleGroups.reduce((sum, g) => sum + g.exercises.length, 0);
+        const groupExercises = schema.muscleGroups.reduce((sum, g) => sum + g.exercises.length, 0);
+        const standaloneExercises = (schema.standaloneExercises || []).length;
+        const totalExercises = groupExercises + standaloneExercises;
         const isBuiltIn = !schema.isCustom;
         const classType = schema.id === "schema1" ? "push" : schema.id === "schema2" ? "legs" : "custom";
         const lockBadge = isBuiltIn ? '<span style="position:absolute; top:0.5rem; right:0.5rem; font-size:1rem;" title="Ingebouwd schema">🔒</span>' : '';

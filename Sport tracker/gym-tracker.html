@@ -1878,7 +1878,7 @@ h1 {
 
 <script>// WORKOUT DATA
 // App version for cache-busting (always bump by 1)
-const APP_VERSION = "2025-12-13-4";
+const APP_VERSION = "2025-12-13-5";
 // Enforce versioned URL so clients always fetch the latest build
 (function enforceVersionedUrl() {
     try {
@@ -2918,7 +2918,7 @@ function selectCalendarDay(dateStr) {
     const historyContainer = document.getElementById('historyContainer');
     
     let html = `
-        <div class="calendar-workouts">
+        <div class="calendar-workouts" id="calendarWorkouts">
             <div class="calendar-workouts-title">${new Date(dateStr).toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
     `;
     
@@ -2956,6 +2956,13 @@ function selectCalendarDay(dateStr) {
     
     html += '</div>';
     historyContainer.innerHTML = html;
+    // Smooth scroll the workouts block into view
+    setTimeout(() => {
+        const listEl = document.getElementById('calendarWorkouts');
+        if (listEl) {
+            listEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, 0);
     window.selectedDayWorkouts = dayWorkouts;
 }
 

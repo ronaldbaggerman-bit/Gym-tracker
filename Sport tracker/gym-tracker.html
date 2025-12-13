@@ -219,6 +219,10 @@ h1 {
 .view.active {
     display: block;
     animation: fadeSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    background: radial-gradient(circle at 20% 30%, rgba(255,255,255,0.03), transparent 40%),
+                radial-gradient(circle at 80% 20%, rgba(255,255,255,0.02), transparent 35%),
+                radial-gradient(circle at 50% 80%, rgba(255,255,255,0.02), transparent 45%),
+                repeating-linear-gradient(45deg, rgba(255,255,255,0.04), rgba(255,255,255,0.04) 6px, rgba(0,0,0,0.02) 6px, rgba(0,0,0,0.02) 12px);
 }
 
 @keyframes fadeSlideIn {
@@ -399,6 +403,35 @@ h1 {
     color: var(--text-muted);
     font-size: 0.9rem;
     margin-top: 0.25rem;
+}
+
+.timer-inline-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.timer-stat {
+    background: var(--dark-elevated);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 0.65rem 0.85rem;
+    text-align: center;
+}
+
+.timer-stat-label {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin-bottom: 0.15rem;
+    font-weight: 600;
+}
+
+.timer-stat-value {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 800;
 }
 
 .timer {
@@ -734,7 +767,30 @@ h1 {
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s;
-    font-size: 1.1rem;
+    position: relative;
+}
+
+.exercise-btn::before {
+    content: "";
+    width: 16px;
+    height: 16px;
+    background: currentColor;
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    transition: transform 0.2s ease;
+}
+
+.exercise-btn.collapse-btn::before {
+    mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23000" d="M6.7 9l5.3 5.3L17.3 9z"/></svg>');
+}
+
+.exercise-btn.collapse-btn.collapsed::before {
+    transform: rotate(-90deg);
+}
+
+.exercise-btn.progress-btn::before {
+    mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23000" d="M5 18h3V8H5zm6 0h3V5h-3zm6 0h3V11h-3z"/></svg>');
 }
 
 .exercise-btn:active {
@@ -752,8 +808,8 @@ h1 {
     border-radius: 14px;
     padding: 1rem;
     display: grid;
-    grid-template-columns: 50px 1fr 1fr 50px;
-    gap: 1rem;
+    grid-template-columns: 1fr 1fr 50px;
+    gap: 0.75rem;
     align-items: center;
     border: 2px solid transparent;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -776,12 +832,7 @@ h1 {
     50% { transform: scale(1.03); box-shadow: 0 0 30px rgba(255, 215, 0, 0.5); }
 }
 
-.set-number {
-    font-weight: 800;
-    color: var(--text-muted);
-    font-size: 1.25rem;
-    text-align: center;
-}
+.set-number { display: none; }
 
 .set-input-group {
     position: relative;
@@ -1681,29 +1732,22 @@ h1 {
                     <div class="timer-label">Workout Tijd</div>
                     <div class="timer" id="timer">00:00</div>
                     <div class="timer-meta" id="exerciseMeta">Oefeningen: 0/0</div>
+                    <div class="timer-inline-stats">
+                        <div class="timer-stat">
+                            <span class="timer-stat-label">Sets</span>
+                            <span class="timer-stat-value" id="statSets">0</span>
+                        </div>
+                        <div class="timer-stat">
+                            <span class="timer-stat-label">Kcal 🔥</span>
+                            <span class="timer-stat-value" id="statKcal">0</span>
+                        </div>
+                    </div>
                     <div class="timer-controls">
                         <button class="btn btn-secondary" onclick="toggleTimer()" id="timerBtn">
                             <span id="timerIcon"></span>
                             <span id="timerText">Start</span>
                         </button>
                         <button class="btn btn-secondary" onclick="resetTimer()"> Reset</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="stats-card">
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <span class="stat-value" id="statSets">0</span>
-                        <span class="stat-label">Sets</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-value" id="statVolume">0</span>
-                        <span class="stat-label">Volume</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-value" id="statKcal">0</span>
-                        <span class="stat-label">Kcal</span>
                     </div>
                 </div>
             </div>
@@ -1941,6 +1985,7 @@ const WORKOUT_DATA = {
 
 // STATE
 let currentView = "workout";
+const collapsedExercises = {};
 let currentWorkout = null;
 let timerInterval = null;
 let timerSeconds = 0;
@@ -2119,6 +2164,7 @@ function selectSchema(schemaId) {
 function renderExercises() {
     if (!currentWorkout) return;
     updateExerciseMeta();
+    updateStats();
     
     const container = document.getElementById("exercisesContainer");
     const visibleExercises = currentWorkout.exercises.filter(ex => !ex.sets.every(s => s.completed));
@@ -2180,6 +2226,9 @@ function updateExerciseMeta() {
 function renderExerciseCard(exercise) {
     const previousBest = getPreviousBest(exercise.id);
     const hasPR = checkIfPR(exercise);
+    const collapsed = collapsedExercises[exercise.id];
+    const setsDisplay = collapsed ? 'style="display:none;"' : '';
+    const collapseClass = collapsed ? 'collapse-btn collapsed' : 'collapse-btn';
     
     return `
         <div class="exercise-card">
@@ -2195,11 +2244,11 @@ function renderExerciseCard(exercise) {
                     </div>
                 </div>
                 <div class="exercise-actions">
-                    <button class="exercise-btn" onclick="addSet(${exercise.id})" title="Set toevoegen"></button>
-                    <button class="exercise-btn" onclick="removeSet(${exercise.id})" title="Set verwijderen"></button>
+                    <button class="exercise-btn ${collapseClass}" onclick="toggleExercise(${exercise.id})" title="Toon/Verberg sets" aria-label="Toon/Verberg sets"></button>
+                    <button class="exercise-btn progress-btn" onclick="openExerciseProgress(${exercise.id})" title="Bekijk progressie" aria-label="Bekijk progressie"></button>
                 </div>
             </div>
-            <div class="sets-container">
+            <div class="sets-container" id="sets-${exercise.id}" ${setsDisplay}>
                 ${previousBest ? `
                     <div class="previous-best">
                         <span class="previous-best-label"> Vorige Beste</span>
@@ -2208,7 +2257,6 @@ function renderExerciseCard(exercise) {
                 ` : ""}
                 ${exercise.sets.map((set, idx) => `
                     <div class="set-row ${set.completed ? "completed" : ""}">
-                        <div class="set-number">${idx + 1}</div>
                         <div class="set-input-group">
                             <div style="display:flex; align-items:center; gap:0.5rem;">
                                 <button class="btn btn-secondary" style="padding:0.4rem 0.6rem" onclick="adjustSet(${exercise.id}, ${idx}, 'reps', -1)">−</button>
@@ -2289,10 +2337,80 @@ function toggleSet(exerciseId, setIndex) {
     if (set.completed && !wasCompleted) {
         startRestTimer();
         checkAndShowPR(exercise, setIndex);
+        focusOnTimer();
     }
     
     renderExercises();
     updateStats();
+}
+
+function toggleExercise(exerciseId) {
+    const el = document.getElementById(`sets-${exerciseId}`);
+    if (!el) return;
+    const isHidden = el.style.display === 'none';
+    const nextHidden = !isHidden;
+    el.style.display = nextHidden ? 'none' : 'grid';
+    collapsedExercises[exerciseId] = nextHidden;
+    const card = el.closest('.exercise-card');
+    if (card) {
+        const btn = card.querySelector('.exercise-btn.collapse-btn');
+        if (btn) btn.classList.toggle('collapsed', nextHidden);
+    }
+}
+
+function openExerciseProgress(exerciseId) {
+    // switch to progress view and set exercise selection
+    const history = getWorkoutHistory();
+    // find schema and exercise names
+    let targetSchemaId = null;
+    let exerciseName = null;
+    history.some(w => {
+        const ex = w.exercises.find(e => e.id === exerciseId);
+        if (ex) {
+            targetSchemaId = w.schemaId;
+            exerciseName = ex.name;
+            return true;
+        }
+        return false;
+    });
+    if (!targetSchemaId) {
+        showToast("Geen progressiedata voor deze oefening", "error");
+        return;
+    }
+    progressState.schemaId = targetSchemaId;
+    progressState.exerciseId = exerciseId;
+    switchView('progress');
+    // update the dropdowns if they exist after render
+    setTimeout(() => {
+        const schemaSelect = document.getElementById('progressSchemaSelect');
+        const exSelect = document.getElementById('progressExerciseSelect');
+        if (schemaSelect) schemaSelect.value = targetSchemaId;
+        if (exSelect) exSelect.value = exerciseId;
+        updateProgressChart();
+        addBackToWorkoutButton();
+    }, 120);
+}
+
+function addBackToWorkoutButton() {
+    const container = document.getElementById('progressContainer');
+    if (!container) return;
+    let backBtn = document.getElementById('backToWorkoutBtn');
+    if (!backBtn) {
+        backBtn = document.createElement('button');
+        backBtn.id = 'backToWorkoutBtn';
+        backBtn.className = 'btn btn-secondary';
+        backBtn.style.marginTop = '1rem';
+        backBtn.textContent = '← Terug naar workout';
+        backBtn.onclick = () => switchView('workout');
+        container.appendChild(backBtn);
+    }
+}
+
+function focusOnTimer() {
+    const timerCard = document.getElementById("timerCard");
+    if (timerCard) {
+        timerCard.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
 }
 
 function addSet(exerciseId) {
@@ -2336,9 +2454,12 @@ function updateStats() {
     const durationMinutes = timerSeconds / 60;
     const totalKcal = calculateKcal(totalVolume, durationMinutes, settings.bodyWeight);
     
-    document.getElementById("statSets").textContent = totalSets;
-    document.getElementById("statVolume").textContent = totalVolume.toFixed(0);
-    document.getElementById("statKcal").textContent = totalKcal.toFixed(0);
+    const statSetsEl = document.getElementById("statSets");
+    if (statSetsEl) statSetsEl.textContent = totalSets;
+    const statVolumeEl = document.getElementById("statVolume");
+    if (statVolumeEl) statVolumeEl.textContent = totalVolume.toFixed(0);
+    const statKcalEl = document.getElementById("statKcal");
+    if (statKcalEl) statKcalEl.textContent = totalKcal.toFixed(0);
 }
 
 function calculateKcal(volume, durationMinutes, bodyWeight) {

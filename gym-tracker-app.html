@@ -2161,7 +2161,10 @@ function updateCustomSchema(id, name, description, muscleGroups) {
 function getAllSchemas() {
     return [...WORKOUT_DATA.schemas, ...getCustomSchemas()].map(s => ({
         ...s,
-        muscleGroups: s.muscleGroups || []
+        muscleGroups: (s.muscleGroups || []).map(g => ({
+            ...g,
+            exercises: g.exercises || []
+        }))
     }));
 }
 
@@ -2231,7 +2234,7 @@ function selectSchema(schemaId) {
     
     // Add exercises from muscle groups
     (schema.muscleGroups || []).forEach(group => {
-        group.exercises.forEach(exercise => {
+        (group.exercises || []).forEach(exercise => {
             const sets = [];
             for (let i = 0; i < settings.defaultSets; i++) {
                 sets.push({
@@ -4102,7 +4105,7 @@ function openAddExerciseToSchemaModal() {
     if (!window.editingSchema.muscleGroups) window.editingSchema.muscleGroups = [];
     WORKOUT_DATA.schemas.forEach(s => {
         s.muscleGroups.forEach(g => {
-            g.exercises.forEach(ex => {
+            (g.exercises || []).forEach(ex => {
                 if (!allExercises.find(e => e.id === ex.id)) {
                     allExercises.push({ ...ex, muscleGroup: g.name });
                 }

@@ -1106,7 +1106,7 @@ h1 {
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.92);
-    backdrop-filter: blur(10px);
+    /* backdrop-filter: blur(10px); */ /* Disabled for iOS compatibility */
     z-index: 2000;
     align-items: center;
     justify-content: center;
@@ -2122,8 +2122,52 @@ h1 {
 
             <div id="exercisesContainer"></div>
 
+            <!-- Inline Add Exercise Form (shown when FAB clicked) -->
+            <div id="inlineAddExercise" style="display: none; margin: 1rem 0; padding: 1rem; background: var(--dark-card); border-radius: 12px; border: 1px solid var(--border);">
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                    <button id="addNewExerciseBtn" onclick="showNewExerciseForm()" style="flex: 1; padding: 0.5rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600;">Nieuwe oefening</button>
+                    <button id="addExistingExerciseBtn" onclick="showExistingExerciseForm()" style="flex: 1; padding: 0.5rem; background: var(--dark-lighter); color: var(--text); border: 1px solid var(--border); border-radius: 8px; font-weight: 600;">Bestaande oefening</button>
+                </div>
+                
+                <!-- New Exercise Form -->
+                <div id="newExerciseForm" style="display: block;">
+                    <h3 style="margin: 0 0 1rem 0; color: var(--primary);">➕ Voeg Nieuwe Oefening Toe</h3>
+                    <div style="display: grid; gap: 1rem;">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Oefening Naam *</label>
+                            <input type="text" id="inlineExerciseName" placeholder="bijv. Bicep Curls" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--dark-lighter); color: var(--text);">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Spiergroep *</label>
+                            <select id="inlineMuscleGroup" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--dark-lighter); color: var(--text);">
+                                <option value="">-- Selecteer spiergroep --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">MET Waarde *</label>
+                            <input type="number" id="inlineExerciseMET" placeholder="bijv. 5.0" step="0.1" min="1" max="15" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--dark-lighter); color: var(--text);">
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button onclick="saveInlineExercise()" style="flex: 1; padding: 0.75rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600;">Toevoegen</button>
+                            <button onclick="hideInlineExerciseForm()" style="flex: 1; padding: 0.75rem; background: var(--dark-lighter); color: var(--text); border: 1px solid var(--border); border-radius: 8px; font-weight: 600;">Annuleren</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Existing Exercise Form -->
+                <div id="existingExerciseForm" style="display: none;">
+                    <h3 style="margin: 0 0 1rem 0; color: var(--primary);">📚 Voeg Bestaande Oefening Toe</h3>
+                    <div id="existingExercisesList" style="max-height: 300px; overflow-y: auto; margin-bottom: 1rem;">
+                        <!-- Exercises will be populated here -->
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button onclick="hideInlineExerciseForm()" style="flex: 1; padding: 0.75rem; background: var(--dark-lighter); color: var(--text); border: 1px solid var(--border); border-radius: 8px; font-weight: 600;">Annuleren</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Floating Button for Adding Custom Exercise -->
-            <button class="fab-add-exercise" id="fabAddExercise" onclick="openAddExerciseModal()" title="Voeg oefening toe">
+            <button class="fab-add-exercise" id="fabAddExercise" onclick="showInlineExerciseForm()" title="Voeg oefening toe">
                 <span>+</span>
             </button>
         </div>
@@ -2301,7 +2345,7 @@ h1 {
 
 <script>// WORKOUT DATA
 // App version for cache-busting (always bump by 1)
-const APP_VERSION = "2025-12-13-15";
+const APP_VERSION = "2025-12-13-16";
 // Enforce versioned URL so clients always fetch the latest build
 (async function enforceVersionedUrl() {
     try {
@@ -2540,16 +2584,26 @@ function getAllMuscleGroups() {
     return Array.from(muscleGroups.entries()).sort((a, b) => a[1].localeCompare(b[1]));
 }
 
-function openAddExerciseModal() {
-    alert('FAB clicked! Opening modal...'); // Temporary debug
-    console.log('openAddExerciseModal called');
-    const modal = document.getElementById('addExerciseModal');
-    console.log('Modal element:', modal);
+function showInlineExerciseForm() {
+    const form = document.getElementById('inlineAddExercise');
+    if (!form) return;
     
-    const selectEl = document.getElementById('customMuscleGroup');
-    console.log('Select element:', selectEl);
+    // Show new exercise form by default
+    showNewExerciseForm();
+    form.style.display = 'block';
+    form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function showNewExerciseForm() {
+    document.getElementById('newExerciseForm').style.display = 'block';
+    document.getElementById('existingExerciseForm').style.display = 'none';
+    document.getElementById('addNewExerciseBtn').style.background = 'var(--primary)';
+    document.getElementById('addNewExerciseBtn').style.color = 'white';
+    document.getElementById('addExistingExerciseBtn').style.background = 'var(--dark-lighter)';
+    document.getElementById('addExistingExerciseBtn').style.color = 'var(--text)';
     
-    // Populate muscle groups
+    // Populate muscle groups for new exercise form
+    const selectEl = document.getElementById('inlineMuscleGroup');
     selectEl.innerHTML = '<option value="">-- Selecteer spiergroep --</option>';
     getAllMuscleGroups().forEach(([id, name]) => {
         const option = document.createElement('option');
@@ -2557,9 +2611,278 @@ function openAddExerciseModal() {
         option.textContent = name;
         selectEl.appendChild(option);
     });
+}
+
+function showExistingExerciseForm() {
+    document.getElementById('newExerciseForm').style.display = 'none';
+    document.getElementById('existingExerciseForm').style.display = 'block';
+    document.getElementById('addNewExerciseBtn').style.background = 'var(--dark-lighter)';
+    document.getElementById('addNewExerciseBtn').style.color = 'var(--text)';
+    document.getElementById('addExistingExerciseBtn').style.background = 'var(--primary)';
+    document.getElementById('addExistingExerciseBtn').style.color = 'white';
     
-    modal.classList.add('active');
-    console.log('Modal should now be visible');
+    // Populate existing exercises list
+    populateExistingExercises();
+}
+
+function populateExistingExercises() {
+    const container = document.getElementById('existingExercisesList');
+    if (!container) return;
+    
+    // Get all exercises (standard + custom)
+    const allExercises = [];
+    
+    // Add standard exercises from schemas
+    WORKOUT_DATA.schemas.forEach(schema => {
+        schema.muscleGroups.forEach(group => {
+            group.exercises.forEach(exercise => {
+                allExercises.push({
+                    ...exercise,
+                    muscleGroup: group.name,
+                    muscleGroupIcon: group.icon,
+                    isCustom: false
+                });
+            });
+        });
+    });
+    
+    // Add custom exercises
+    const customExercises = getCustomExercises();
+    Object.values(customExercises).forEach(exercise => {
+        // Find the muscle group info
+        let muscleGroup = null;
+        for (const schema of WORKOUT_DATA.schemas) {
+            const group = schema.muscleGroups.find(g => g.id === exercise.muscleGroupId);
+            if (group) {
+                muscleGroup = group;
+                break;
+            }
+        }
+        
+        if (muscleGroup) {
+            allExercises.push({
+                ...exercise,
+                muscleGroup: muscleGroup.name,
+                muscleGroupIcon: muscleGroup.icon,
+                isCustom: true
+            });
+        }
+    });
+    
+    // Sort exercises alphabetically
+    allExercises.sort((a, b) => a.name.localeCompare(b.name));
+    
+    // Group by muscle group
+    const groupedExercises = {};
+    allExercises.forEach(exercise => {
+        if (!groupedExercises[exercise.muscleGroup]) {
+            groupedExercises[exercise.muscleGroup] = {
+                icon: exercise.muscleGroupIcon,
+                exercises: []
+            };
+        }
+        groupedExercises[exercise.muscleGroup].exercises.push(exercise);
+    });
+    
+    // Render the list
+    container.innerHTML = Object.entries(groupedExercises).map(([groupName, data]) => `
+        <div style="margin-bottom: 1rem;">
+            <div style="display: flex; align-items: center; margin-bottom: 0.5rem; padding: 0.5rem; background: var(--dark-lighter); border-radius: 8px;">
+                <span style="font-size: 1.2rem; margin-right: 0.5rem;">${data.icon}</span>
+                <h4 style="margin: 0; font-size: 0.9rem; font-weight: 600;">${groupName}</h4>
+            </div>
+            <div style="display: grid; gap: 0.5rem;">
+                ${data.exercises.map(exercise => `
+                    <button onclick="addExistingExerciseToWorkout(${exercise.id})" 
+                            style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; background: var(--dark-lighter); border: 1px solid var(--border); border-radius: 8px; color: var(--text); text-align: left; cursor: pointer;">
+                        <div>
+                            <div style="font-weight: 600;">${exercise.name}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">MET: ${exercise.met}</div>
+                        </div>
+                        <div style="font-size: 1.2rem;">${exercise.isCustom ? '⭐' : '📚'}</div>
+                    </button>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+function addExistingExerciseToWorkout(exerciseId) {
+    if (!currentWorkout) {
+        showToast('❌ Geen actieve workout');
+        return;
+    }
+    
+    // Find the exercise in standard exercises or custom exercises
+    let exercise = null;
+    
+    // Check standard exercises
+    for (const schema of WORKOUT_DATA.schemas) {
+        for (const group of schema.muscleGroups) {
+            exercise = group.exercises.find(e => e.id === exerciseId);
+            if (exercise) {
+                exercise = {
+                    ...exercise,
+                    muscleGroup: group.name,
+                    muscleGroupIcon: group.icon
+                };
+                break;
+            }
+        }
+        if (exercise) break;
+    }
+    
+    // Check custom exercises if not found
+    if (!exercise) {
+        const customExercises = getCustomExercises();
+        const customExercise = customExercises[exerciseId];
+        if (customExercise) {
+            // Find muscle group info
+            let muscleGroup = null;
+            for (const schema of WORKOUT_DATA.schemas) {
+                const group = schema.muscleGroups.find(g => g.id === customExercise.muscleGroupId);
+                if (group) {
+                    muscleGroup = group;
+                    break;
+                }
+            }
+            
+            if (muscleGroup) {
+                exercise = {
+                    ...customExercise,
+                    muscleGroup: muscleGroup.name,
+                    muscleGroupIcon: muscleGroup.icon
+                };
+            }
+        }
+    }
+    
+    if (!exercise) {
+        showToast('❌ Oefening niet gevonden');
+        return;
+    }
+    
+    // Check if exercise is already in the workout
+    const existingExercise = currentWorkout.exercises.find(e => e.id === exerciseId);
+    if (existingExercise) {
+        showToast('⚠️ Oefening staat al in deze workout');
+        return;
+    }
+    
+    // Add exercise to current workout
+    const settings = getSettings();
+    const sets = [];
+    for (let i = 0; i < settings.defaultSets; i++) {
+        sets.push({
+            reps: 12,
+            weight: getInitialWeight(exercise.id),
+            completed: false
+        });
+    }
+    
+    currentWorkout.exercises.push({
+        ...exercise,
+        sets
+    });
+    
+    renderExercises();
+    hideInlineExerciseForm();
+    showToast(`✅ Oefening '${exercise.name}' toegevoegd aan workout!`);
+}
+
+function hideInlineExerciseForm() {
+    const form = document.getElementById('inlineAddExercise');
+    if (form) {
+        form.style.display = 'none';
+        // Clear form
+        document.getElementById('inlineExerciseName').value = '';
+        document.getElementById('inlineMuscleGroup').value = '';
+        document.getElementById('inlineExerciseMET').value = '';
+    }
+}
+
+function saveInlineExercise() {
+    const name = document.getElementById('inlineExerciseName').value.trim();
+    const muscleGroupId = document.getElementById('inlineMuscleGroup').value;
+    const met = parseFloat(document.getElementById('inlineExerciseMET').value) || 0;
+    
+    // Validation
+    if (!name) {
+        showToast('❌ Vul oefening naam in');
+        return;
+    }
+    if (!muscleGroupId) {
+        showToast('❌ Selecteer spiergroep');
+        return;
+    }
+    if (met < 1 || met > 15) {
+        showToast('❌ MET waarde moet tussen 1 en 15 zijn');
+        return;
+    }
+    
+    // Zoek spiergroep naam uit alle schemas
+    let muscleGroup = null;
+    for (const schema of WORKOUT_DATA.schemas) {
+        const group = schema.muscleGroups.find(g => g.id === muscleGroupId);
+        if (group) {
+            muscleGroup = group;
+            break;
+        }
+    }
+    if (!muscleGroup) {
+        showToast('❌ Spiergroep niet gevonden');
+        return;
+    }
+    
+    // Maak custom oefening aan
+    const id = getNextCustomExerciseId();
+    const custom = getCustomExercises();
+    custom[id] = {
+        id,
+        name,
+        met,
+        muscleGroupId,
+        muscleGroupName: muscleGroup.name,
+        custom: true
+    };
+    saveCustomExercises(custom);
+    
+    // Als er een actieve workout is, voeg de oefening toe aan de huidige workout
+    console.log('currentWorkout exists:', !!currentWorkout);
+    if (currentWorkout) {
+        console.log('Adding exercise to current workout');
+        const settings = getSettings();
+        const sets = [];
+        for (let i = 0; i < settings.defaultSets; i++) {
+            sets.push({
+                reps: 12,
+                weight: 0, // Start with 0 for custom exercises
+                completed: false
+            });
+        }
+        
+        currentWorkout.exercises.push({
+            id,
+            name,
+            met,
+            muscleGroup: muscleGroup.name,
+            muscleGroupIcon: muscleGroup.icon,
+            sets
+        });
+        
+        renderExercises();
+        showToast(`✅ Oefening '${name}' toegevoegd aan workout!`);
+    } else {
+        console.log('No active workout, saving to library only');
+        // Update lijst als je in oefeningen-tab zit
+        const exercisesView = document.getElementById("exercisesView");
+        if (exercisesView && exercisesView.style.display !== "none") {
+            renderExercisesList();
+        }
+        showToast(`✅ Oefening '${name}' opgeslagen in bibliotheek!`);
+    }
+    
+    hideInlineExerciseForm();
 }
 
 function closeAddExerciseModal() {
@@ -2572,8 +2895,6 @@ function closeAddExerciseModal() {
 }
 
 function saveCustomExercise() {
-    alert('Save button clicked!'); // Temporary debug
-    console.log('saveCustomExercise called');
     const name = document.getElementById('customExerciseName').value.trim();
     const muscleGroupId = document.getElementById('customMuscleGroup').value;
     const met = parseFloat(document.getElementById('customExerciseMET').value) || 0;
@@ -3294,6 +3615,7 @@ function resetWorkout() {
     document.getElementById("bottomActions").classList.remove("active");
     document.getElementById("timerCard").classList.remove("running");
     document.getElementById("fabAddExercise").classList.remove("visible");
+    hideInlineExerciseForm();
     closeAddExerciseModal();
     
     updateTimerDisplay();

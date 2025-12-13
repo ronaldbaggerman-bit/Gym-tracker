@@ -382,6 +382,15 @@ h1 {
     opacity: 0.15;
 }
 
+/* Schema-specific timer colors */
+.timer-card.schema-push::before {
+    background: conic-gradient(from 0deg, transparent 0%, #34C759 50%, transparent 100%);
+}
+
+.timer-card.schema-legs::before {
+    background: conic-gradient(from 0deg, transparent 0%, #FF9500 50%, transparent 100%);
+}
+
 @keyframes timerRotate {
     100% { transform: rotate(360deg); }
 }
@@ -2119,6 +2128,15 @@ function selectSchema(schemaId) {
     document.getElementById("schemaSelection").style.display = "none";
     document.getElementById("activeWorkout").style.display = "block";
     document.getElementById("bottomActions").classList.add("active");
+    
+    // Update timer card color based on schema
+    const timerCard = document.getElementById("timerCard");
+    timerCard.classList.remove("schema-push", "schema-legs");
+    if (schema.id === "schema1") {
+        timerCard.classList.add("schema-push");
+    } else if (schema.id === "schema2") {
+        timerCard.classList.add("schema-legs");
+    }
     
     renderExercises();
     startTimer();

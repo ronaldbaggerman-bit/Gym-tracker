@@ -2609,12 +2609,39 @@ function saveCustomExercise() {
         custom: true
     };
     saveCustomExercises(custom);
-    // Update lijst als je in oefeningen-tab zit
-    const exercisesView = document.getElementById("exercisesView");
-    if (exercisesView && exercisesView.style.display !== "none") {
-        renderExercisesList();
+    
+    // Als er een actieve workout is, voeg de oefening toe aan de huidige workout
+    if (currentWorkout) {
+        const settings = getSettings();
+        const sets = [];
+        for (let i = 0; i < settings.defaultSets; i++) {
+            sets.push({
+                reps: 12,
+                weight: 0, // Start with 0 for custom exercises
+                completed: false
+            });
+        }
+        
+        currentWorkout.exercises.push({
+            id,
+            name,
+            met,
+            muscleGroup: muscleGroup.name,
+            muscleGroupIcon: muscleGroup.icon,
+            sets
+        });
+        
+        renderExercises();
+        showToast(`✅ Oefening '${name}' toegevoegd aan workout!`);
+    } else {
+        // Update lijst als je in oefeningen-tab zit
+        const exercisesView = document.getElementById("exercisesView");
+        if (exercisesView && exercisesView.style.display !== "none") {
+            renderExercisesList();
+        }
+        showToast(`✅ Oefening '${name}' opgeslagen in bibliotheek!`);
     }
-    showToast(`✅ Oefening '${name}' opgeslagen in bibliotheek!`);
+    
     closeAddExerciseModal();
 
 }

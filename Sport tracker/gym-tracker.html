@@ -4116,7 +4116,13 @@ function switchView(viewName) {
     if (viewName === "history") renderHistory();
     if (viewName === "prs") renderPRs();
     if (viewName === "progress") renderProgress();
-    if (viewName === "exercises") renderExercisesList();
+    if (viewName === "exercises") {
+        renderExercisesList();
+        document.getElementById("fabAddExercise").classList.add("visible");
+    } else if (viewName !== "workout") {
+        // Hide FAB unless in exercises view or workout view (workout view handles FAB in selectSchema)
+        document.getElementById("fabAddExercise").classList.remove("visible");
+    }
     if (viewName === "settings") updateSettingsUI();
 }
 

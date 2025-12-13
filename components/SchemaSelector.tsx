@@ -29,6 +29,7 @@ export function SchemaSelector({ schemas, selectedSchemaId, onSchemaSelect }: Sc
               style={[
                 styles.button,
                 isSelected && styles.buttonSelected,
+                isSelected && { backgroundColor: schema.color ?? COLORS.ACCENT, borderColor: schema.color ?? COLORS.ACCENT },
               ]}
               onPress={() => onSchemaSelect(schema.id)}
               activeOpacity={0.8}
@@ -37,6 +38,7 @@ export function SchemaSelector({ schemas, selectedSchemaId, onSchemaSelect }: Sc
                 style={[
                   styles.buttonText,
                   isSelected && styles.buttonTextSelected,
+                  isSelected && { color: '#FFFFFF' },
                 ]}
                 type="defaultSemiBold"
               >

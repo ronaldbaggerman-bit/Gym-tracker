@@ -1,5 +1,7 @@
 import { WORKOUT_DATA } from '@/app/data/workoutData';
 import { COLORS } from '@/app/styles/colors';
+import { ProgressLineChart } from '@/components/ProgressLineChart';
+import { ThemedText } from '@/components/themed-text';
 import {
     calculateProgressionMetrics,
     getExerciseProgressionData,
@@ -8,8 +10,6 @@ import {
 } from '@/utils/progressionData';
 import { loadSettings, updateSetting } from '@/utils/settingsStorage';
 import { loadSessions } from '@/utils/storage';
-import { ProgressLineChart } from '@/components/ProgressLineChart';
-import { ThemedText } from '@/components/themed-text';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Dimensions, FlatList, Modal, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';

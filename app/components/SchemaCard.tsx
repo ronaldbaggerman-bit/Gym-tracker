@@ -1,6 +1,7 @@
 import type { Schema } from '@/app/data/workoutData';
-import { COLORS } from '@/app/styles/colors';
+import { useThemeColors } from '@/app/hooks/useThemeColors';
 import { ThemedText } from '@/components/themed-text';
+import { useMemo } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 interface SchemaCardProps {
@@ -10,11 +11,16 @@ interface SchemaCardProps {
 }
 
 export function SchemaCard({ schema, isSelected, onPress }: SchemaCardProps) {
+  const COLORS = useThemeColors();
+  const accentColor = schema.color ?? COLORS.ACCENT;
+  const styles = useMemo(() => getStyles(COLORS), [COLORS]);
+
   return (
     <TouchableOpacity
       style={[
         styles.card,
         isSelected && styles.cardSelected,
+        isSelected && { borderColor: accentColor },
       ]}
       onPress={onPress}
       activeOpacity={0.7}
@@ -30,47 +36,46 @@ export function SchemaCard({ schema, isSelected, onPress }: SchemaCardProps) {
           {schema.muscleGroups.reduce((acc, mg) => acc + mg.exercises.length, 0)} oefeningen
         </ThemedText>
       </View>
-      {isSelected && <View style={styles.checkmark} />}
+      {isSelected && <View style={[styles.checkmark, { backgroundColor: accentColor }]} />}
     </TouchableOpacity>
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    borderWidth: 2,
-    borderColor: COLORS.BORDER,
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: 'transparent',
-  },
-  cardSelected: {
-    borderColor: COLORS.ACCENT,
-    backgroundColor: COLORS.SURFACE,
-  },
-  content: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 16,
-    marginBottom: 5,
-  },
-  description: {
-    fontSize: 13,
-    marginBottom: 8,
-  },
-  count: {
-    fontSize: 12,
-    color: COLORS.MUTED,
-  },
-  checkmark: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: COLORS.ACCENT,
-    marginLeft: 10,
-  },
-});
+const getStyles = (COLORS: ReturnType<typeof useThemeColors>) =>
+  StyleSheet.create({
+    card: {
+      borderWidth: 2,
+      borderColor: COLORS.BORDER,
+      borderRadius: 10,
+      padding: 15,
+      marginBottom: 12,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      backgroundColor: 'transparent',
+    },
+    cardSelected: {
+      backgroundColor: COLORS.SURFACE,
+    },
+    content: {
+      flex: 1,
+    },
+    title: {
+      fontSize: 16,
+      marginBottom: 5,
+    },
+    description: {
+      fontSize: 13,
+      marginBottom: 8,
+    },
+    count: {
+      fontSize: 12,
+      color: COLORS.MUTED,
+    },
+    checkmark: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      marginLeft: 10,
+    },
+  });

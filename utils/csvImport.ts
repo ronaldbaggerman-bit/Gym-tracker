@@ -1,6 +1,5 @@
-import type { DifficultyRating, WorkoutExercise, WorkoutSession } from '@/app/types/workout';
+import type { DifficultyRating, WorkoutSession as Session, WorkoutExercise, WorkoutSession } from '@/app/types/workout';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { WorkoutSession as Session } from '@/app/types/workout';
 
 const SESSIONS_KEY = 'workout_sessions_v1';
 

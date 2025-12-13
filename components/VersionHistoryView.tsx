@@ -1,22 +1,22 @@
 import { COLORS } from '@/app/styles/colors';
+import { ThemedText } from '@/components/themed-text';
 import { saveSession } from '@/utils/storage';
 import {
-    deleteSessionVersion,
-    formatVersionTime,
-    getSessionVersions,
-    type SessionVersion
+  deleteSessionVersion,
+  formatVersionTime,
+  getSessionVersions,
+  type SessionVersion
 } from '@/utils/versionHistory';
-import { ThemedText } from '@/components/themed-text';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 type ExerciseSet = {

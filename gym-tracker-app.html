@@ -35,6 +35,8 @@
     --success: #34C759;
     --gold: linear-gradient(135deg, #FFD700, #FFA500);
     --shadow: 0 10px 40px rgba(0,0,0,0.3);
+    --schema-accent: var(--primary);
+    --schema-accent-2: var(--secondary);
 }
 
 /* Light Mode Colors */
@@ -235,21 +237,25 @@ h1 {
 }
 
 .schema-card {
+.schema-card {
+    --schema-accent: var(--primary);
+    --schema-accent-2: var(--secondary);
     background: linear-gradient(135deg, var(--dark-card) 0%, var(--dark-elevated) 100%);
     border-radius: 24px;
     padding: 1.75rem;
-    border: 2px solid var(--border);
+    border: 2px solid var(--schema-accent);
     cursor: pointer;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
 }
 
+
 .schema-card::before {
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    background: linear-gradient(135deg, var(--schema-accent) 0%, var(--schema-accent-2) 100%);
     opacity: 0;
     transition: opacity 0.4s;
 }
@@ -259,19 +265,18 @@ h1 {
 }
 
 .schema-card.push {
-    border-color: var(--primary);
-}
-
-.schema-card.push::before {
-    background: linear-gradient(135deg, #34C759 0%, #30B050 100%);
+    --schema-accent: #34C759;
+    --schema-accent-2: #30B050;
 }
 
 .schema-card.legs {
-    border-color: var(--secondary);
+    --schema-accent: #FF9500;
+    --schema-accent-2: #FF8000;
 }
 
-.schema-card.legs::before {
-    background: linear-gradient(135deg, #FF9500 0%, #FF8000 100%);
+.schema-card.custom {
+    --schema-accent: var(--purple);
+    --schema-accent-2: #8E5ED6;
 }
 
 .schema-card:hover::before {
@@ -296,7 +301,7 @@ h1 {
 }
 
 .schema-badge {
-    background: var(--primary);
+    background: var(--schema-accent);
     color: var(--dark);
     padding: 0.375rem 0.875rem;
     border-radius: 14px;
@@ -304,10 +309,6 @@ h1 {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-}
-
-.schema-card.legs .schema-badge {
-    background: var(--secondary);
 }
 
 .schema-card h3 {
@@ -336,15 +337,12 @@ h1 {
 }
 
 .schema-stat-value {
+.schema-stat-value {
     font-size: 1.5rem;
     font-weight: 700;
-    color: var(--primary);
+    color: var(--schema-accent);
     display: block;
     margin-bottom: 0.25rem;
-}
-
-.schema-card.legs .schema-stat-value {
-    color: var(--secondary);
 }
 
 .schema-stat-label {
@@ -354,12 +352,14 @@ h1 {
 
 /* Timer Card */
 .timer-card {
+    --schema-accent: var(--primary);
+    --schema-accent-2: var(--secondary);
     background: linear-gradient(135deg, var(--dark-card) 0%, var(--dark-elevated) 100%);
     border-radius: 24px;
     padding: 2rem;
     text-align: center;
     margin-bottom: 1.5rem;
-    border: 1px solid var(--border);
+    border: 1px solid var(--schema-accent);
     position: relative;
     overflow: hidden;
     box-shadow: var(--shadow);
@@ -372,7 +372,7 @@ h1 {
     left: -50%;
     width: 200%;
     height: 200%;
-    background: conic-gradient(from 0deg, transparent 0%, var(--primary) 50%, transparent 100%);
+    background: conic-gradient(from 0deg, transparent 0%, var(--schema-accent) 50%, transparent 100%);
     animation: timerRotate 6s linear infinite;
     opacity: 0;
     transition: opacity 0.5s;
@@ -383,28 +383,34 @@ h1 {
 }
 
 /* Schema-specific timer colors */
-.timer-card.schema-push::before {
-    background: conic-gradient(from 0deg, transparent 0%, #34C759 50%, transparent 100%);
+.timer-card.schema-push {
+    --schema-accent: #34C759;
+    --schema-accent-2: #30B050;
 }
 
-.timer-card.schema-legs::before {
-    background: conic-gradient(from 0deg, transparent 0%, #FF9500 50%, transparent 100%);
+.timer-card.schema-legs {
+    --schema-accent: #FF9500;
+    --schema-accent-2: #FF8000;
 }
 
-.timer-card.schema-blue::before {
-    background: conic-gradient(from 0deg, transparent 0%, #007AFF 50%, transparent 100%);
+.timer-card.schema-blue {
+    --schema-accent: #007AFF;
+    --schema-accent-2: #0060CC;
 }
 
-.timer-card.schema-purple::before {
-    background: conic-gradient(from 0deg, transparent 0%, #AF52DE 50%, transparent 100%);
+.timer-card.schema-purple {
+    --schema-accent: #AF52DE;
+    --schema-accent-2: #8E5ED6;
 }
 
-.timer-card.schema-pink::before {
-    background: conic-gradient(from 0deg, transparent 0%, #FF2D55 50%, transparent 100%);
+.timer-card.schema-pink {
+    --schema-accent: #FF2D55;
+    --schema-accent-2: #FF5375;
 }
 
-.timer-card.schema-teal::before {
-    background: conic-gradient(from 0deg, transparent 0%, #5AC8FA 50%, transparent 100%);
+.timer-card.schema-teal {
+    --schema-accent: #5AC8FA;
+    --schema-accent-2: #3FA7D6;
 }
 
 @keyframes timerRotate {
@@ -2074,6 +2080,30 @@ function debounce(fn, wait = 300) {
     };
 }
 
+// COLOR HELPERS
+function shadeColor(hex, percent) {
+    if (typeof hex !== "string" || !/^#([0-9A-Fa-f]{6})$/.test(hex)) return hex || "#34C759";
+    const num = parseInt(hex.slice(1), 16);
+    const amt = Math.round(2.55 * percent);
+    const r = (num >> 16) + amt;
+    const g = ((num >> 8) & 0x00FF) + amt;
+    const b = (num & 0x0000FF) + amt;
+    return `#${(
+        0x1000000 +
+        (r < 255 ? (r < 0 ? 0 : r) : 255) * 0x10000 +
+        (g < 255 ? (g < 0 ? 0 : g) : 255) * 0x100 +
+        (b < 255 ? (b < 0 ? 0 : b) : 255)
+    ).toString(16).slice(1)}`;
+}
+
+function getSchemaAccentPair(color) {
+    const accent = (typeof color === "string" && color.startsWith("#")) ? color : "#34C759";
+    return {
+        accent,
+        accent2: shadeColor(accent, -12)
+    };
+}
+
 // SETTINGS
 function getSettings() {
     const defaults = {
@@ -2200,10 +2230,12 @@ function renderSchemaSelection() {
         const totalExercises = muscleGroups.reduce((sum, g) => sum + (g.exercises?.length || 0), 0);
         const isBuiltIn = !schema.isCustom;
         const classType = schema.id === "schema1" ? "push" : schema.id === "schema2" ? "legs" : "custom";
+        const { accent, accent2 } = getSchemaAccentPair(schema.color);
+        const styleVars = `--schema-accent:${accent}; --schema-accent-2:${accent2};`;
         const lockBadge = isBuiltIn ? '<span style="position:absolute; top:0.5rem; right:0.5rem; font-size:1rem;" title="Ingebouwd schema">🔒</span>' : '';
         
         return `
-            <div class="schema-card ${classType}" onclick="selectSchema('${schema.id}')" style="position:relative;">
+            <div class="schema-card ${classType}" onclick="selectSchema('${schema.id}')" style="position:relative; ${styleVars}">
                 ${lockBadge}
                 <div class="schema-content">
                     <div class="schema-header">
@@ -2273,6 +2305,9 @@ function selectSchema(schemaId) {
     
     // Update timer card color based on schema
     const timerCard = document.getElementById("timerCard");
+    const { accent, accent2 } = getSchemaAccentPair(schema.color);
+    timerCard.style.setProperty("--schema-accent", accent);
+    timerCard.style.setProperty("--schema-accent-2", accent2);
     timerCard.classList.remove("schema-push", "schema-legs", "schema-blue", "schema-purple", "schema-pink", "schema-teal");
     if (schema.id === "schema1") {
         timerCard.classList.add("schema-push");

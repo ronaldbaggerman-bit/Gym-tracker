@@ -8,17 +8,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { WORKOUT_DATA, type Schema } from '@/app/data/workoutData';
 import type { ExerciseSet, WorkoutExercise, WorkoutSession } from '@/app/types/workout';
-import { calculateSessionKcal, formatKcalDisplay } from '@/utils/kcalCalculator';
-import { checkForNewPRs } from '@/utils/prTracker';
-import { applyOverrides, loadCustomSchemas, mergeSchemas } from '@/utils/schemaStorage';
-import { loadSettings } from '@/utils/settingsStorage';
-import { loadPRs, loadSessions, savePR, saveSession } from '@/utils/storage';
 import { ExerciseDetail } from '@/components/ExerciseDetail';
 import { OfflineIndicator } from '@/components/OfflineIndicator';
 import { PRCelebration } from '@/components/PRCelebration';
 import { SchemaSelector } from '@/components/SchemaSelector';
 import { ThemedText } from '@/components/themed-text';
 import { WorkoutPlanningScreen } from '@/components/WorkoutPlanningScreen';
+import { calculateSessionKcal, formatKcalDisplay } from '@/utils/kcalCalculator';
+import { checkForNewPRs } from '@/utils/prTracker';
+import { applyOverrides, loadCustomSchemas, mergeSchemas } from '@/utils/schemaStorage';
+import { loadSettings } from '@/utils/settingsStorage';
+import { loadPRs, loadSessions, savePR, saveSession } from '@/utils/storage';
 
 const createDefaultSets = (numberOfSets: number = 3): ExerciseSet[] => {
   return Array.from({ length: numberOfSets }, (_, i) => ({
@@ -378,6 +378,14 @@ export default function WorkoutScreen() {
     return focus.join(' • ');
   }, [selectedSchema]);
 
+  const activeSchemaColor = useMemo(() => {
+    if (workoutSession) {
+      const sessionSchema = schemas.find(s => s.id === workoutSession.schemaId);
+      if (sessionSchema?.color) return sessionSchema.color;
+    }
+    return selectedSchema?.color ?? COLORS.ACCENT;
+  }, [workoutSession?.schemaId, schemas, selectedSchema?.color, COLORS]);
+
   const heroSubtitle = lastSession
     ? `Laatste: ${lastSession.schemaName || 'Workout'} • ${lastSessionDate}`
     : 'Klaar voor een nieuwe sessie?';
@@ -430,9 +438,11 @@ export default function WorkoutScreen() {
                   <ThemedText type="title" style={styles.heroTitle}>
                     {selectedSchema?.name || 'Kies een schema'}
                   </ThemedText>
-                  <ThemedText style={styles.heroFocus}>Focus: {todaysFocus}</ThemedText>
+                  <ThemedText style={[styles.heroFocus, { color: activeSchemaColor }]}>
+                    Focus: {todaysFocus}
+                  </ThemedText>
                 </View>
-                <View style={styles.heroBadge}>
+                <View style={[styles.heroBadge, { backgroundColor: activeSchemaColor }]}>
                   <ThemedText style={styles.heroBadgeText}>Ready</ThemedText>
                 </View>
               </View>
@@ -466,7 +476,7 @@ export default function WorkoutScreen() {
                   <ThemedText style={styles.actionPillText}>📋 Plan</ThemedText>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.actionPill, styles.actionPillAccent]}
+                  style={[styles.actionPill, { backgroundColor: activeSchemaColor, borderColor: activeSchemaColor }]}
                   onPress={() => {
                     if (!selectedSchema) return;
                     const exercisesWithDefaults = exercises.map(ex => {
@@ -538,7 +548,7 @@ export default function WorkoutScreen() {
                     <ThemedText style={styles.muscleGroupName}>
                       {mg.name}
                     </ThemedText>
-                    <ThemedText style={styles.muscleGroupCount}>
+                    <ThemedText style={[styles.muscleGroupCount, { color: activeSchemaColor }]}>
                       {mg.exercises.length} oef.
                     </ThemedText>
                   </View>
@@ -556,7 +566,7 @@ export default function WorkoutScreen() {
                   </ThemedText>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.startButton}
+                  style={[styles.startButton, { backgroundColor: activeSchemaColor }]}
                   onPress={() => {
                     // Quick start without planning
                     if (!selectedSchema) return;
@@ -613,7 +623,7 @@ export default function WorkoutScreen() {
                 <View
                   style={[
                     styles.progressFill,
-                    { width: `${completionPercentage}%` },
+                    { width: `${completionPercentage}%`, backgroundColor: activeSchemaColor },
                   ]}
                 />
               </View>
@@ -650,9 +660,9 @@ export default function WorkoutScreen() {
 
               {/* Timer & Calories Display */}
               <View style={styles.timerKcalContainer}>
-                <View style={styles.timerCard}>
+                <View style={[styles.timerCard, { borderLeftColor: activeSchemaColor }]}>
                     <ThemedText style={styles.timerLabel}>Tijd</ThemedText>
-                  <ThemedText style={styles.timerValue}>{formatWorkoutTime(workoutSeconds)}</ThemedText>
+                  <ThemedText style={[styles.timerValue, { color: activeSchemaColor }]}>{formatWorkoutTime(workoutSeconds)}</ThemedText>
                 </View>
                 <View style={styles.kcalCard}>
                     <ThemedText style={styles.kcalLabel}>Kcal</ThemedText>
@@ -699,7 +709,7 @@ export default function WorkoutScreen() {
             ))}
 
             <TouchableOpacity
-              style={styles.finishButton}
+              style={[styles.finishButton, { backgroundColor: activeSchemaColor }]}
               onPress={handleFinishWorkout}
               activeOpacity={0.8}
             >
@@ -988,13 +998,12 @@ const styles = StyleSheet.create({
   finishButton: {
     marginHorizontal: 16,
     marginTop: 12,
-    backgroundColor: COLORS.ACCENT,
     paddingVertical: 12,
     borderRadius: 10,
     alignItems: 'center',
   },
   finishButtonText: {
-    color: COLORS.TEXT_PRIMARY,
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -1039,7 +1048,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#34C759',
+    backgroundColor: COLORS.ACCENT,
   },
   progressText: {
     fontSize: 13,
@@ -1074,7 +1083,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#FF9500',
+    borderLeftColor: COLORS.ACCENT,
     alignItems: 'center',
   },
   timerLabel: {
@@ -1085,7 +1094,7 @@ const styles = StyleSheet.create({
   timerValue: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#FF9500',
+    color: COLORS.ACCENT,
     fontFamily: 'Courier New',
   },
   kcalCard: {

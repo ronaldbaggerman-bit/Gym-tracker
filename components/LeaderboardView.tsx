@@ -1,4 +1,5 @@
 import { useThemeColors } from '@/app/hooks/useThemeColors';
+import { ThemedText } from '@/components/themed-text';
 import {
     formatRank,
     getAchievementShareText,
@@ -7,7 +8,6 @@ import {
     type LeaderboardEntry,
     type UserAchievement,
 } from '@/utils/leaderboard';
-import { ThemedText } from '@/components/themed-text';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Share, StyleSheet, TouchableOpacity, View } from 'react-native';
 

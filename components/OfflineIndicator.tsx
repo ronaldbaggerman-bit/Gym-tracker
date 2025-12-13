@@ -1,4 +1,5 @@
 import { COLORS } from '@/app/styles/colors';
+import { ThemedText } from '@/components/themed-text';
 import {
     clearPendingData,
     formatLastOnlineTime,
@@ -7,7 +8,6 @@ import {
     subscribeToOfflineStatus,
     type OfflineStatus,
 } from '@/utils/offlineManager';
-import { ThemedText } from '@/components/themed-text';
 import { useEffect, useState } from 'react';
 import { Alert, Modal, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 

@@ -1,4 +1,5 @@
 import { COLORS } from '@/app/styles/colors';
+import { ThemedText } from '@/components/themed-text';
 import {
     formatBackupDate,
     formatFileSize,
@@ -10,7 +11,6 @@ import {
     saveBackupSchedule
 } from '@/utils/backupManager';
 import { savePR, saveSessionsList } from '@/utils/storage';
-import { ThemedText } from '@/components/themed-text';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useEffect, useState } from 'react';
 import {

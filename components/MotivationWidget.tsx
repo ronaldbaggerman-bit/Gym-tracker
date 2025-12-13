@@ -1,4 +1,5 @@
 import { useThemeColors } from '@/app/hooks/useThemeColors';
+import { ThemedText } from '@/components/themed-text';
 import {
   getAllTips,
   getDailyTip,
@@ -6,7 +7,6 @@ import {
   getRandomTip,
   getTodayQuote
 } from '@/utils/motivation';
-import { ThemedText } from '@/components/themed-text';
 import { useEffect, useMemo, useState } from 'react';
 import { Modal, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 

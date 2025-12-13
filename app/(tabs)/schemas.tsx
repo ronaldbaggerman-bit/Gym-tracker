@@ -1,7 +1,7 @@
 import { WORKOUT_DATA, type Schema } from '@/app/data/workoutData';
 import { COLORS } from '@/app/styles/colors';
-import { addCustomSchema, applyOverrides, deleteCustomSchema, loadCustomSchemas, removeExerciseFromSchema, saveSchemaOverride, upsertCustomSchema } from '@/utils/schemaStorage';
 import { ThemedText } from '@/components/themed-text';
+import { addCustomSchema, applyOverrides, deleteCustomSchema, loadCustomSchemas, removeExerciseFromSchema, saveSchemaOverride, upsertCustomSchema } from '@/utils/schemaStorage';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';

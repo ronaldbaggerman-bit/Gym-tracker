@@ -8,16 +8,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EXERCISE_GUIDES } from '@/app/data/exerciseGuides';
 import { WORKOUT_DATA } from '@/app/data/workoutData';
 import { useThemeColors } from '@/app/hooks/useThemeColors';
-import { clearImportedSessions, importCsvSessions } from '@/utils/csvImport';
-import { calculateTotalSessionKcal, formatKcalDisplay } from '@/utils/kcalCalculator';
-import { loadSettings } from '@/utils/settingsStorage';
-import { loadSessions, removeSession, saveSessionsList } from '@/utils/storage';
-import { getExerciseVolumeHistory, getExerciseVolumeSummary } from '@/utils/workoutStats';
 import { ScreenTransition } from '@/components/ScreenTransition';
 import { SwipeableRow } from '@/components/SwipeableRow';
 import { ThemedText } from '@/components/themed-text';
 import { UndoSnackbar, type UndoAction } from '@/components/UndoSnackbar';
 import { VersionHistoryView } from '@/components/VersionHistoryView';
+import { clearImportedSessions, importCsvSessions } from '@/utils/csvImport';
+import { calculateTotalSessionKcal, formatKcalDisplay } from '@/utils/kcalCalculator';
+import { loadSettings } from '@/utils/settingsStorage';
+import { loadSessions, removeSession, saveSessionsList } from '@/utils/storage';
+import { getExerciseVolumeHistory, getExerciseVolumeSummary } from '@/utils/workoutStats';
 
 export default function HistorieScreen() {
   const insets = useSafeAreaInsets();

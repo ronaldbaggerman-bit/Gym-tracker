@@ -2,11 +2,11 @@ import { EXERCISE_GUIDES } from '@/app/data/exerciseGuides';
 import { useThemeColors } from '@/app/hooks/useThemeColors';
 import { getColors } from '@/app/styles/colors';
 import type { WorkoutExercise } from '@/app/types/workout';
+import { ThemedText } from '@/components/themed-text';
 import { calculateExerciseKcal, formatKcalDisplay } from '@/utils/kcalCalculator';
 import { calculate1RMFromPR, format1RMDisplay } from '@/utils/oneRepMaxCalculator';
 import { getPRDisplay } from '@/utils/prTracker';
 import { calculateProgressiveOverload, formatProgressiveSuggestion } from '@/utils/progressiveOverload';
-import { ThemedText } from '@/components/themed-text';
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 

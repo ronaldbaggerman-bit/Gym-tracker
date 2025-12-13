@@ -1,4 +1,5 @@
 import { COLORS } from '@/app/styles/colors';
+import { ThemedText } from '@/components/themed-text';
 import {
     disableCloudSync,
     getCloudSyncSettings,
@@ -8,7 +9,6 @@ import {
     syncAllToCloud
 } from '@/utils/cloudSync';
 import { loadPRs, loadSessions } from '@/utils/storage';
-import { ThemedText } from '@/components/themed-text';
 import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,

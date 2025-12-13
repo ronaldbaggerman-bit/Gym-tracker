@@ -1,4 +1,5 @@
 import type { PersonalRecord } from '@/app/types/workout';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
     bulkInsertSessionsToDB,
     deleteSessionFromDB,
@@ -10,7 +11,6 @@ import {
     savePRToDB,
     saveSessionToDB,
 } from './database';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const SESSIONS_KEY = 'workout_sessions_v1';
 const PRS_KEY = 'personal_records_v1';

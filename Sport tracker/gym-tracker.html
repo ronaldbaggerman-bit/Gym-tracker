@@ -1878,7 +1878,7 @@ h1 {
 
 <script>// WORKOUT DATA
 // App version for cache-busting (always bump by 1)
-const APP_VERSION = "2025-12-13-5";
+const APP_VERSION = "2025-12-13-6";
 // Enforce versioned URL so clients always fetch the latest build
 (function enforceVersionedUrl() {
     try {
@@ -1957,7 +1957,7 @@ const WORKOUT_DATA = {
                     exercises: [
                         { id: 109, name: "Leg Press", met: 5.0 },
                         { id: 110, name: "Leg Curl", met: 5.0 },
-                        { id: 111, name: "Hack Squat", met: 5.0 }
+                        { id: 111, name: "Hack Squad", met: 5.0 }
                     ]
                 },
                 {
@@ -2050,6 +2050,7 @@ function init() {
     setAppVersionLabel();
     renderSchemaSelection();
     loadSettings();
+    migrateHackSquatToHackSquadToday();
     renderHistory();
     renderPRs();
 }
@@ -2694,6 +2695,31 @@ function saveWorkout(workout) {
 function getWorkoutHistory() {
     const stored = localStorage.getItem("workout_history");
     return stored ? JSON.parse(stored) : [];
+}
+
+// DATA MIGRATION: Move today's "Hack Squat" entries to "Hack Squad"
+function migrateHackSquatToHackSquadToday() {
+    try {
+        const history = getWorkoutHistory();
+        if (!Array.isArray(history) || history.length === 0) return;
+        const todayStr = new Date().toDateString();
+        let changed = false;
+        history.forEach(w => {
+            const d = new Date(w.startTime).toDateString();
+            if (d !== todayStr || !Array.isArray(w.exercises)) return;
+            w.exercises.forEach(ex => {
+                if (ex && typeof ex.name === 'string' && ex.name.trim().toLowerCase() === 'hack squat') {
+                    ex.name = 'Hack Squad';
+                    // keep id if present, otherwise set to 111
+                    if (!ex.id) ex.id = 111;
+                    changed = true;
+                }
+            });
+        });
+        if (changed) {
+            localStorage.setItem('workout_history', JSON.stringify(history));
+        }
+    } catch (e) { /* ignore */ }
 }
 
 function deleteWorkout(index) {

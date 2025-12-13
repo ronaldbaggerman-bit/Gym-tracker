@@ -2586,8 +2586,7 @@ function saveWorkout(workout) {
     if (history.length > 100) {
         history.splice(100);
     }
-    
-    localStorage.setItem("workout_history", JSON.stringify(history));
+    saveWorkoutHistoryDebounced(history);
 }
 
 function getWorkoutHistory() {
@@ -2604,7 +2603,7 @@ function deleteWorkout(index) {
     if (index < 0 || index >= history.length) return;
     
     history.splice(index, 1);
-    localStorage.setItem("workout_history", JSON.stringify(history));
+    saveWorkoutHistoryDebounced(history);
     
     showToast("Workout verwijderd", "success");
     renderHistory();
@@ -2644,7 +2643,7 @@ function updatePRs(workout) {
         });
     });
     
-    localStorage.setItem("workout_prs", JSON.stringify(prs));
+    savePRsDebounced(prs);
     
     return newPRs;
 }
@@ -3360,6 +3359,27 @@ function showToastWithUndo(message, undoCallback) {
 }
 
 // UTILITY
+const saveWorkoutHistoryDebounced = debounce((history) => {
+    try { localStorage.setItem("workout_history", JSON.stringify(history)); } catch (e) {}
+}, 350);
+const savePRsDebounced = debounce((prs) => {
+    try { localStorage.setItem("workout_prs", JSON.stringify(prs)); } catch (e) {}
+}, 350);
+
+// Ensure pending debounced writes flush when the page is hidden
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+        try {
+            // Attempt minimal flush by re-saving current state
+            const history = getWorkoutHistory();
+            localStorage.setItem("workout_history", JSON.stringify(history));
+            const prs = getPRs();
+            localStorage.setItem("workout_prs", JSON.stringify(prs));
+            const settings = getSettings();
+            localStorage.setItem("gym_settings", JSON.stringify(settings));
+        } catch (e) {}
+    }
+});
 function formatDate(date) {
     const options = { day: "numeric", month: "long", year: "numeric" };
     return date.toLocaleDateString("nl-NL", options);

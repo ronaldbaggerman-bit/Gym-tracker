@@ -1878,7 +1878,7 @@ h1 {
 
 <script>// WORKOUT DATA
 // App version for cache-busting (always bump by 1)
-const APP_VERSION = "2025-12-13-7";
+const APP_VERSION = "2025-12-13-8";
 // Enforce versioned URL so clients always fetch the latest build
 (function enforceVersionedUrl() {
     try {
@@ -2052,6 +2052,7 @@ function init() {
     loadSettings();
     migrateHackSquatToHackSquadToday();
     migratePRsHackSquatToHackSquad();
+    migrateUnifyHackSquadIds();
     renderHistory();
     renderPRs();
 }
@@ -2762,6 +2763,61 @@ function migratePRsHackSquatToHackSquad() {
         });
         if (changed) {
             localStorage.setItem('workout_prs', JSON.stringify(prs));
+        }
+    } catch (e) { /* ignore */ }
+}
+
+// DATA MIGRATION: Unify all history exercises named Hack Squat/Squad to id=111, name="Hack Squad"
+function migrateUnifyHackSquadIds() {
+    try {
+        const history = getWorkoutHistory();
+        if (!Array.isArray(history) || history.length === 0) return;
+        let changed = false;
+        history.forEach(w => {
+            if (!Array.isArray(w.exercises)) return;
+            w.exercises.forEach(ex => {
+                if (!ex || typeof ex.name !== 'string') return;
+                const nm = ex.name.trim().toLowerCase();
+                if (nm === 'hack squat' || nm === 'hack squad') {
+                    if (ex.id !== 111 || ex.name !== 'Hack Squad') {
+                        ex.id = 111;
+                        ex.name = 'Hack Squad';
+                        changed = true;
+                    }
+                }
+            });
+        });
+        if (changed) {
+            localStorage.setItem('workout_history', JSON.stringify(history));
+        }
+
+        // Also merge PRs under key 111 to ensure previous best is consistent
+        const prs = getPRs();
+        if (prs && typeof prs === 'object') {
+            let newPrs = {};
+            let merged = false;
+            Object.keys(prs).forEach(key => {
+                const pr = prs[key];
+                if (!pr) return;
+                const nm = (pr.exerciseName || '').toString().trim().toLowerCase();
+                if (nm === 'hack squat' || nm === 'hack squad' || pr.exerciseId === 111) {
+                    const unified = {
+                        ...pr,
+                        exerciseId: 111,
+                        exerciseName: 'Hack Squad'
+                    };
+                    const existing = newPrs['111'];
+                    if (!existing || (unified.oneRM || 0) > (existing.oneRM || 0)) {
+                        newPrs['111'] = unified;
+                    }
+                    merged = true;
+                } else {
+                    newPrs[key] = pr;
+                }
+            });
+            if (merged) {
+                localStorage.setItem('workout_prs', JSON.stringify(newPrs));
+            }
         }
     } catch (e) { /* ignore */ }
 }

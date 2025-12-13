@@ -1801,6 +1801,7 @@ h1 {
                         <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.5;">
                             💡 Tip: Backup bevat al je workouts, PRs en instellingen. Bewaar in OneDrive voor sync tussen apparaten.
                         </p>
+                        <div id="backupStatus" style="margin-top:0.5rem; font-size:0.85rem; color: var(--text-muted);"></div>
                     </div>
                 </div>
 
@@ -3188,6 +3189,12 @@ function exportBackup() {
     a.click();
     URL.revokeObjectURL(url);
     
+    const status = document.getElementById('backupStatus');
+    if (status) {
+        const workoutsCount = data.workouts?.length || 0;
+        const prsCount = Object.keys(data.prs || {}).length;
+        status.textContent = `Export: ${workoutsCount} workouts, ${prsCount} PRs, instellingen opgeslagen.`;
+    }
     showToast("Backup gedownload!", "success");
 }
 
@@ -3203,11 +3210,25 @@ function handleImportFile(event) {
     reader.onload = function(e) {
         try {
             const data = JSON.parse(e.target.result);
-            
-            if (data.workouts) localStorage.setItem("workout_history", JSON.stringify(data.workouts));
-            if (data.prs) localStorage.setItem("workout_prs", JSON.stringify(data.prs));
-            if (data.settings) localStorage.setItem("gym_settings", JSON.stringify(data.settings));
-            
+            // Basic validation
+            const workoutsValid = Array.isArray(data.workouts);
+            const prsValid = typeof data.prs === 'object' && data.prs !== null;
+            const settingsValid = typeof data.settings === 'object' && data.settings !== null;
+
+            if (!workoutsValid && !prsValid && !settingsValid) {
+                throw new Error('Backup heeft geen geldige secties (workouts/prs/settings)');
+            }
+
+            if (workoutsValid) localStorage.setItem("workout_history", JSON.stringify(data.workouts));
+            if (prsValid) localStorage.setItem("workout_prs", JSON.stringify(data.prs));
+            if (settingsValid) localStorage.setItem("gym_settings", JSON.stringify(data.settings));
+
+            const status = document.getElementById('backupStatus');
+            if (status) {
+                const workoutsCount = (data.workouts || []).length;
+                const prsCount = Object.keys(data.prs || {}).length;
+                status.textContent = `Import: ${workoutsCount} workouts, ${prsCount} PRs, instellingen geladen.`;
+            }
             showToast("Backup succesvol geïmporteerd!", "success");
             
             // Refresh views
@@ -3215,6 +3236,8 @@ function handleImportFile(event) {
             renderPRs();
             loadSettings();
         } catch (error) {
+            const status = document.getElementById('backupStatus');
+            if (status) status.textContent = `Fout bij import: ${error.message}`;
             showToast("Ongeldige backup file", "error");
         }
     };

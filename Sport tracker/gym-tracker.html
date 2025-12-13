@@ -2070,6 +2070,7 @@ h1 {
             <button class="tab" data-view="history" onclick="switchView('history')"> Historie</button>
             <button class="tab" data-view="progress" onclick="switchView('progress')"> Progressie</button>
             <button class="tab" data-view="prs" onclick="switchView('prs')"> PRs</button>
+            <button class="tab" data-view="exercises" onclick="switchView('exercises')"> 💪 Oefeningen</button>
             <button class="tab" data-view="settings" onclick="switchView('settings')"> ⚙️ Instellingen</button>
         </div>
     </div>
@@ -2230,6 +2231,17 @@ h1 {
                         <button onclick="updateDefaultSets((parseInt(document.getElementById('defaultSetsInput').value) || 3) + 1)">+</button>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exercises View -->
+    <div id="exercisesView" class="view">
+        <div class="settings-container">
+            <div class="settings-section">
+                <h2>💪 Oefeningen</h2>
+                <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Overzicht van alle beschikbare oefeningen (standaard + eigen)</p>
+                <div id="exercisesList"></div>
             </div>
         </div>
     </div>
@@ -3828,6 +3840,74 @@ function renderPRs() {
     `;
 }
 
+// EXERCISES VIEW
+function renderExercisesList() {
+    const container = document.getElementById("exercisesList");
+    if (!container) return;
+    
+    const customExercises = getCustomExercises();
+    const allExercises = [];
+    
+    // Add standard exercises
+    WORKOUT_DATA.schemas.forEach(schema => {
+        schema.muscleGroups.forEach(group => {
+            group.exercises.forEach(exercise => {
+                allExercises.push({
+                    ...exercise,
+                    muscleGroup: group.name,
+                    custom: false
+                });
+            });
+        });
+    });
+    
+    // Add custom exercises
+    Object.values(customExercises).forEach(exercise => {
+        allExercises.push({
+            ...exercise,
+            custom: true
+        });
+    });
+    
+    // Sort by name
+    allExercises.sort((a, b) => a.name.localeCompare(b.name));
+    
+    if (allExercises.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon"></div>
+                <h3>Geen oefeningen</h3>
+                <p>Er zijn geen oefeningen beschikbaar.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = allExercises.map(exercise => `
+        <div class="exercise-item" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: var(--dark-card); border-radius: 12px; margin-bottom: 0.5rem; border: 1px solid var(--border);">
+            <div>
+                <div style="font-weight: 600; color: var(--text);">${exercise.name} ${exercise.custom ? '<span style="color: var(--primary);">⚡ Eigen</span>' : ''}</div>
+                <div style="font-size: 0.875rem; color: var(--text-muted);">${exercise.muscleGroup} • MET ${exercise.met.toFixed(1)}</div>
+            </div>
+            ${exercise.custom ? `<button class="btn-icon delete-btn" onclick="deleteCustomExercise(${exercise.id})" title="Verwijderen">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14M10 11v6m4-6v6"/>
+                </svg>
+            </button>` : ''}
+        </div>
+    `).join("");
+}
+
+function deleteCustomExercise(exerciseId) {
+    if (!confirm('Weet je zeker dat je deze oefening wilt verwijderen?')) return;
+    
+    const custom = getCustomExercises();
+    delete custom[exerciseId];
+    saveCustomExercises(custom);
+    renderExercisesList();
+    showToast('Oefening verwijderd', 'success');
+}
+
 // PROGRESS VIEW
 function renderProgress() {
     const container = document.getElementById("progressContainer");
@@ -4026,6 +4106,7 @@ function switchView(viewName) {
         "history": "historyView",
         "progress": "progressView",
         "prs": "prsView",
+        "exercises": "exercisesView",
         "settings": "settingsView"
     };
     
@@ -4035,6 +4116,7 @@ function switchView(viewName) {
     if (viewName === "history") renderHistory();
     if (viewName === "prs") renderPRs();
     if (viewName === "progress") renderProgress();
+    if (viewName === "exercises") renderExercisesList();
     if (viewName === "settings") updateSettingsUI();
 }
 

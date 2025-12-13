@@ -678,6 +678,15 @@ h1 {
     transform: scale(0.99);
 }
 
+.exercise-card.collapsing {
+    animation: collapseOut 300ms ease forwards;
+}
+
+@keyframes collapseOut {
+    0% { opacity: 1; transform: scale(1); max-height: 1000px; }
+    100% { opacity: 0; transform: scale(0.98); max-height: 0; margin: 0; padding: 0; }
+}
+
 .exercise-header {
     display: flex;
     justify-content: space-between;
@@ -2247,9 +2256,37 @@ function toggleSet(exerciseId, setIndex) {
         startRestTimer();
         checkAndShowPR(exercise, setIndex);
     }
+    // If exercise became fully completed, trigger collapse + undo option
+    const nowCompleted = exercise.sets.every(s => s.completed);
+    if (nowCompleted) {
+        handleExerciseCompleted(exerciseId);
+    }
     
     renderExercises();
     updateStats();
+}
+
+function handleExerciseCompleted(exerciseId) {
+    try {
+        // Add collapsing class briefly before rerender to show animation on next render
+        requestAnimationFrame(() => {
+            const cards = document.querySelectorAll('.exercise-card');
+            cards.forEach(card => card.classList.add('collapsing'));
+            setTimeout(() => {
+                // Show undo toast; will revert last set to incomplete
+                showToastWithUndo('Oefening voltooid', () => {
+                    const ex = currentWorkout?.exercises.find(e => e.id === exerciseId);
+                    if (!ex) return;
+                    const lastIdx = ex.sets.length - 1;
+                    if (lastIdx >= 0) {
+                        ex.sets[lastIdx].completed = false;
+                        renderExercises();
+                        updateStats();
+                    }
+                });
+            }, 150);
+        });
+    } catch (e) {}
 }
 
 function addSet(exerciseId) {
@@ -3216,13 +3253,31 @@ function closeModal(modalId) {
 // TOAST
 function showToast(message, type = "success") {
     const toast = document.getElementById("toast");
-    toast.textContent = message;
+    toast.innerHTML = message;
     toast.className = `toast ${type}`;
     toast.classList.add("show");
     
     setTimeout(() => {
         toast.classList.remove("show");
     }, 3000);
+}
+
+function showToastWithUndo(message, undoCallback) {
+    const toast = document.getElementById('toast');
+    toast.className = 'toast success';
+    const btnId = `undo-${Date.now()}`;
+    toast.innerHTML = `${message} <button id="${btnId}" style="margin-left:0.75rem; background: var(--dark-card); color: var(--text); border:1px solid var(--border); padding:0.3rem 0.6rem; border-radius:10px; font-weight:700;">Undo</button>`;
+    toast.classList.add('show');
+    const btn = document.getElementById(btnId);
+    if (btn) {
+        btn.onclick = () => {
+            undoCallback?.();
+            toast.classList.remove('show');
+        };
+    }
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 4000);
 }
 
 // UTILITY

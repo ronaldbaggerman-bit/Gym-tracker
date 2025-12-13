@@ -391,6 +391,22 @@ h1 {
     background: conic-gradient(from 0deg, transparent 0%, #FF9500 50%, transparent 100%);
 }
 
+.timer-card.schema-blue::before {
+    background: conic-gradient(from 0deg, transparent 0%, #007AFF 50%, transparent 100%);
+}
+
+.timer-card.schema-purple::before {
+    background: conic-gradient(from 0deg, transparent 0%, #AF52DE 50%, transparent 100%);
+}
+
+.timer-card.schema-pink::before {
+    background: conic-gradient(from 0deg, transparent 0%, #FF2D55 50%, transparent 100%);
+}
+
+.timer-card.schema-teal::before {
+    background: conic-gradient(from 0deg, transparent 0%, #5AC8FA 50%, transparent 100%);
+}
+
 @keyframes timerRotate {
     100% { transform: rotate(360deg); }
 }
@@ -1049,7 +1065,7 @@ h1 {
     padding: 1rem;
     display: none;
     gap: 1rem;
-    z-index: 999;
+    z-index: 2000;
     box-shadow: 0 -10px 40px rgba(0,0,0,0.3);
 }
 
@@ -2116,7 +2132,12 @@ function saveCustomSchemas(schemas) {
 function addCustomSchema(name, description, muscleGroups = []) {
     const schemas = getCustomSchemas();
     const id = `custom_${Date.now()}`;
-    const newSchema = { id, name, description, icon: "🏋️", muscleGroups, isCustom: true };
+    
+    // Cycle through colors for custom schemas
+    const colors = ["#007AFF", "#AF52DE", "#FF2D55", "#5AC8FA", "#34C759", "#FF9500"];
+    const colorIndex = schemas.length % colors.length;
+    
+    const newSchema = { id, name, description, icon: "🏋️", color: colors[colorIndex], muscleGroups, isCustom: true };
     schemas.push(newSchema);
     saveCustomSchemas(schemas);
     return newSchema;
@@ -2191,7 +2212,8 @@ function renderSchemaSelection() {
 }
 
 function selectSchema(schemaId) {
-    const schema = WORKOUT_DATA.schemas.find(s => s.id === schemaId);
+    const allSchemas = getAllSchemas();
+    const schema = allSchemas.find(s => s.id === schemaId);
     if (!schema) return;
     
     const settings = getSettings();
@@ -2229,11 +2251,21 @@ function selectSchema(schemaId) {
     
     // Update timer card color based on schema
     const timerCard = document.getElementById("timerCard");
-    timerCard.classList.remove("schema-push", "schema-legs");
+    timerCard.classList.remove("schema-push", "schema-legs", "schema-blue", "schema-purple", "schema-pink", "schema-teal");
     if (schema.id === "schema1") {
         timerCard.classList.add("schema-push");
     } else if (schema.id === "schema2") {
         timerCard.classList.add("schema-legs");
+    } else {
+        // Custom schema - map color to animation class
+        const colorMap = {
+            "#007AFF": "schema-blue",
+            "#AF52DE": "schema-purple",
+            "#FF2D55": "schema-pink",
+            "#5AC8FA": "schema-teal"
+        };
+        const schemaClass = colorMap[schema.color] || "schema-blue";
+        timerCard.classList.add(schemaClass);
     }
     
     renderExercises();
@@ -2623,17 +2655,101 @@ function addExerciseToWorkout(exerciseId, exerciseName, met = 5.0) {
 }
 
 function openQuickAddExerciseModal() {
-    const name = prompt("Nieuwe oefening naam:");
-    if (!name) return;
-    const met = parseFloat(prompt("MET waarde (standaard 5.0):", "5.0")) || 5.0;
+    const muscleGroups = ["Borst", "Schouder", "Rug", "Triceps / Biceps", "Benen", "Extra"];
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.id = 'quickAddExerciseModal';
+    modal.style.zIndex = '3100';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:400px;">
+            <div class="modal-header">
+                <h2>Nieuwe Oefening</h2>
+                <button class="close-btn" onclick="document.getElementById('quickAddExerciseModal').remove()">×</button>
+            </div>
+            <div class="modal-body">
+                <div style="display:grid; gap:1rem;">
+                    <div>
+                        <label class="form-label">Naam</label>
+                        <input type="text" id="newExerciseName" class="form-input" placeholder="Bijv. Biceps Curl">
+                    </div>
+                    <div>
+                        <label class="form-label">Spiergroep</label>
+                        <select id="newExerciseMuscleGroup" class="form-input">
+                            ${muscleGroups.map(g => `<option value="${g}">${g}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">MET Waarde</label>
+                        <input type="number" id="newExerciseMet" class="form-input" value="5.0" step="0.1" min="1" max="15">
+                    </div>
+                    <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+                        <button class="btn btn-secondary" style="flex:1;" onclick="document.getElementById('quickAddExerciseModal').remove()">Annuleren</button>
+                        <button class="btn btn-primary" style="flex:1;" onclick="saveQuickAddExercise()">Toevoegen</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    setTimeout(() => document.getElementById('newExerciseName')?.focus(), 100);
+}
+
+function saveQuickAddExercise() {
+    const name = document.getElementById('newExerciseName')?.value;
+    const muscleGroup = document.getElementById('newExerciseMuscleGroup')?.value;
+    const met = parseFloat(document.getElementById('newExerciseMet')?.value) || 5.0;
+    
+    if (!name) {
+        showToast("Vul een naam in", "error");
+        return;
+    }
     
     // Add to database
     const exercise = addCustomExercise(name, met);
     
-    // Add to workout
-    addExerciseToWorkout(exercise.id, exercise.name, exercise.met);
+    // Add to workout with proper muscle group
+    addExerciseToWorkoutWithGroup(exercise.id, exercise.name, exercise.met, muscleGroup);
     
+    document.getElementById('quickAddExerciseModal')?.remove();
     document.getElementById('addExerciseWorkoutModal')?.remove();
+}
+
+function addExerciseToWorkoutWithGroup(exerciseId, exerciseName, met, muscleGroup) {
+    if (!currentWorkout) return;
+    
+    const settings = getSettings();
+    const sets = [];
+    for (let i = 0; i < settings.defaultSets; i++) {
+        sets.push({
+            reps: 12,
+            weight: getInitialWeight(exerciseId),
+            completed: false
+        });
+    }
+    
+    const muscleGroupIcons = {
+        "Borst": "",
+        "Schouder": "",
+        "Rug": "",
+        "Triceps / Biceps": "",
+        "Benen": "",
+        "Extra": "⭐"
+    };
+    
+    currentWorkout.exercises.push({
+        id: exerciseId,
+        name: exerciseName,
+        met,
+        muscleGroup: muscleGroup,
+        muscleGroupIcon: muscleGroupIcons[muscleGroup] || "⭐",
+        sets
+    });
+    
+    scheduleRender('renderExercises', () => renderExercises());
+    scheduleRender('updateStats', () => updateStats());
+    showToast(`${exerciseName} toegevoegd aan ${muscleGroup}!`, "success");
 }
 
 // TIMER

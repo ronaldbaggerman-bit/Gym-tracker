@@ -1328,6 +1328,313 @@ h1 {
     margin-bottom: 2rem;
 }
 
+/* Floating Action Button */
+.fab-add-exercise {
+    position: fixed;
+    bottom: 100px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    border: none;
+    font-size: 2rem;
+    font-weight: 300;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(52, 199, 89, 0.4);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.fab-add-exercise.visible {
+    display: flex;
+}
+
+.fab-add-exercise:hover {
+    transform: scale(1.1);
+    box-shadow: 0 8px 20px rgba(52, 199, 89, 0.6);
+}
+
+.fab-add-exercise:active {
+    transform: scale(0.95);
+}
+
+/* Modal Styles */
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(12px);
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.modal.active {
+    display: flex;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.modal-content {
+    background: var(--dark-card);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+    color: var(--primary);
+    transform: rotate(90deg);
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    padding: 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--dark-elevated);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(52, 199, 89, 0.1);
+}
+
+.form-input option {
+    background: var(--dark-card);
+    color: var(--text);
+}
+
+/* Add Extra Exercise Bar */
+.add-extra-exercise-bar {
+    padding: 1rem;
+    margin-top: 1rem;
+    background: var(--dark-elevated);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+
+.extra-exercise-item {
+    padding: 0.75rem;
+    margin: 0.5rem 0;
+    background: var(--dark-elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.extra-exercise-item:hover {
+    background: var(--dark-card);
+    border-color: var(--primary);
+}
+
+.extra-exercise-item-name {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.extra-exercise-item-meta {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+/* Exercises Management */
+.exercises-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+.exercises-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    gap: 1rem;
+}
+
+.exercises-header h2 {
+    margin: 0;
+    font-size: 1.75rem;
+}
+
+.exercises-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.exercise-item {
+    background: var(--dark-elevated);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.exercise-item:hover {
+    background: var(--dark-card);
+    border-color: var(--primary);
+}
+
+.exercise-item-info {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.exercise-item-name {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--text);
+}
+
+.exercise-item-meta {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.exercise-item-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.exercise-item-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.exercise-item-actions button {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+}
+
+.empty-exercises {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    color: var(--text-muted);
+}
+
+.empty-exercises-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 640px) {
+    .fab-add-exercise {
+        bottom: 80px;
+        right: 16px;
+    }
+    
+    .modal-content {
+        max-width: 100%;
+        border-radius: 20px 20px 0 0;
+    }
+    
+    .exercises-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .exercises-header button {
+        width: 100%;
+    }
+    
+    .exercise-item {
+        grid-template-columns: 1fr;
+    }
+    
+    .exercise-item-actions {
+        justify-content: flex-end;
+    }
+}
+
 /* Form Groups */
 .form-group {
     margin-bottom: 1.75rem;
@@ -1857,6 +2164,7 @@ h1 {
             <button class="tab" data-view="history" onclick="switchView('history')"> Historie</button>
             <button class="tab" data-view="progress" onclick="switchView('progress')"> Progressie</button>
             <button class="tab" data-view="prs" onclick="switchView('prs')"> PRs</button>
+            <button class="tab" data-view="exercises" onclick="switchView('exercises')"> 💪 Oefeningen</button>
             <button class="tab" data-view="settings" onclick="switchView('settings')"> ⚙️ Instellingen</button>
         </div>
     </div>
@@ -1907,6 +2215,18 @@ h1 {
             </div>
 
             <div id="exercisesContainer"></div>
+
+            <!-- Add Extra Exercise Button -->
+            <div class="add-extra-exercise-bar" id="addExtraExerciseBar" style="display: none;">
+                <button class="btn btn-primary" onclick="openAddExtraExerciseModal()" style="width: 100%;">
+                    ➕ Voeg Extra Oefening Toe
+                </button>
+            </div>
+
+            <!-- Floating Button for Adding Custom Exercise -->
+            <button class="fab-add-exercise" id="fabAddExercise" onclick="openAddExerciseModal()" title="Nieuwe oefening aanmaken">
+                <span>+</span>
+            </button>
         </div>
     </div>
 
@@ -1924,6 +2244,17 @@ h1 {
     <!-- PRs View -->
     <div id="prsView" class="view">
         <div id="prsContainer"></div>
+    </div>
+
+    <!-- Exercises Management View -->
+    <div id="exercisesView" class="view">
+        <div class="exercises-container">
+            <div class="exercises-header">
+                <h2>💪 Oefeningen Beheer</h2>
+                <button class="btn btn-primary" onclick="openAddExerciseModalFromTab()">➕ Voeg Toe</button>
+            </div>
+            <div id="exercisesManagementList" class="exercises-list"></div>
+        </div>
     </div>
 
     <!-- Settings View -->
@@ -2033,11 +2364,70 @@ h1 {
 </div>
 
 <div class="modal" id="settingsModal">
+</div>
+
+<!-- Add Custom Exercise Modal -->
+<div class="modal" id="addExerciseModal">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h2>➕ Voeg Oefening Toe</h2>
+            <button class="modal-close" onclick="closeAddExerciseModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Oefening Naam *</label>
+                <input type="text" id="customExerciseName" placeholder="bijv. Bicep Curls" class="form-input">
+            </div>
+            <div class="form-group">
+                <label>Spiergroep *</label>
+                <select id="customMuscleGroup" class="form-input">
+                    <option value="">-- Selecteer spiergroep --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>MET Waarde * (Metabolic Equivalent)</label>
+                <input type="number" id="customExerciseMET" placeholder="bijv. 5.0" step="0.1" min="1" max="15" class="form-input">
+            </div>
+            <div class="form-group">
+                <label style="font-size: 0.85rem; color: var(--text-muted);">💡 MET bepaalt calorieverbruik. Typische waarden: 3-5 (cardio), 5-8 (kracht)</label>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeAddExerciseModal()">Annuleren</button>
+            <button class="btn btn-primary" onclick="saveCustomExercise()">Aanmaken</button>
+        </div>
+    </div>
+</div>
+
+<!-- Add Extra Exercise to Workout Modal -->
+<div class="modal" id="addExtraExerciseModal">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+            <h2>➕ Voeg Extra Oefening Toe aan Workout</h2>
+            <button class="modal-close" onclick="closeAddExtraExerciseModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Zoek oefening</label>
+                <input type="text" id="searchExerciseInput" placeholder="Type om te zoeken..." class="form-input" onkeyup="filterExtraExercises()">
+            </div>
+            <div class="form-group">
+                <label>Beschikbare oefeningen</label>
+                <div id="extraExercisesList" style="max-height: 400px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; padding: 0.5rem;">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeAddExtraExerciseModal()">Sluiten</button>
+        </div>
+    </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>// WORKOUT DATA
 // App version for cache-busting (always bump by 1)
-const APP_VERSION = "2025-12-13-13";
+const APP_VERSION = "2025-12-13-16";
 // Enforce versioned URL so clients always fetch the latest build
 (async function enforceVersionedUrl() {
     try {
@@ -2184,6 +2574,279 @@ let restTimerRemaining = 0;
 const REST_DURATION_SECONDS = 90;
 let progressState = { schemaId: null, exerciseId: null };
 
+// CUSTOM EXERCISES MANAGEMENT
+function getCustomExercises() {
+    try {
+        const stored = localStorage.getItem("gym_custom_exercises");
+        return stored ? JSON.parse(stored) : {};
+    } catch (e) {
+        return {};
+    }
+}
+
+function saveCustomExercises(exercises) {
+    try {
+        localStorage.setItem("gym_custom_exercises", JSON.stringify(exercises));
+    } catch (e) {}
+}
+
+function deleteCustomExercise(id) {
+    if (!confirm("Oefening verwijderen?")) return;
+    
+    const custom = getCustomExercises();
+    delete custom[id];
+    saveCustomExercises(custom);
+    
+    showToast("✅ Oefening verwijderd!");
+    renderExercisesList();
+}
+
+function renderExercisesList() {
+    console.log("🔧 renderExercisesList called");
+    const container = document.getElementById('exercisesManagementList');
+    if (!container) {
+        console.error("❌ exercisesManagementList container not found");
+        return;
+    }
+    
+    // Get all exercises (standard + custom)
+    const allExercises = [];
+    
+    // Add standard exercises from schemas
+    WORKOUT_DATA.schemas.forEach(schema => {
+        schema.muscleGroups.forEach(group => {
+            group.exercises.forEach(ex => {
+                allExercises.push({
+                    id: ex.id,
+                    name: ex.name,
+                    met: ex.met,
+                    muscleGroupName: group.name,
+                    muscleGroupId: group.id,
+                    custom: false
+                });
+            });
+        });
+    });
+    
+    // Add custom exercises
+    const custom = getCustomExercises();
+    Object.values(custom).forEach(ex => {
+        allExercises.push({
+            ...ex,
+            custom: true
+        });
+    });
+    
+    // Sort by name
+    allExercises.sort((a, b) => a.name.localeCompare(b.name));
+    
+    console.log("📋 All exercises:", allExercises.length);
+    
+    if (allExercises.length === 0) {
+        container.innerHTML = `
+            <div class="empty-exercises">
+                <div class="empty-exercises-icon">💪</div>
+                <h3>Geen oefeningen</h3>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = allExercises.map(ex => `
+        <div class="exercise-item">
+            <div class="exercise-item-info">
+                <div class="exercise-item-name">
+                    ${ex.name}
+                    ${ex.custom ? '<span style="color: var(--primary); font-size: 0.8rem; margin-left: 0.5rem;">⚡ Eigen</span>' : ''}
+                </div>
+                <div class="exercise-item-meta">
+                    <div class="exercise-item-meta-item">🦵 ${ex.muscleGroupName}</div>
+                    <div class="exercise-item-meta-item">⚡ MET ${ex.met.toFixed(1)}</div>
+                    <div class="exercise-item-meta-item">ID: ${ex.id}</div>
+                </div>
+            </div>
+            <div class="exercise-item-actions">
+                ${ex.custom ? `<button class="btn btn-danger" onclick="deleteCustomExercise(${ex.id})">🗑️ Verwijder</button>` : '<span style="color: var(--text-muted); font-size: 0.85rem;">Standaard</span>'}
+            </div>
+        </div>
+    `).join('');
+    console.log("✅ Exercises list rendered");
+}
+
+function openAddExerciseModalFromTab() {
+    openAddExerciseModal();
+}
+
+// ADD EXTRA EXERCISE TO WORKOUT
+function openAddExtraExerciseModal() {
+    const modal = document.getElementById('addExtraExerciseModal');
+    modal.classList.add('active');
+    renderExtraExercisesList();
+}
+
+function closeAddExtraExerciseModal() {
+    const modal = document.getElementById('addExtraExerciseModal');
+    modal.classList.remove('active');
+    document.getElementById('searchExerciseInput').value = '';
+}
+
+function renderExtraExercisesList(searchTerm = '') {
+    const container = document.getElementById('extraExercisesList');
+    
+    // Get all available exercises
+    const allExercises = [];
+    
+    // Standard exercises
+    WORKOUT_DATA.schemas.forEach(schema => {
+        schema.muscleGroups.forEach(group => {
+            group.exercises.forEach(ex => {
+                allExercises.push({
+                    id: ex.id,
+                    name: ex.name,
+                    met: ex.met,
+                    muscleGroupName: group.name,
+                    muscleGroupIcon: group.icon,
+                    custom: false
+                });
+            });
+        });
+    });
+    
+    // Custom exercises
+    const custom = getCustomExercises();
+    Object.values(custom).forEach(ex => {
+        allExercises.push({
+            id: ex.id,
+            name: ex.name,
+            met: ex.met,
+            muscleGroupName: ex.muscleGroupName,
+            muscleGroupIcon: '💪',
+            custom: true
+        });
+    });
+    
+    // Filter by search term
+    let filtered = allExercises;
+    if (searchTerm) {
+        const search = searchTerm.toLowerCase();
+        filtered = allExercises.filter(ex => 
+            ex.name.toLowerCase().includes(search) || 
+            ex.muscleGroupName.toLowerCase().includes(search)
+        );
+    }
+    
+    // Sort by name
+    filtered.sort((a, b) => a.name.localeCompare(b.name));
+    
+    if (filtered.length === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-muted);">Geen oefeningen gevonden</div>';
+        return;
+    }
+    
+    container.innerHTML = filtered.map(ex => `
+        <div class="extra-exercise-item" onclick="addExtraExerciseToWorkout(${ex.id}, ${ex.custom})">
+            <div class="extra-exercise-item-name">
+                ${ex.name}
+                ${ex.custom ? '<span style="color: var(--primary); font-size: 0.8rem; margin-left: 0.5rem;">⚡ Eigen</span>' : ''}
+            </div>
+            <div class="extra-exercise-item-meta">
+                ${ex.muscleGroupIcon} ${ex.muscleGroupName} · MET ${ex.met.toFixed(1)}
+            </div>
+        </div>
+    `).join('');
+}
+
+function filterExtraExercises() {
+    const searchTerm = document.getElementById('searchExerciseInput').value;
+    renderExtraExercisesList(searchTerm);
+}
+
+function addExtraExerciseToWorkout(exerciseId, isCustom) {
+    if (!currentWorkout || !currentWorkout.schemaId) {
+        showToast('❌ Geen actieve workout');
+        return;
+    }
+    
+    let exercise = null;
+    let muscleGroup = null;
+    
+    if (isCustom) {
+        // Get from custom exercises
+        const custom = getCustomExercises();
+        exercise = custom[exerciseId];
+        if (!exercise) {
+            showToast('❌ Oefening niet gevonden');
+            return;
+        }
+        
+        // Find muscle group
+        for (const schema of WORKOUT_DATA.schemas) {
+            const group = schema.muscleGroups.find(g => g.id === exercise.muscleGroupId);
+            if (group) {
+                muscleGroup = group;
+                break;
+            }
+        }
+    } else {
+        // Get from standard exercises
+        for (const schema of WORKOUT_DATA.schemas) {
+            for (const group of schema.muscleGroups) {
+                const ex = group.exercises.find(e => e.id === exerciseId);
+                if (ex) {
+                    exercise = ex;
+                    muscleGroup = group;
+                    break;
+                }
+            }
+            if (exercise) break;
+        }
+    }
+    
+    if (!exercise || !muscleGroup) {
+        showToast('❌ Oefening niet gevonden');
+        return;
+    }
+    
+    // Check if already in workout
+    const exists = currentWorkout.exercises.some(e => e.id === exerciseId);
+    if (exists) {
+        showToast('⚠️ Oefening zit al in deze workout');
+        return;
+    }
+    
+    // Add to workout
+    const sets = [];
+    const settings = getSettings();
+    for (let i = 0; i < settings.defaultSets; i++) {
+        sets.push({
+            reps: 12,
+            weight: isCustom ? 20 : getInitialWeight(exerciseId),
+            completed: false
+        });
+    }
+    
+    currentWorkout.exercises.push({
+        id: exerciseId,
+        name: exercise.name,
+        met: exercise.met,
+        muscleGroup: muscleGroup.name,
+        muscleGroupIcon: muscleGroup.icon,
+        sets,
+        custom: isCustom
+    });
+    
+    showToast(`✅ ${exercise.name} toegevoegd!`);
+    closeAddExtraExerciseModal();
+    renderExercises();
+}
+
+function getNextCustomExerciseId() {
+    const custom = getCustomExercises();
+    const existingIds = Object.keys(custom).map(k => parseInt(k));
+    const maxId = Math.max(0, ...existingIds);
+    return 9000 + (maxId >= 9000 ? maxId - 9000 + 1 : 1);
+}
+
 // SETTINGS
 function getSettings() {
     const defaults = {
@@ -2236,6 +2899,132 @@ function hexToRgba(hex, alpha = 0.35) {
     const g = (num >> 8) & 255;
     const b = num & 255;
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+// CUSTOM EXERCISE MANAGEMENT
+function getAllMuscleGroups() {
+    const muscleGroups = new Map();
+    
+    WORKOUT_DATA.schemas.forEach(schema => {
+        schema.muscleGroups.forEach(group => {
+            if (!muscleGroups.has(group.id)) {
+                muscleGroups.set(group.id, group.name);
+            }
+        });
+    });
+    
+    return Array.from(muscleGroups.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+}
+
+function openAddExerciseModal() {
+    console.log("🔧 openAddExerciseModal called");
+    const modal = document.getElementById('addExerciseModal');
+    const selectEl = document.getElementById('customMuscleGroup');
+    
+    if (!modal) {
+        console.error("❌ Modal not found");
+        return;
+    }
+    if (!selectEl) {
+        console.error("❌ Muscle group select not found");
+        return;
+    }
+    
+    // Populate muscle groups
+    selectEl.innerHTML = '<option value="">-- Selecteer spiergroep --</option>';
+    const groups = getAllMuscleGroups();
+    console.log("📋 Muscle groups:", groups);
+    
+    groups.forEach(([id, name]) => {
+        const option = document.createElement('option');
+        option.value = id;
+        option.textContent = name;
+        selectEl.appendChild(option);
+    });
+    
+    modal.classList.add('active');
+    console.log("✅ Modal opened");
+}
+
+function closeAddExerciseModal() {
+    const modal = document.getElementById('addExerciseModal');
+    modal.classList.remove('active');
+    // Clear form
+    document.getElementById('customExerciseName').value = '';
+    document.getElementById('customMuscleGroup').value = '';
+    document.getElementById('customExerciseMET').value = '';
+}
+
+function saveCustomExercise() {
+    console.log("💾 saveCustomExercise called");
+    const name = document.getElementById('customExerciseName').value.trim();
+    const muscleGroupId = document.getElementById('customMuscleGroup').value;
+    const met = parseFloat(document.getElementById('customExerciseMET').value) || 0;
+    
+    console.log("📝 Form values:", { name, muscleGroupId, met });
+    
+    // Validation
+    if (!name) {
+        showToast('❌ Vul oefening naam in');
+        console.log("❌ Validation failed: no name");
+        return;
+    }
+    if (!muscleGroupId) {
+        showToast('❌ Selecteer spiergroep');
+        console.log("❌ Validation failed: no muscle group");
+        return;
+    }
+    if (met < 1 || met > 15) {
+        showToast('❌ MET waarde moet tussen 1 en 15 zijn');
+        console.log("❌ Validation failed: MET out of range", met);
+        return;
+    }
+    
+    // Find muscle group name from all schemas
+    let muscleGroup = null;
+    for (const schema of WORKOUT_DATA.schemas) {
+        const group = schema.muscleGroups.find(g => g.id === muscleGroupId);
+        if (group) {
+            muscleGroup = group;
+            break;
+        }
+    }
+    
+    if (!muscleGroup) {
+        showToast('❌ Spiergroep niet gevonden');
+        return;
+    }
+    
+    // Create custom exercise
+    const id = getNextCustomExerciseId();
+    console.log("🆔 Generated ID:", id);
+    const custom = getCustomExercises();
+    console.log("📂 Existing custom exercises:", custom);
+    custom[id] = {
+        id,
+        name,
+        met,
+        muscleGroupId,
+        muscleGroupName: muscleGroup.name,
+        custom: true
+    };
+    console.log("💾 Saving exercise:", custom[id]);
+    saveCustomExercises(custom);
+    console.log("✅ Exercise saved to localStorage");
+    
+    // Re-render exercises list if we're in the exercises view
+    const exercisesView = document.getElementById("exercisesView");
+    if (exercisesView && exercisesView.style.display !== "none") {
+        renderExercisesList();
+    }
+    
+    showToast(`✅ Oefening '${name}' opgeslagen in bibliotheek!`);
+    closeAddExerciseModal();
+    
+    // Update exercises list if in that view
+    if (currentView === 'exercises') {
+        renderExercisesList();
+    }
 }
 
 // INITIALIZATION
@@ -2344,6 +3133,8 @@ function selectSchema(schemaId) {
     document.getElementById("schemaSelection").style.display = "none";
     document.getElementById("activeWorkout").style.display = "block";
     document.getElementById("bottomActions").classList.add("active");
+    document.getElementById("fabAddExercise").classList.add("visible");
+    document.getElementById("addExtraExerciseBar").style.display = "block";
     
     // Update timer card color based on schema
     const timerCard = document.getElementById("timerCard");
@@ -2869,6 +3660,10 @@ function resetWorkout() {
     document.getElementById("activeWorkout").style.display = "none";
     document.getElementById("bottomActions").classList.remove("active");
     document.getElementById("timerCard").classList.remove("running");
+    document.getElementById("fabAddExercise").classList.remove("visible");
+    document.getElementById("addExtraExerciseBar").style.display = "none";
+    closeAddExerciseModal();
+    closeAddExtraExerciseModal();
     
     updateTimerDisplay();
     updateStats();
@@ -3652,6 +4447,7 @@ function switchView(viewName) {
         "history": "historyView",
         "progress": "progressView",
         "prs": "prsView",
+        "exercises": "exercisesView",
         "settings": "settingsView"
     };
     
@@ -3661,6 +4457,7 @@ function switchView(viewName) {
     if (viewName === "history") renderHistory();
     if (viewName === "prs") renderPRs();
     if (viewName === "progress") renderProgress();
+    if (viewName === "exercises") renderExercisesList();
     if (viewName === "settings") updateSettingsUI();
 }
 
@@ -3670,6 +4467,7 @@ function exportBackup() {
         workouts: getWorkoutHistory(),
         prs: getPRs(),
         settings: getSettings(),
+        customExercises: getCustomExercises(),
         exportDate: new Date().toISOString()
     };
     
@@ -3681,7 +4479,7 @@ function exportBackup() {
     a.click();
     URL.revokeObjectURL(url);
     
-    showToast("Backup gedownload!", "success");
+    showToast("✅ Backup gedownload!", "success");
 }
 
 function importBackup() {
@@ -3700,15 +4498,18 @@ function handleImportFile(event) {
             if (data.workouts) localStorage.setItem("workout_history", JSON.stringify(data.workouts));
             if (data.prs) localStorage.setItem("workout_prs", JSON.stringify(data.prs));
             if (data.settings) localStorage.setItem("gym_settings", JSON.stringify(data.settings));
+            if (data.customExercises) localStorage.setItem("gym_custom_exercises", JSON.stringify(data.customExercises));
             
-            showToast("Backup succesvol geïmporteerd!", "success");
+            showToast("✅ Backup succesvol geïmporteerd!", "success");
             
             // Refresh views
             renderHistory();
             renderPRs();
             loadSettings();
+            renderExercisesList();
         } catch (error) {
-            showToast("Ongeldige backup file", "error");
+            showToast("❌ Ongeldige backup file", "error");
+            console.error("Import error:", error);
         }
     };
     reader.readAsText(file);

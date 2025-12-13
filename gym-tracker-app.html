@@ -2176,9 +2176,7 @@ function renderSchemaSelection() {
     const allSchemas = getAllSchemas();
     
     container.innerHTML = allSchemas.map(schema => {
-        const groupExercises = schema.muscleGroups.reduce((sum, g) => sum + g.exercises.length, 0);
-        const standaloneExercises = (schema.standaloneExercises || []).length;
-        const totalExercises = groupExercises + standaloneExercises;
+        const totalExercises = schema.muscleGroups.reduce((sum, g) => sum + g.exercises.length, 0);
         const isBuiltIn = !schema.isCustom;
         const classType = schema.id === "schema1" ? "push" : schema.id === "schema2" ? "legs" : "custom";
         const lockBadge = isBuiltIn ? '<span style="position:absolute; top:0.5rem; right:0.5rem; font-size:1rem;" title="Ingebouwd schema">🔒</span>' : '';
@@ -2247,27 +2245,6 @@ function selectSchema(schemaId) {
             });
         });
     });
-    
-    // Add standalone exercises
-    if (schema.standaloneExercises && schema.standaloneExercises.length > 0) {
-        schema.standaloneExercises.forEach(exercise => {
-            const sets = [];
-            for (let i = 0; i < settings.defaultSets; i++) {
-                sets.push({
-                    reps: 12,
-                    weight: getInitialWeight(exercise.id),
-                    completed: false
-                });
-            }
-            
-            currentWorkout.exercises.push({
-                ...exercise,
-                muscleGroup: "Extra",
-                muscleGroupIcon: "⭐",
-                sets
-            });
-        });
-    }
     
     document.getElementById("schemaSelection").style.display = "none";
     document.getElementById("activeWorkout").style.display = "block";
@@ -4075,43 +4052,28 @@ function renderSchemaEditorModal() {
                 
                 <div style="margin-top:1.5rem;">
                     <h3 style="margin-bottom:1rem; color:var(--text);">Losse Oefeningen</h3>
-                    <div style="display:grid; gap:0.5rem; margin-bottom:1rem;">
-                        ${(schema.standaloneExercises || []).map((ex, idx) => `
-                            <div style="background:var(--dark-card); padding:0.75rem; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
-                                <div>
-                                    <div style="font-weight:600;">${ex.name}</div>
-                                    <div style="font-size:0.85rem; color:var(--text-muted);">MET: ${ex.met.toFixed(1)}</div>
-                                </div>
-                                <button class="btn-icon delete-btn" onclick="removeStandaloneExercise(${idx})" title="Verwijderen">×</button>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <button class="btn btn-secondary" style="width:100%; margin-bottom:1.5rem;" onclick="addStandaloneExerciseToSchema()">+ Losse Oefening Toevoegen</button>
-                </div>
-                
-                <div style="margin-top:1.5rem;">
-                    <h3 style="margin-bottom:1rem; color:var(--text);">Spiergroepen</h3>
-                    <button class="btn btn-primary" style="width:100%; margin-bottom:1rem;" onclick="addMuscleGroupToSchema()">+ Spiergroep Toevoegen</button>
+                    <button class="btn btn-primary" style="width:100%; margin-bottom:1rem;" onclick="openAddExerciseToSchemaModal()">+ Oefening Toevoegen</button>
                     
                     <div style="display:grid; gap:1rem;">
                         ${schema.muscleGroups.map((group, idx) => `
                             <div style="background:var(--dark-elevated); padding:1rem; border-radius:12px; border:1px solid var(--border);">
                                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-                                    <input type="text" class="form-input" value="${group.name}" onchange="window.editingSchema.muscleGroups[${idx}].name = this.value" style="flex:1;">
-                                    <button class="btn btn-danger" style="padding:0.4rem 0.6rem; font-size:0.85rem; margin-left:0.5rem;" onclick="removeMuscleGroupFromSchema(${idx})">−</button>
+                                    <h4 style="margin:0; color:var(--text);">${group.name}</h4>
                                 </div>
                                 
                                 <div style="margin-bottom:0.75rem;">
                                     <label style="font-size:0.85rem; color:var(--text-muted);">Oefeningen in deze groep</label>
                                     <div style="display:grid; gap:0.5rem; margin-top:0.5rem;">
                                         ${group.exercises.map((ex, exIdx) => `
-                                            <div style="background:var(--dark-card); padding:0.5rem; border-radius:8px; display:flex; justify-content:space-between; align-items:center; font-size:0.9rem;">
-                                                <span>${ex.name}</span>
-                                                <button class="btn-icon delete-btn" onclick="removeExerciseFromGroup(${idx}, ${exIdx})" style="padding:0.2rem;" title="Verwijderen">×</button>
+                                            <div style="background:var(--dark-card); padding:0.75rem; border-radius:8px; display:flex; justify-content:space-between; align-items:center; font-size:0.9rem;">
+                                                <div>
+                                                    <div style="font-weight:600;">${ex.name}</div>
+                                                    <div style="font-size:0.85rem; color:var(--text-muted);">MET: ${ex.met?.toFixed(1) || '5.0'}</div>
+                                                </div>
+                                                <button class="btn-icon delete-btn" onclick="removeExerciseFromSchema(${idx}, ${exIdx})" style="padding:0.2rem;" title="Verwijderen">×</button>
                                             </div>
                                         `).join('')}
                                     </div>
-                                    <button class="btn btn-secondary" style="width:100%; margin-top:0.5rem; padding:0.5rem; font-size:0.85rem;" onclick="openAddExerciseToGroupModal(${idx})">+ Oefening Toevoegen</button>
                                 </div>
                             </div>
                         `).join('')}
@@ -4130,39 +4092,50 @@ function renderSchemaEditorModal() {
 }
 
 function addStandaloneExerciseToSchema() {
+function openAddExerciseToSchemaModal() {
     const allExercises = [];
     WORKOUT_DATA.schemas.forEach(s => {
         s.muscleGroups.forEach(g => {
             g.exercises.forEach(ex => {
                 if (!allExercises.find(e => e.id === ex.id)) {
-                    allExercises.push(ex);
+                    allExercises.push({ ...ex, muscleGroup: g.name });
                 }
             });
         });
     });
-    const customExercises = getCustomExercises();
+    const customExercises = getCustomExercises().map(ex => ({ ...ex, muscleGroup: ex.muscleGroup || 'Extra' }));
     const availableExercises = [...allExercises, ...customExercises];
+    
+    // Filter out already added exercises
+    const alreadyAdded = [];
+    window.editingSchema.muscleGroups.forEach(g => {
+        g.exercises.forEach(ex => alreadyAdded.push(ex.id));
+    });
+    const unused = availableExercises.filter(ex => !alreadyAdded.includes(ex.id));
     
     const modal = document.createElement('div');
     modal.className = 'modal active';
-    modal.id = 'addStandaloneExModal';
+    modal.id = 'addExerciseToSchemaModal';
     modal.style.zIndex = '3200';
     modal.innerHTML = `
         <div class="modal-content" style="max-width:500px;">
             <div class="modal-header">
                 <h2>Selecteer Oefening</h2>
-                <button class="close-btn" onclick="document.getElementById('addStandaloneExModal').remove()">×</button>
+                <button class="close-btn" onclick="document.getElementById('addExerciseToSchemaModal').remove()">×</button>
             </div>
             <div class="modal-body">
-                <div style="display:grid; gap:0.5rem; max-height:400px; overflow-y:auto;">
-                    ${availableExercises.map(ex => `
-                        <button class="btn btn-secondary" style="text-align:left; padding:0.75rem; justify-content:space-between; display:flex; align-items:center;" onclick="selectStandaloneExercise(${ex.id}, '${ex.name}', ${ex.met || 5.0})">
-                            <span>${ex.name}</span>
+                <div style="display:grid; gap:0.5rem; max-height:400px; overflow-y:auto; margin-bottom:1rem;">
+                    ${unused.map(ex => `
+                        <button class="btn btn-secondary" style="text-align:left; padding:0.75rem; justify-content:space-between; display:flex; align-items:center;" onclick="addExerciseToSchemaByGroup(${ex.id}, '${ex.name}', ${ex.met || 5.0}, '${ex.muscleGroup}')">
+                            <div>
+                                <div>${ex.name}</div>
+                                <div style="font-size:0.85rem; color:var(--text-muted);">${ex.muscleGroup}</div>
+                            </div>
                             <span style="color:var(--text-muted); font-size:0.85rem;">MET ${ex.met?.toFixed(1) || '5.0'}</span>
                         </button>
                     `).join('')}
                 </div>
-                <button class="btn btn-secondary" style="width:100%; margin-top:1rem;" onclick="document.getElementById('addStandaloneExModal').remove()">Annuleren</button>
+                <button class="btn btn-secondary" style="width:100%;" onclick="document.getElementById('addExerciseToSchemaModal').remove()">Annuleren</button>
             </div>
         </div>
     `;
@@ -4170,31 +4143,35 @@ function addStandaloneExerciseToSchema() {
     document.body.appendChild(modal);
 }
 
-function selectStandaloneExercise(id, name, met) {
-    if (!window.editingSchema.standaloneExercises) window.editingSchema.standaloneExercises = [];
-    window.editingSchema.standaloneExercises.push({ id, name, met });
-    document.getElementById('addStandaloneExModal')?.remove();
-    renderSchemaEditorModal();
-}
-
-function removeStandaloneExercise(idx) {
-    window.editingSchema.standaloneExercises.splice(idx, 1);
-    renderSchemaEditorModal();
-}
-
-function addMuscleGroupToSchema() {
-    const name = prompt("Spiergroep naam:");
-    if (!name) return;
+function addExerciseToSchemaByGroup(id, name, met, muscleGroup) {
     if (!window.editingSchema.muscleGroups) window.editingSchema.muscleGroups = [];
-    window.editingSchema.muscleGroups.push({ name, exercises: [] });
+    
+    // Find or create muscle group
+    let group = window.editingSchema.muscleGroups.find(g => g.name === muscleGroup);
+    if (!group) {
+        group = { name: muscleGroup, exercises: [] };
+        window.editingSchema.muscleGroups.push(group);
+    }
+    
+    // Add exercise to group
+    group.exercises.push({ id, name, met });
+    
+    document.getElementById('addExerciseToSchemaModal')?.remove();
     renderSchemaEditorModal();
 }
 
-function removeMuscleGroupFromSchema(idx) {
-    window.editingSchema.muscleGroups.splice(idx, 1);
+function removeExerciseFromSchema(groupIdx, exIdx) {
+    window.editingSchema.muscleGroups[groupIdx].exercises.splice(exIdx, 1);
+    
+    // Remove group if empty
+    if (window.editingSchema.muscleGroups[groupIdx].exercises.length === 0) {
+        window.editingSchema.muscleGroups.splice(groupIdx, 1);
+    }
+    
     renderSchemaEditorModal();
 }
 
+// Legacy function kept for compatibility
 function openAddExerciseToGroupModal(groupIdx) {
     const allExercises = [];
     WORKOUT_DATA.schemas.forEach(s => {
@@ -4244,8 +4221,7 @@ function saveEditedSchema() {
             ...schemas[idx],
             name: window.editingSchema.name,
             description: window.editingSchema.description,
-            muscleGroups: window.editingSchema.muscleGroups,
-            standaloneExercises: window.editingSchema.standaloneExercises || []
+            muscleGroups: window.editingSchema.muscleGroups
         };
         saveCustomSchemas(schemas);
     }

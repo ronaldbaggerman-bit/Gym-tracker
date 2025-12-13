@@ -1603,46 +1603,174 @@ h1 {
 
     /* Settings Styles */
     .settings-container {
-        padding: 2rem 1.5rem;
-        max-width: 800px;
+        padding: 1.5rem;
+        max-width: 700px;
         margin: 0 auto;
     }
 
     .settings-section {
         background: var(--dark-card);
-        border-radius: 1.25rem;
-        padding: 1.5rem;
+        border-radius: 20px;
+        padding: 2rem;
         border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+    }
+
+    .settings-section h2 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 2rem;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .settings-section h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin: 2.5rem 0 1.5rem 0;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
     }
 
     .settings-item {
-        display: flex;
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: 1fr auto;
         align-items: center;
-        padding: 1rem 0;
-        gap: 1.5rem;
+        padding: 1.25rem 0;
+        gap: 2rem;
+    }
+
+    .settings-item:first-of-type {
+        padding-top: 0;
     }
 
     .settings-label {
         display: flex;
         flex-direction: column;
-        gap: 0.25rem;
+        gap: 0.375rem;
+        min-width: 0;
     }
 
     .settings-label > span:first-child {
         font-weight: 600;
+        font-size: 1rem;
         color: var(--text);
     }
 
     .settings-description {
         font-size: 0.875rem;
         color: var(--text-muted);
+        line-height: 1.4;
     }
 
     .settings-divider {
         height: 1px;
         background: var(--border);
-        margin: 1rem 0;
+        margin: 1.5rem 0;
+    }
+
+    .settings-control {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-shrink: 0;
+    }
+
+    .settings-input {
+        width: 100px;
+        padding: 0.625rem 0.875rem;
+        border-radius: 12px;
+        border: 2px solid var(--border);
+        background: var(--dark-elevated);
+        color: var(--text);
+        font-size: 1rem;
+        font-weight: 600;
+        text-align: center;
+        transition: all 0.2s;
+    }
+
+    .settings-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(52, 199, 89, 0.1);
+    }
+
+    .settings-counter {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--dark-elevated);
+        border-radius: 12px;
+        padding: 0.25rem;
+        border: 1px solid var(--border);
+    }
+
+    .settings-counter button {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .settings-counter input {
+        width: 50px;
+        text-align: center;
+        border: none;
+        background: transparent;
+        color: var(--text);
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+    .settings-backup-grid {
+        display: grid;
+        gap: 0.875rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .settings-tip {
+        padding: 1rem 1.25rem;
+        background: rgba(52, 199, 89, 0.08);
+        border-radius: 12px;
+        border: 1px solid rgba(52, 199, 89, 0.2);
+    }
+
+    .settings-tip p {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+        line-height: 1.6;
+        margin: 0;
+    }
+
+    .settings-version {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 0.875rem;
+        background: var(--dark-elevated);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        font-weight: 600;
+        color: var(--text-muted);
+        font-size: 0.875rem;
+    }
+
+    @media (max-width: 640px) {
+        .settings-item {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .settings-control {
+            justify-content: flex-start;
+        }
     }
 
     /* Toggle Switch */
@@ -1779,18 +1907,25 @@ h1 {
     <div id="settingsView" class="view">
         <div class="settings-container">
             <div class="settings-section">
-                <h2 style="margin-bottom: 2rem;">⚙️ Instellingen</h2>
+                <h2>⚙️ Instellingen</h2>
 
                 <div class="settings-item">
                     <div class="settings-label">
-                        <span>App versie</span>
+                        <span>App Versie</span>
                         <span class="settings-description">Actieve build op dit device</span>
                     </div>
-                    <div id="appVersionText" style="color: var(--text-muted); font-weight: 600;">
-                        …
+                    <div class="settings-control">
+                        <span id="appVersionText" class="settings-version">…</span>
                     </div>
-                    <button class="btn btn-secondary" style="margin-top:0.5rem; padding:0.4rem 0.85rem; font-size:0.85rem;" onclick="forceReload()">
-                        🔄 Forceer herladen naar nieuwste versie
+                </div>
+
+                <div class="settings-item">
+                    <div class="settings-label">
+                        <span>Cache Opnieuw Laden</span>
+                        <span class="settings-description">Forceer herladen naar nieuwste versie</span>
+                    </div>
+                    <button class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;" onclick="forceReload()">
+                        🔄 Herladen
                     </button>
                 </div>
 
@@ -1799,23 +1934,22 @@ h1 {
                 <div class="settings-item">
                     <div class="settings-label">
                         <span>Donker Thema</span>
-                        <span class="settings-description">Schakel donker/licht thema in</span>
+                        <span class="settings-description">Schakel tussen donker en licht thema</span>
                     </div>
-                    <div style="display:flex; flex-direction:column; gap:0.35rem; align-items:flex-end;">
+                    <div class="settings-control">
                         <div class="toggle-switch" id="themeToggle" onclick="toggleDarkMode()" title="Toggle dark/light mode">
                             <span class="toggle-icon">🌙</span>
                             <div class="toggle-slider"></div>
                             <span class="toggle-icon">☀️</span>
                         </div>
-                        <button class="btn btn-secondary" style="padding:0.35rem 0.75rem; font-size:0.85rem;" onclick="toggleDarkMode()">Toggle thema</button>
                     </div>
                 </div>
 
                 <div class="settings-divider"></div>
 
-                <h3 style="margin: 2rem 0 1rem 0; color: var(--text);">📦 Backup & Synchronisatie</h3>
+                <h3>📦 Backup & Synchronisatie</h3>
                 
-                <div style="display: grid; gap: 0.75rem; margin-bottom: 1.5rem;">
+                <div class="settings-backup-grid">
                     <button class="btn btn-primary" onclick="exportBackup()" style="width: 100%;">
                         ⬇️ Export Data
                     </button>
@@ -1823,8 +1957,8 @@ h1 {
                         ⬆️ Import Data
                     </button>
                     <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="handleImportFile(event)">
-                    <div style="padding: 1rem; background: var(--dark-card); border-radius: 12px; border: 1px solid var(--border);">
-                        <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.5;">
+                    <div class="settings-tip">
+                        <p>
                             💡 Tip: Backup bevat al je workouts, PRs en instellingen. Bewaar in OneDrive voor sync tussen apparaten.
                         </p>
                     </div>
@@ -1834,11 +1968,11 @@ h1 {
 
                 <div class="settings-item">
                     <div class="settings-label">
-                        <span>Lichaamsgewicht (kg)</span>
-                        <span class="settings-description">Gebruikt voor calorieberekening</span>
+                        <span>Lichaamsgewicht</span>
+                        <span class="settings-description">Gebruikt voor calorieberekening (kg)</span>
                     </div>
                     <input type="number" id="bodyWeightInput" min="30" max="200" value="75" 
-                           onchange="updateBodyWeight(this.value)" style="width: 100px; padding: 0.5rem; border-radius: 0.5rem; border: 1px solid var(--border); background: var(--dark-card); color: var(--text);">
+                           onchange="updateBodyWeight(this.value)" class="settings-input">
                 </div>
 
                 <div class="settings-item">
@@ -1846,11 +1980,10 @@ h1 {
                         <span>Standaard Sets</span>
                         <span class="settings-description">Aantal sets per oefening</span>
                     </div>
-                    <div style="display: flex; gap: 1rem; align-items: center;">
-                        <button class="btn btn-secondary" style="padding: 0.5rem 1rem;" onclick="updateDefaultSets(parseInt(document.getElementById('defaultSetsInput').value) - 1)">−</button>
-                        <input type="number" id="defaultSetsInput" min="1" max="10" value="3" 
-                               style="width: 60px; text-align: center; padding: 0.5rem; border-radius: 0.5rem; border: 1px solid var(--border); background: var(--dark-card); color: var(--text);">
-                        <button class="btn btn-secondary" style="padding: 0.5rem 1rem;" onclick="updateDefaultSets(parseInt(document.getElementById('defaultSetsInput').value) + 1)">+</button>
+                    <div class="settings-counter">
+                        <button class="btn btn-secondary" onclick="updateDefaultSets(parseInt(document.getElementById('defaultSetsInput').value) - 1)">−</button>
+                        <input type="number" id="defaultSetsInput" min="1" max="10" value="3" readonly>
+                        <button class="btn btn-secondary" onclick="updateDefaultSets(parseInt(document.getElementById('defaultSetsInput').value) + 1)">+</button>
                     </div>
                 </div>
             </div>
@@ -1878,7 +2011,7 @@ h1 {
 
 <script>// WORKOUT DATA
 // App version for cache-busting (always bump by 1)
-const APP_VERSION = "2025-12-13-9";
+const APP_VERSION = "2025-12-13-10";
 // Enforce versioned URL so clients always fetch the latest build
 (function enforceVersionedUrl() {
     try {

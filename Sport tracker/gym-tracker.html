@@ -2335,6 +2335,16 @@ function toggleSet(exerciseId, setIndex) {
         startRestTimer();
         checkAndShowPR(exercise, setIndex);
         focusOnTimer();
+
+        // If this exercise is now fully complete, auto-open the next incomplete exercise
+        const isExerciseDone = exercise.sets.every(s => s.completed);
+        if (isExerciseDone) {
+            const exIndex = currentWorkout.exercises.findIndex(ex => ex.id === exerciseId);
+            const next = currentWorkout.exercises.slice(exIndex + 1).find(ex => !ex.sets.every(s => s.completed));
+            if (next) {
+                collapsedExercises[next.id] = false;
+            }
+        }
     }
     
     renderExercises();

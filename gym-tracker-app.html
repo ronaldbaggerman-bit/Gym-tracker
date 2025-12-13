@@ -1804,6 +1804,11 @@ h1 {
             </div>
 
             <div id="exercisesContainer"></div>
+            
+            <div class="bottom-actions" id="bottomActions">
+                <button class="btn btn-secondary" onclick="cancelWorkout()">🚫 Annuleren</button>
+                <button class="btn btn-primary" onclick="finishWorkout()">✅ Voltooien</button>
+            </div>
         </div>
     </div>
 
@@ -1932,11 +1937,6 @@ h1 {
                 <div id="schemasManagerContainer" style="display:none;">
                     <!-- Dynamically filled -->
                 </div>
-
-<div class="bottom-actions" id="bottomActions">
-    <button class="btn btn-secondary" onclick="cancelWorkout()"> Annuleren</button>
-    <button class="btn btn-primary" onclick="finishWorkout()"> Voltooien</button>
-</div>
 
 <div class="pr-celebration" id="prCelebration" role="dialog" aria-live="polite" aria-label="PR melding">
     <div class="pr-content">

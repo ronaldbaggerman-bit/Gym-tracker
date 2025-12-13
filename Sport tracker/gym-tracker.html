@@ -2037,19 +2037,51 @@ h1 {
 
 <script>// WORKOUT DATA
 // App version for cache-busting (always bump by 1)
-const APP_VERSION = "2025-12-13-12";
+const APP_VERSION = "2025-12-13-13";
 // Enforce versioned URL so clients always fetch the latest build
-(function enforceVersionedUrl() {
+(async function enforceVersionedUrl() {
     try {
+        const storedVersion = localStorage.getItem("app_version");
         const url = new URL(location.href);
         const currentV = url.searchParams.get("v");
+        
+        // Version mismatch detected - force clear cache and reload
+        if (storedVersion && storedVersion !== APP_VERSION) {
+            console.log(`🔄 Version upgrade: ${storedVersion} → ${APP_VERSION}`);
+            
+            // Unregister any service workers
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (let registration of registrations) {
+                    await registration.unregister();
+                    console.log("🗑️ Service worker unregistered");
+                }
+            }
+            
+            // Clear caches
+            if ('caches' in window) {
+                const cacheNames = await caches.keys();
+                await Promise.all(cacheNames.map(name => caches.delete(name)));
+                console.log("🗑️ Caches cleared");
+            }
+            
+            // Update version and force reload with cache bust
+            localStorage.setItem("app_version", APP_VERSION);
+            url.searchParams.set("v", APP_VERSION);
+            url.searchParams.set("t", Date.now().toString());
+            location.replace(url.toString());
+            return;
+        }
+        
+        // First visit or URL param mismatch
         if (currentV !== APP_VERSION) {
             url.searchParams.set("v", APP_VERSION);
             url.searchParams.set("t", Date.now().toString());
             localStorage.setItem("app_version", APP_VERSION);
             location.replace(url.toString());
-            return; // stop further execution on this load
+            return;
         }
+        
         localStorage.setItem("app_version", APP_VERSION);
         console.log("✅ App loaded:", APP_VERSION);
     } catch (e) {

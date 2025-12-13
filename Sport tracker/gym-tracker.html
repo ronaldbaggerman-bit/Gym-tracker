@@ -2572,21 +2572,20 @@ function saveCustomExercise() {
         return;
     }
     
-    // Get current schema (must be in active workout)
-    if (!currentWorkout.schemaId) {
-        showToast('❌ Start eerst een workout');
-        return;
+    // Zoek spiergroep naam uit alle schemas
+    let muscleGroup = null;
+    for (const schema of WORKOUT_DATA.schemas) {
+        const group = schema.muscleGroups.find(g => g.id === muscleGroupId);
+        if (group) {
+            muscleGroup = group;
+            break;
+        }
     }
-    
-    // Find muscle group name
-    const schema = WORKOUT_DATA.schemas.find(s => s.id === currentWorkout.schemaId);
-    const muscleGroup = schema?.muscleGroups.find(g => g.id === muscleGroupId);
     if (!muscleGroup) {
         showToast('❌ Spiergroep niet gevonden');
         return;
     }
-    
-    // Create custom exercise
+    // Maak custom oefening aan
     const id = getNextCustomExerciseId();
     const custom = getCustomExercises();
     custom[id] = {
@@ -2598,33 +2597,13 @@ function saveCustomExercise() {
         custom: true
     };
     saveCustomExercises(custom);
-    
-    // Add to current workout
-    const sets = [];
-    const settings = getSettings();
-    for (let i = 0; i < settings.defaultSets; i++) {
-        sets.push({
-            reps: 12,
-            weight: 20, // Default starting weight
-            completed: false
-        });
+    // Update lijst als je in oefeningen-tab zit
+    const exercisesView = document.getElementById("exercisesView");
+    if (exercisesView && exercisesView.style.display !== "none") {
+        renderExercisesList();
     }
-    
-    currentWorkout.exercises.push({
-        id,
-        name,
-        met,
-        muscleGroup: muscleGroup.name,
-        muscleGroupIcon: muscleGroup.icon,
-        sets,
-        custom: true
-    });
-    
-    showToast(`✅ Oefening '${name}' toegevoegd!`);
+    showToast(`✅ Oefening '${name}' opgeslagen in bibliotheek!`);
     closeAddExerciseModal();
-    
-    // Re-render exercises
-    renderExercises();
 }
 
 

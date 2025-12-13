@@ -1987,6 +1987,20 @@ function getSchemaAccentPair(color) {
     };
 }
 
+function getSchemaColor(schemaId) {
+    const schema = WORKOUT_DATA.schemas.find(s => s.id === schemaId);
+    return (schema && schema.color) ? schema.color : "#34C759";
+}
+
+function hexToRgba(hex, alpha = 0.35) {
+    if (typeof hex !== "string" || !/^#([0-9A-Fa-f]{6})$/.test(hex)) return `rgba(52, 199, 89, ${alpha})`;
+    const num = parseInt(hex.slice(1), 16);
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 // INITIALIZATION
 function init() {
     loadTheme();
@@ -2698,6 +2712,14 @@ function renderCalendar() {
         const hasWorkout = workoutsByDate[dateStr] ? true : false;
         const isToday = dateStr === today_str;
         const isOtherMonth = currentDate.getMonth() !== month;
+        let dayStyle = "";
+        if (hasWorkout && !isOtherMonth) {
+            const schemaId = workoutsByDate[dateStr][0].schemaId;
+            const accent = getSchemaColor(schemaId);
+            const border = shadeColor(accent, -14);
+            const shadow = hexToRgba(accent, 0.35);
+            dayStyle = `style="background:${accent}; color:#000; border:1px solid ${border}; box-shadow:0 0 12px ${shadow};"`;
+        }
         
         const classes = [
             'calendar-day',
@@ -2706,7 +2728,7 @@ function renderCalendar() {
             isOtherMonth ? 'other-month' : ''
         ].filter(c => c).join(' ');
         
-        html += `<div class="${classes}" onclick="selectCalendarDay('${dateStr}')">${currentDate.getDate()}</div>`;
+        html += `<div class="${classes}" ${dayStyle} onclick="selectCalendarDay('${dateStr}')">${currentDate.getDate()}</div>`;
         
         currentDate.setDate(currentDate.getDate() + 1);
     }

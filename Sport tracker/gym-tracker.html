@@ -1755,6 +1755,9 @@ h1 {
                     <div id="appVersionText" style="color: var(--text-muted); font-weight: 600;">
                         …
                     </div>
+                    <button class="btn btn-secondary" style="margin-top:0.5rem; padding:0.4rem 0.85rem; font-size:0.85rem;" onclick="forceReload()">
+                        🔄 Forceer herladen naar nieuwste versie
+                    </button>
                 </div>
 
                 <div class="settings-divider"></div>
@@ -1841,7 +1844,7 @@ h1 {
 
 <script>// WORKOUT DATA
 // App version for cache-busting
-const APP_VERSION = "2025-12-13-1";
+const APP_VERSION = "2025-12-13-2";
 try {
     const lastVersion = localStorage.getItem("app_version");
     if (lastVersion !== APP_VERSION) {
@@ -2016,6 +2019,17 @@ function setAppVersionLabel() {
         const el = document.getElementById("appVersionText");
         if (el) el.textContent = APP_VERSION;
     } catch (e) {}
+}
+
+function forceReload() {
+    try {
+        const base = location.href.split("?")[0];
+        const newUrl = `${base}?v=${APP_VERSION}&t=${Date.now()}`;
+        localStorage.setItem("app_version", APP_VERSION);
+        location.replace(newUrl);
+    } catch (e) {
+        location.reload();
+    }
 }
 
 function renderSchemaSelection() {

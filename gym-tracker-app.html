@@ -1884,18 +1884,18 @@ h1 {
     <button class="btn btn-primary" onclick="finishWorkout()"> Voltooien</button>
 </div>
 
-<div class="pr-celebration" id="prCelebration">
+<div class="pr-celebration" id="prCelebration" role="dialog" aria-live="polite" aria-label="PR melding">
     <div class="pr-content">
         <div class="pr-emoji"></div>
-        <div class="pr-title">NIEUW PR!</div>
-        <div class="pr-detail" id="prDetail"></div>
-        <div class="pr-sub" id="prSub"></div>
+        <div class="pr-title" aria-live="assertive">NIEUW PR!</div>
+        <div class="pr-detail" id="prDetail" aria-live="assertive"></div>
+        <div class="pr-sub" id="prSub" aria-live="polite"></div>
         <button class="btn btn-primary" onclick="closePRCelebration()">Awesome! </button>
     </div>
 </div>
 
 <div class="modal" id="settingsModal">
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="alert" aria-live="assertive"></div>
 
 <script>// WORKOUT DATA
 const WORKOUT_DATA = {

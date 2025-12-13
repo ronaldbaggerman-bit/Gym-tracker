@@ -678,14 +678,7 @@ h1 {
     transform: scale(0.99);
 }
 
-.exercise-card.collapsing {
-    animation: collapseOut 300ms ease forwards;
-}
-
-@keyframes collapseOut {
-    0% { opacity: 1; transform: scale(1); max-height: 1000px; }
-    100% { opacity: 0; transform: scale(0.98); max-height: 0; margin: 0; padding: 0; }
-}
+/* Removed collapsing animation to prevent unintended global hides */
 
 .exercise-header {
     display: flex;
@@ -1978,6 +1971,7 @@ let restTimerInterval = null;
 let restTimerRemaining = 0;
 let REST_DURATION_SECONDS = getSettings().restDuration || 90;
 let progressState = { schemaId: null, exerciseId: null, metric: 'weight' };
+let lastToggle = { exerciseId: null, setIndex: null };
 
 // SETTINGS
 function getSettings() {
@@ -2251,43 +2245,32 @@ function toggleSet(exerciseId, setIndex) {
 
     const wasCompleted = set.completed;
     set.completed = !set.completed;
+    lastToggle = { exerciseId, setIndex };
 
     if (set.completed && !wasCompleted) {
         startRestTimer();
         checkAndShowPR(exercise, setIndex);
     }
-    // If exercise became fully completed, trigger collapse + undo option
+    // If exercise became fully completed, offer precise undo via toast
     const nowCompleted = exercise.sets.every(s => s.completed);
     if (nowCompleted) {
-        handleExerciseCompleted(exerciseId);
+        showToastWithUndo('Oefening voltooid', () => {
+            const ex = currentWorkout?.exercises.find(e => e.id === exerciseId);
+            if (!ex) return;
+            const idx = lastToggle?.setIndex ?? ex.sets.length - 1;
+            if (idx >= 0) {
+                ex.sets[idx].completed = false;
+                renderExercises();
+                updateStats();
+            }
+        });
     }
     
     renderExercises();
     updateStats();
 }
 
-function handleExerciseCompleted(exerciseId) {
-    try {
-        // Add collapsing class to the specific exercise card
-        requestAnimationFrame(() => {
-            const card = document.querySelector(`.exercise-card[data-ex-id="${exerciseId}"]`);
-            if (card) card.classList.add('collapsing');
-            setTimeout(() => {
-                // Show undo toast; will revert last set to incomplete
-                showToastWithUndo('Oefening voltooid', () => {
-                    const ex = currentWorkout?.exercises.find(e => e.id === exerciseId);
-                    if (!ex) return;
-                    const lastIdx = ex.sets.length - 1;
-                    if (lastIdx >= 0) {
-                        ex.sets[lastIdx].completed = false;
-                        renderExercises();
-                        updateStats();
-                    }
-                });
-            }, 150);
-        });
-    } catch (e) {}
-}
+// Removed collapsing handler
 
 function addSet(exerciseId) {
     const exercise = currentWorkout.exercises.find(ex => ex.id === exerciseId);

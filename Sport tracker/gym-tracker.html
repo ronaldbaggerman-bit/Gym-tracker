@@ -1746,6 +1746,18 @@ h1 {
         <div class="settings-container">
             <div class="settings-section">
                 <h2 style="margin-bottom: 2rem;">⚙️ Instellingen</h2>
+
+                <div class="settings-item">
+                    <div class="settings-label">
+                        <span>App versie</span>
+                        <span class="settings-description">Actieve build op dit device</span>
+                    </div>
+                    <div id="appVersionText" style="color: var(--text-muted); font-weight: 600;">
+                        …
+                    </div>
+                </div>
+
+                <div class="settings-divider"></div>
                 
                 <div class="settings-item">
                     <div class="settings-label">
@@ -1978,10 +1990,18 @@ function getSchemaAccentPair(color) {
 // INITIALIZATION
 function init() {
     loadTheme();
+    setAppVersionLabel();
     renderSchemaSelection();
     loadSettings();
     renderHistory();
     renderPRs();
+}
+
+function setAppVersionLabel() {
+    try {
+        const el = document.getElementById("appVersionText");
+        if (el) el.textContent = APP_VERSION;
+    } catch (e) {}
 }
 
 function renderSchemaSelection() {

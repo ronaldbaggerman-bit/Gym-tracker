@@ -2225,6 +2225,7 @@ function selectSchema(schemaId) {
         exercises: []
     };
     
+    // Add exercises from muscle groups
     schema.muscleGroups.forEach(group => {
         group.exercises.forEach(exercise => {
             const sets = [];
@@ -2244,6 +2245,27 @@ function selectSchema(schemaId) {
             });
         });
     });
+    
+    // Add standalone exercises
+    if (schema.standaloneExercises && schema.standaloneExercises.length > 0) {
+        schema.standaloneExercises.forEach(exercise => {
+            const sets = [];
+            for (let i = 0; i < settings.defaultSets; i++) {
+                sets.push({
+                    reps: 12,
+                    weight: getInitialWeight(exercise.id),
+                    completed: false
+                });
+            }
+            
+            currentWorkout.exercises.push({
+                ...exercise,
+                muscleGroup: "Extra",
+                muscleGroupIcon: "⭐",
+                sets
+            });
+        });
+    }
     
     document.getElementById("schemaSelection").style.display = "none";
     document.getElementById("activeWorkout").style.display = "block";
@@ -3865,7 +3887,7 @@ function renderExercisesManager() {
                 <div style="background:var(--dark-card); padding:1rem; border-radius:12px; border:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
                     <div>
                         <div style="font-weight:700;">${ex.name}</div>
-                        <div style="color:var(--text-muted); font-size:0.85rem;">MET: ${ex.met.toFixed(1)}</div>
+                        <div style="color:var(--text-muted); font-size:0.85rem;">MET: ${ex.met.toFixed(1)}${ex.muscleGroup ? ` • ${ex.muscleGroup}` : ''}</div>
                     </div>
                     ${customExercises.find(c => c.id === ex.id) ? `
                         <button class="btn-icon delete-btn" onclick="deleteExerciseConfirm(${ex.id})" title="Verwijderen">
@@ -3883,11 +3905,70 @@ function renderExercisesManager() {
 }
 
 function openAddExerciseModal() {
-    const name = prompt("Oefening naam:");
-    if (!name) return;
-    const met = parseFloat(prompt("MET waarde (standaard 5.0):", "5.0")) || 5.0;
-    addCustomExercise(name, met);
+    const muscleGroups = ["Borst", "Schouder", "Rug", "Triceps / Biceps", "Benen", "Extra"];
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.id = 'addExerciseSettingsModal';
+    modal.style.zIndex = '3100';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:400px;">
+            <div class="modal-header">
+                <h2>Nieuwe Oefening</h2>
+                <button class="close-btn" onclick="document.getElementById('addExerciseSettingsModal').remove()">×</button>
+            </div>
+            <div class="modal-body">
+                <div style="display:grid; gap:1rem;">
+                    <div>
+                        <label class="form-label">Naam</label>
+                        <input type="text" id="settingsExerciseName" class="form-input" placeholder="Bijv. Biceps Curl">
+                    </div>
+                    <div>
+                        <label class="form-label">Spiergroep</label>
+                        <select id="settingsExerciseMuscleGroup" class="form-input">
+                            ${muscleGroups.map(g => `<option value="${g}">${g}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">MET Waarde</label>
+                        <input type="number" id="settingsExerciseMet" class="form-input" value="5.0" step="0.1" min="1" max="15">
+                    </div>
+                    <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+                        <button class="btn btn-secondary" style="flex:1;" onclick="document.getElementById('addExerciseSettingsModal').remove()">Annuleren</button>
+                        <button class="btn btn-primary" style="flex:1;" onclick="saveExerciseFromSettings()">Toevoegen</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    setTimeout(() => document.getElementById('settingsExerciseName')?.focus(), 100);
+}
+
+function saveExerciseFromSettings() {
+    const name = document.getElementById('settingsExerciseName')?.value;
+    const muscleGroup = document.getElementById('settingsExerciseMuscleGroup')?.value;
+    const met = parseFloat(document.getElementById('settingsExerciseMet')?.value) || 5.0;
+    
+    if (!name) {
+        showToast("Vul een naam in", "error");
+        return;
+    }
+    
+    const exercise = addCustomExercise(name, met);
+    exercise.muscleGroup = muscleGroup;
+    
+    // Update in storage
+    const customs = getCustomExercises();
+    const idx = customs.findIndex(e => e.id === exercise.id);
+    if (idx >= 0) {
+        customs[idx].muscleGroup = muscleGroup;
+        saveCustomExercises(customs);
+    }
+    
     renderExercisesManager();
+    document.getElementById('addExerciseSettingsModal')?.remove();
     showToast("Oefening toegevoegd!", "success");
 }
 
@@ -3991,6 +4072,22 @@ function renderSchemaEditorModal() {
                 </div>
                 
                 <div style="margin-top:1.5rem;">
+                    <h3 style="margin-bottom:1rem; color:var(--text);">Losse Oefeningen</h3>
+                    <div style="display:grid; gap:0.5rem; margin-bottom:1rem;">
+                        ${(schema.standaloneExercises || []).map((ex, idx) => `
+                            <div style="background:var(--dark-card); padding:0.75rem; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <div style="font-weight:600;">${ex.name}</div>
+                                    <div style="font-size:0.85rem; color:var(--text-muted);">MET: ${ex.met.toFixed(1)}</div>
+                                </div>
+                                <button class="btn-icon delete-btn" onclick="removeStandaloneExercise(${idx})" title="Verwijderen">×</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button class="btn btn-secondary" style="width:100%; margin-bottom:1.5rem;" onclick="addStandaloneExerciseToSchema()">+ Losse Oefening Toevoegen</button>
+                </div>
+                
+                <div style="margin-top:1.5rem;">
                     <h3 style="margin-bottom:1rem; color:var(--text);">Spiergroepen</h3>
                     <button class="btn btn-primary" style="width:100%; margin-bottom:1rem;" onclick="addMuscleGroupToSchema()">+ Spiergroep Toevoegen</button>
                     
@@ -4028,6 +4125,59 @@ function renderSchemaEditorModal() {
     `;
     
     document.body.appendChild(modal);
+}
+
+function addStandaloneExerciseToSchema() {
+    const allExercises = [];
+    WORKOUT_DATA.schemas.forEach(s => {
+        s.muscleGroups.forEach(g => {
+            g.exercises.forEach(ex => {
+                if (!allExercises.find(e => e.id === ex.id)) {
+                    allExercises.push(ex);
+                }
+            });
+        });
+    });
+    const customExercises = getCustomExercises();
+    const availableExercises = [...allExercises, ...customExercises];
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.id = 'addStandaloneExModal';
+    modal.style.zIndex = '3200';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:500px;">
+            <div class="modal-header">
+                <h2>Selecteer Oefening</h2>
+                <button class="close-btn" onclick="document.getElementById('addStandaloneExModal').remove()">×</button>
+            </div>
+            <div class="modal-body">
+                <div style="display:grid; gap:0.5rem; max-height:400px; overflow-y:auto;">
+                    ${availableExercises.map(ex => `
+                        <button class="btn btn-secondary" style="text-align:left; padding:0.75rem; justify-content:space-between; display:flex; align-items:center;" onclick="selectStandaloneExercise(${ex.id}, '${ex.name}', ${ex.met || 5.0})">
+                            <span>${ex.name}</span>
+                            <span style="color:var(--text-muted); font-size:0.85rem;">MET ${ex.met?.toFixed(1) || '5.0'}</span>
+                        </button>
+                    `).join('')}
+                </div>
+                <button class="btn btn-secondary" style="width:100%; margin-top:1rem;" onclick="document.getElementById('addStandaloneExModal').remove()">Annuleren</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+function selectStandaloneExercise(id, name, met) {
+    if (!window.editingSchema.standaloneExercises) window.editingSchema.standaloneExercises = [];
+    window.editingSchema.standaloneExercises.push({ id, name, met });
+    document.getElementById('addStandaloneExModal')?.remove();
+    renderSchemaEditorModal();
+}
+
+function removeStandaloneExercise(idx) {
+    window.editingSchema.standaloneExercises.splice(idx, 1);
+    renderSchemaEditorModal();
 }
 
 function addMuscleGroupToSchema() {
@@ -4085,12 +4235,18 @@ function removeExerciseFromGroup(groupIdx, exIdx) {
 }
 
 function saveEditedSchema() {
-    updateCustomSchema(
-        window.editingSchema.id,
-        window.editingSchema.name,
-        window.editingSchema.description,
-        window.editingSchema.muscleGroups
-    );
+    const schemas = getCustomSchemas();
+    const idx = schemas.findIndex(s => s.id === window.editingSchema.id);
+    if (idx >= 0) {
+        schemas[idx] = {
+            ...schemas[idx],
+            name: window.editingSchema.name,
+            description: window.editingSchema.description,
+            muscleGroups: window.editingSchema.muscleGroups,
+            standaloneExercises: window.editingSchema.standaloneExercises || []
+        };
+        saveCustomSchemas(schemas);
+    }
     window.editingSchema = null;
     document.getElementById('schemaEditorModal')?.remove();
     renderSchemasManager();

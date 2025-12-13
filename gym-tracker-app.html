@@ -1977,6 +1977,33 @@ let REST_DURATION_SECONDS = getSettings().restDuration || 90;
 let progressState = { schemaId: null, exerciseId: null, metric: 'weight' };
 let lastToggle = { exerciseId: null, setIndex: null };
 
+// PERFORMANCE HELPERS
+let rafScheduled = false;
+const renderRegistry = new Map();
+const pendingRenderKeys = new Set();
+function scheduleRender(key, fn) {
+    renderRegistry.set(key, fn);
+    pendingRenderKeys.add(key);
+    if (!rafScheduled) {
+        rafScheduled = true;
+        requestAnimationFrame(() => {
+            rafScheduled = false;
+            const keys = Array.from(pendingRenderKeys);
+            pendingRenderKeys.clear();
+            keys.forEach(k => {
+                try { const f = renderRegistry.get(k); f && f(); } catch (e) {}
+            });
+        });
+    }
+}
+function debounce(fn, wait = 300) {
+    let t;
+    return (...args) => {
+        clearTimeout(t);
+        t = setTimeout(() => fn(...args), wait);
+    };
+}
+
 // SETTINGS
 function getSettings() {
     const defaults = {
@@ -1989,10 +2016,11 @@ function getSettings() {
     return stored ? { ...defaults, ...JSON.parse(stored) } : defaults;
 }
 
+const saveSettingsDebounced = debounce((settings) => {
+    try { localStorage.setItem("gym_settings", JSON.stringify(settings)); } catch (e) {}
+}, 350);
 function saveSettings(settings) {
-    try {
-        localStorage.setItem("gym_settings", JSON.stringify(settings));
-    } catch (e) {}
+    saveSettingsDebounced(settings);
 }
 
 // INITIALIZATION
@@ -2228,7 +2256,7 @@ function updateSet(exerciseId, setIndex, field, value) {
     if (field === 'weight') {
         saveLastWeight(exerciseId, exercise.sets[setIndex].weight);
     }
-    updateStats();
+    scheduleRender('updateStats', () => updateStats());
     
     // Check for PR
     if (field === "weight" && exercise.sets[setIndex].completed) {
@@ -2264,14 +2292,13 @@ function toggleSet(exerciseId, setIndex) {
             const idx = lastToggle?.setIndex ?? ex.sets.length - 1;
             if (idx >= 0) {
                 ex.sets[idx].completed = false;
-                renderExercises();
-                updateStats();
+                scheduleRender('renderExercises', () => renderExercises());
+                scheduleRender('updateStats', () => updateStats());
             }
         });
     }
-    
-    renderExercises();
-    updateStats();
+    scheduleRender('renderExercises', () => renderExercises());
+    scheduleRender('updateStats', () => updateStats());
 }
 
 // Removed collapsing handler
@@ -2286,7 +2313,7 @@ function addSet(exerciseId) {
         completed: false
     });
     
-    renderExercises();
+    scheduleRender('renderExercises', () => renderExercises());
 }
 
 function removeSet(exerciseId) {
@@ -2294,8 +2321,8 @@ function removeSet(exerciseId) {
     if (!exercise || exercise.sets.length <= 1) return;
     
     exercise.sets.pop();
-    renderExercises();
-    updateStats();
+    scheduleRender('renderExercises', () => renderExercises());
+    scheduleRender('updateStats', () => updateStats());
 }
 
 function updateStats() {
@@ -2340,8 +2367,8 @@ function adjustSet(exerciseId, setIndex, field, delta) {
         set.weight = next;
         saveLastWeight(exerciseId, next);
     }
-    renderExercises();
-    updateStats();
+    scheduleRender('renderExercises', () => renderExercises());
+    scheduleRender('updateStats', () => updateStats());
 }
 
 function saveLastWeight(exerciseId, weight) {

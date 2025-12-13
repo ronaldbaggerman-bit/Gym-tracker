@@ -1995,9 +1995,9 @@ h1 {
                         <span class="settings-description">Gebruikt voor calorieberekening (kg)</span>
                     </div>
                     <div class="settings-counter">
-                        <button onclick="updateBodyWeight(parseInt(document.getElementById('bodyWeightInput').value) - 1)">−</button>
+                        <button onclick="updateBodyWeight((parseInt(document.getElementById('bodyWeightInput').value) || 75) - 1)">−</button>
                         <input type="number" id="bodyWeightInput" min="30" max="200" value="75" readonly>
-                        <button onclick="updateBodyWeight(parseInt(document.getElementById('bodyWeightInput').value) + 1)">+</button>
+                        <button onclick="updateBodyWeight((parseInt(document.getElementById('bodyWeightInput').value) || 75) + 1)">+</button>
                     </div>
                 </div>
 
@@ -2007,9 +2007,9 @@ h1 {
                         <span class="settings-description">Aantal sets per oefening</span>
                     </div>
                     <div class="settings-counter">
-                        <button onclick="updateDefaultSets(parseInt(document.getElementById('defaultSetsInput').value) - 1)">−</button>
+                        <button onclick="updateDefaultSets((parseInt(document.getElementById('defaultSetsInput').value) || 3) - 1)">−</button>
                         <input type="number" id="defaultSetsInput" min="1" max="10" value="3" readonly>
-                        <button onclick="updateDefaultSets(parseInt(document.getElementById('defaultSetsInput').value) + 1)">+</button>
+                        <button onclick="updateDefaultSets((parseInt(document.getElementById('defaultSetsInput').value) || 3) + 1)">+</button>
                     </div>
                 </div>
             </div>
@@ -2037,7 +2037,7 @@ h1 {
 
 <script>// WORKOUT DATA
 // App version for cache-busting (always bump by 1)
-const APP_VERSION = "2025-12-13-11";
+const APP_VERSION = "2025-12-13-12";
 // Enforce versioned URL so clients always fetch the latest build
 (function enforceVersionedUrl() {
     try {
@@ -2051,7 +2051,10 @@ const APP_VERSION = "2025-12-13-11";
             return; // stop further execution on this load
         }
         localStorage.setItem("app_version", APP_VERSION);
-    } catch (e) {}
+        console.log("✅ App loaded:", APP_VERSION);
+    } catch (e) {
+        console.error("⚠️ Version check error:", e);
+    }
 })();
 
 const WORKOUT_DATA = {
@@ -3787,7 +3790,7 @@ function updateBodyWeight(value) {
 }
 
 function updateDefaultSets(value) {
-    const sets = Math.max(1, Math.min(10, value));
+    const sets = Math.max(1, Math.min(10, parseInt(value) || 3));
     document.getElementById('defaultSetsInput').value = sets;
     const settings = getSettings();
     settings.defaultSets = sets;

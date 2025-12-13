@@ -1745,7 +1745,7 @@ h1 {
 
             <div class="rest-timer-card" id="restTimerCard">
                 <div class="rest-timer-header">
-                    <div class="rest-timer-title" id="restTimerLabel">Rust: 1:30</div>
+                    <div class="rest-timer-title" id="restTimerLabel" aria-live="polite">Rust: 1:30</div>
                     <div class="rest-timer-actions">
                         <button class="btn btn-secondary" aria-label="Start rust 30 seconden" style="padding:0.35rem 0.75rem; font-size:0.85rem;" onclick="startRestTimerWithToast(30)">30s</button>
                         <button class="btn btn-secondary" aria-label="Start rust 60 seconden" style="padding:0.35rem 0.75rem; font-size:0.85rem;" onclick="startRestTimerWithToast(60)">60s</button>
@@ -2254,7 +2254,12 @@ function renderExerciseCard(exercise) {
                         </div>
                         <div 
                             class="checkbox ${set.completed ? "checked" : ""}"
+                            role="checkbox"
+                            aria-checked="${set.completed ? 'true' : 'false'}"
+                            aria-label="Set ${idx + 1} ${set.completed ? 'voltooid' : 'niet voltooid'}"
+                            tabindex="0"
                             onclick="toggleSet(${exercise.id}, ${idx})"
+                            onkeydown="handleSetCheckboxKey(event, ${exercise.id}, ${idx})"
                         ></div>
                     </div>
                 `).join("")}
@@ -2315,6 +2320,13 @@ function toggleSet(exerciseId, setIndex) {
     }
     scheduleRender('renderExercises', () => renderExercises());
     scheduleRender('updateStats', () => updateStats());
+}
+
+function handleSetCheckboxKey(e, exerciseId, setIndex) {
+    if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleSet(exerciseId, setIndex);
+    }
 }
 
 // Removed collapsing handler

@@ -1878,7 +1878,7 @@ h1 {
 
 <script>// WORKOUT DATA
 // App version for cache-busting (always bump by 1)
-const APP_VERSION = "2025-12-13-8";
+const APP_VERSION = "2025-12-13-9";
 // Enforce versioned URL so clients always fetch the latest build
 (function enforceVersionedUrl() {
     try {
@@ -2050,6 +2050,8 @@ function init() {
     setAppVersionLabel();
     renderSchemaSelection();
     loadSettings();
+    // Normalize historical data to canonical exercise ids/names
+    migrateNormalizeExercises();
     migrateHackSquatToHackSquadToday();
     migratePRsHackSquatToHackSquad();
     migrateUnifyHackSquadIds();
@@ -2744,6 +2746,93 @@ function deleteWorkout(index) {
 function getPRs() {
     const stored = localStorage.getItem("workout_prs");
     return stored ? JSON.parse(stored) : {};
+}
+
+// DATA MIGRATION: General normalization of exercises in history and PRs
+function migrateNormalizeExercises() {
+    try {
+        // Build canonical maps from WORKOUT_DATA
+        const canonicalById = {};
+        const canonicalByName = {};
+        WORKOUT_DATA.schemas.forEach(s => {
+            s.muscleGroups.forEach(g => {
+                g.exercises.forEach(ex => {
+                    canonicalById[ex.id] = ex.name;
+                    const key = ex.name.trim().toLowerCase();
+                    canonicalByName[key] = { id: ex.id, name: ex.name };
+                });
+            });
+        });
+        // Known synonyms (left lowercased) → canonical id
+        const synonyms = {
+            "hack squat": 111,
+            "hack squad": 111
+        };
+        Object.keys(synonyms).forEach(n => {
+            const id = synonyms[n];
+            if (canonicalById[id]) {
+                canonicalByName[n] = { id, name: canonicalById[id] };
+            }
+        });
+
+        // Normalize workout history
+        let history = getWorkoutHistory();
+        let histChanged = false;
+        history.forEach(w => {
+            if (!Array.isArray(w.exercises)) return;
+            w.exercises.forEach(ex => {
+                if (!ex) return;
+                // Prefer id mapping if valid
+                if (ex.id && canonicalById[ex.id]) {
+                    ex.name = canonicalById[ex.id];
+                    return;
+                }
+                // Else try name mapping
+                const key = (ex.name || '').toString().trim().toLowerCase();
+                const canon = canonicalByName[key];
+                if (canon) {
+                    if (ex.id !== canon.id || ex.name !== canon.name) {
+                        ex.id = canon.id;
+                        ex.name = canon.name;
+                        histChanged = true;
+                    }
+                }
+            });
+        });
+        if (histChanged) {
+            localStorage.setItem('workout_history', JSON.stringify(history));
+        }
+
+        // Normalize and merge PRs by canonical id
+        const prs = getPRs();
+        if (prs && typeof prs === 'object') {
+            const merged = {};
+            Object.keys(prs).forEach(key => {
+                const pr = prs[key];
+                if (!pr) return;
+                let targetId = pr.exerciseId;
+                let targetName = pr.exerciseName;
+                if (targetId && canonicalById[targetId]) {
+                    targetName = canonicalById[targetId];
+                } else {
+                    const nk = (pr.exerciseName || '').toString().trim().toLowerCase();
+                    const canon = canonicalByName[nk];
+                    if (canon) {
+                        targetId = canon.id;
+                        targetName = canon.name;
+                    }
+                }
+                if (!targetId) return; // skip unknowns
+                const newKey = String(targetId);
+                const next = { ...pr, exerciseId: targetId, exerciseName: targetName };
+                const cur = merged[newKey];
+                if (!cur || (next.oneRM || 0) > (cur.oneRM || 0)) {
+                    merged[newKey] = next;
+                }
+            });
+            localStorage.setItem('workout_prs', JSON.stringify(merged));
+        }
+    } catch (e) { /* ignore */ }
 }
 
 // DATA MIGRATION: Rename PR entries from "Hack Squat" to "Hack Squad"

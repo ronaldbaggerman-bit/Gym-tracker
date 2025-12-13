@@ -3564,6 +3564,14 @@ function switchView(viewName) {
     
     document.getElementById(viewMap[viewName]).classList.add("active");
     
+    // Hide bottom actions when not in workout view or workout not active
+    const bottomActions = document.getElementById("bottomActions");
+    if (viewName !== "workout" || !currentWorkout) {
+        bottomActions?.classList.remove("active");
+    } else if (currentWorkout && viewName === "workout") {
+        bottomActions?.classList.add("active");
+    }
+    
     // Render content
     if (viewName === "history") renderHistory();
     if (viewName === "prs") renderPRs();

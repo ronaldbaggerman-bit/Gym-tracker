@@ -1883,10 +1883,20 @@ h1 {
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
+
+                <div class="settings-divider"></div>
+
+                <h3 style="margin: 2rem 0 1rem 0; color: var(--text);">💪 Oefeningen Beheren</h3>
+                <div id="exercisesManagerContainer" style="display:none;">
+                    <!-- Dynamically filled -->
+                </div>
+
+                <div class="settings-divider"></div>
+
+                <h3 style="margin: 2rem 0 1rem 0; color: var(--text);">📋 Schema's Beheren</h3>
+                <div id="schemasManagerContainer" style="display:none;">
+                    <!-- Dynamically filled -->
+                </div>
 
 <div class="bottom-actions" id="bottomActions">
     <button class="btn btn-secondary" onclick="cancelWorkout()"> Annuleren</button>
@@ -2048,6 +2058,70 @@ function saveSettings(settings) {
     saveSettingsDebounced(settings);
 }
 
+// CUSTOM EXERCISES & SCHEMAS DATABASE
+function getCustomExercises() {
+    const stored = localStorage.getItem("custom_exercises");
+    return stored ? JSON.parse(stored) : [];
+}
+
+function saveCustomExercises(exercises) {
+    try {
+        localStorage.setItem("custom_exercises", JSON.stringify(exercises));
+    } catch (e) {}
+}
+
+function addCustomExercise(name, met = 5.0) {
+    const exercises = getCustomExercises();
+    const id = Math.max(...exercises.map(e => e.id || 0), 1000) + 1;
+    exercises.push({ id, name, met });
+    saveCustomExercises(exercises);
+    return { id, name, met };
+}
+
+function deleteCustomExercise(id) {
+    const exercises = getCustomExercises().filter(e => e.id !== id);
+    saveCustomExercises(exercises);
+}
+
+function getCustomSchemas() {
+    const stored = localStorage.getItem("custom_schemas");
+    return stored ? JSON.parse(stored) : [];
+}
+
+function saveCustomSchemas(schemas) {
+    try {
+        localStorage.setItem("custom_schemas", JSON.stringify(schemas));
+    } catch (e) {}
+}
+
+function addCustomSchema(name, description, muscleGroups = []) {
+    const schemas = getCustomSchemas();
+    const id = `custom_${Date.now()}`;
+    const newSchema = { id, name, description, icon: "🏋️", muscleGroups, isCustom: true };
+    schemas.push(newSchema);
+    saveCustomSchemas(schemas);
+    return newSchema;
+}
+
+function deleteCustomSchema(id) {
+    const schemas = getCustomSchemas().filter(s => s.id !== id);
+    saveCustomSchemas(schemas);
+}
+
+function updateCustomSchema(id, name, description, muscleGroups) {
+    const schemas = getCustomSchemas();
+    const idx = schemas.findIndex(s => s.id === id);
+    if (idx >= 0) {
+        schemas[idx] = { ...schemas[idx], name, description, muscleGroups };
+        saveCustomSchemas(schemas);
+    }
+}
+
+// Get all schemas (built-in + custom)
+function getAllSchemas() {
+    return [...WORKOUT_DATA.schemas, ...getCustomSchemas()];
+}
+
 // INITIALIZATION
 function init() {
     loadTheme();
@@ -2059,16 +2133,21 @@ function init() {
 
 function renderSchemaSelection() {
     const container = document.getElementById("schemaSelection");
-    container.innerHTML = WORKOUT_DATA.schemas.map(schema => {
+    const allSchemas = getAllSchemas();
+    
+    container.innerHTML = allSchemas.map(schema => {
         const totalExercises = schema.muscleGroups.reduce((sum, g) => sum + g.exercises.length, 0);
-        const classType = schema.id === "schema1" ? "push" : "legs";
+        const isBuiltIn = !schema.isCustom;
+        const classType = schema.id === "schema1" ? "push" : schema.id === "schema2" ? "legs" : "custom";
+        const lockBadge = isBuiltIn ? '<span style="position:absolute; top:0.5rem; right:0.5rem; font-size:1rem;" title="Ingebouwd schema">🔒</span>' : '';
         
         return `
-            <div class="schema-card ${classType}" onclick="selectSchema('${schema.id}')">
+            <div class="schema-card ${classType}" onclick="selectSchema('${schema.id}')" style="position:relative;">
+                ${lockBadge}
                 <div class="schema-content">
                     <div class="schema-header">
                         <div class="schema-icon">${schema.icon}</div>
-                        <div class="schema-badge">${schema.id === "schema1" ? "Upper" : "Lower"}</div>
+                        <div class="schema-badge">${isBuiltIn ? (schema.id === "schema1" ? "Upper" : "Lower") : "Custom"}</div>
                     </div>
                     <h3>${schema.name}</h3>
                     <p>${schema.description}</p>
@@ -3262,6 +3341,8 @@ function exportBackup() {
         workouts: getWorkoutHistory(),
         prs: getPRs(),
         settings: getSettings(),
+        customExercises: getCustomExercises(),
+        customSchemas: getCustomSchemas(),
         exportDate: new Date().toISOString()
     };
     
@@ -3277,7 +3358,9 @@ function exportBackup() {
     if (status) {
         const workoutsCount = data.workouts?.length || 0;
         const prsCount = Object.keys(data.prs || {}).length;
-        status.textContent = `Export: ${workoutsCount} workouts, ${prsCount} PRs, instellingen opgeslagen.`;
+        const schemasCount = data.customSchemas?.length || 0;
+        const exCount = data.customExercises?.length || 0;
+        status.textContent = `Export: ${workoutsCount} workouts, ${prsCount} PRs, ${schemasCount} schema's, ${exCount} oefeningen.`;
     }
     // Persist last backup for quick restore
     try {
@@ -3311,12 +3394,16 @@ function handleImportFile(event) {
             if (workoutsValid) localStorage.setItem("workout_history", JSON.stringify(data.workouts));
             if (prsValid) localStorage.setItem("workout_prs", JSON.stringify(data.prs));
             if (settingsValid) localStorage.setItem("gym_settings", JSON.stringify(data.settings));
+            if (data.customExercises) localStorage.setItem("custom_exercises", JSON.stringify(data.customExercises));
+            if (data.customSchemas) localStorage.setItem("custom_schemas", JSON.stringify(data.customSchemas));
 
             const status = document.getElementById('backupStatus');
             if (status) {
                 const workoutsCount = (data.workouts || []).length;
                 const prsCount = Object.keys(data.prs || {}).length;
-                status.textContent = `Import: ${workoutsCount} workouts, ${prsCount} PRs, instellingen geladen.`;
+                const schemasCount = (data.customSchemas || []).length;
+                const exCount = (data.customExercises || []).length;
+                status.textContent = `Import: ${workoutsCount} workouts, ${prsCount} PRs, ${schemasCount} schema's, ${exCount} oefeningen.`;
             }
             // Save last backup raw for restore
             try {
@@ -3361,11 +3448,16 @@ function restoreLastBackup() {
         if (workoutsValid) localStorage.setItem("workout_history", JSON.stringify(data.workouts));
         if (prsValid) localStorage.setItem("workout_prs", JSON.stringify(data.prs));
         if (settingsValid) localStorage.setItem("gym_settings", JSON.stringify(data.settings));
+        if (data.customExercises) localStorage.setItem("custom_exercises", JSON.stringify(data.customExercises));
+        if (data.customSchemas) localStorage.setItem("custom_schemas", JSON.stringify(data.customSchemas));
         const workoutsCount = (data.workouts || []).length;
         const prsCount = Object.keys(data.prs || {}).length;
-        if (status) status.textContent = `Herstel: ${workoutsCount} workouts, ${prsCount} PRs, instellingen toegepast (${when ? new Date(when).toLocaleString() : 'onbekend'})`;
+        const schemasCount = (data.customSchemas || []).length;
+        const exCount = (data.customExercises || []).length;
+        if (status) status.textContent = `Herstel: ${workoutsCount} workouts, ${prsCount} PRs, ${schemasCount} schema's, ${exCount} oefeningen (${when ? new Date(when).toLocaleString() : 'onbekend'})`;
         showToast('Laatste backup hersteld', 'success');
         renderHistory();
+        renderSchemaSelection();
         renderPRs();
         loadSettings();
     } catch (error) {
@@ -3500,6 +3592,130 @@ function updateThemeToggle(isDarkMode) {
     }
 }
 
+// EXERCISES MANAGER UI
+function renderExercisesManager() {
+    const container = document.getElementById('exercisesManagerContainer');
+    if (!container) return;
+    
+    const allExercises = [];
+    // Collect built-in exercises from all schemas
+    WORKOUT_DATA.schemas.forEach(schema => {
+        schema.muscleGroups.forEach(group => {
+            group.exercises.forEach(ex => {
+                if (!allExercises.find(e => e.id === ex.id)) {
+                    allExercises.push(ex);
+                }
+            });
+        });
+    });
+    // Add custom exercises
+    const customExercises = getCustomExercises();
+    const combined = [...allExercises, ...customExercises];
+    
+    container.innerHTML = `
+        <div style="display:grid; gap:0.75rem; margin-bottom:1rem;">
+            <button class="btn btn-primary" onclick="openAddExerciseModal()" style="width:100%;">+ Nieuwe Oefening</button>
+        </div>
+        <div style="display:grid; gap:0.75rem; max-height:400px; overflow-y:auto;">
+            ${combined.map(ex => `
+                <div style="background:var(--dark-card); padding:1rem; border-radius:12px; border:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div style="font-weight:700;">${ex.name}</div>
+                        <div style="color:var(--text-muted); font-size:0.85rem;">MET: ${ex.met.toFixed(1)}</div>
+                    </div>
+                    ${customExercises.find(c => c.id === ex.id) ? `
+                        <button class="btn-icon delete-btn" onclick="deleteExerciseConfirm(${ex.id})" title="Verwijderen">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14M10 11v6m4-6v6"/>
+                            </svg>
+                        </button>
+                    ` : ''}
+                </div>
+            `).join('')}
+        </div>
+    `;
+    
+    container.style.display = 'block';
+}
+
+function openAddExerciseModal() {
+    const name = prompt("Oefening naam:");
+    if (!name) return;
+    const met = parseFloat(prompt("MET waarde (standaard 5.0):", "5.0")) || 5.0;
+    addCustomExercise(name, met);
+    renderExercisesManager();
+    showToast("Oefening toegevoegd!", "success");
+}
+
+function deleteExerciseConfirm(id) {
+    if (confirm("Deze oefening verwijderen?")) {
+        deleteCustomExercise(id);
+        renderExercisesManager();
+        showToast("Oefening verwijderd", "success");
+    }
+}
+
+// SCHEMAS MANAGER UI
+function renderSchemasManager() {
+    const container = document.getElementById('schemasManagerContainer');
+    if (!container) return;
+    
+    const customSchemas = getCustomSchemas();
+    
+    container.innerHTML = `
+        <div style="display:grid; gap:0.75rem; margin-bottom:1rem;">
+            <button class="btn btn-primary" onclick="openAddSchemaModal()" style="width:100%;">+ Nieuw Schema</button>
+        </div>
+        <div style="display:grid; gap:0.75rem; max-height:400px; overflow-y:auto;">
+            ${customSchemas.map(schema => `
+                <div style="background:var(--dark-card); padding:1rem; border-radius:12px; border:1px solid var(--border);">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.5rem;">
+                        <div>
+                            <div style="font-weight:700;">${schema.name}</div>
+                            <div style="color:var(--text-muted); font-size:0.85rem;">${schema.description}</div>
+                        </div>
+                        <div style="display:flex; gap:0.5rem;">
+                            <button class="btn btn-secondary" style="padding:0.4rem 0.6rem; font-size:0.85rem;" onclick="openEditSchemaModal('${schema.id}')">Bewerk</button>
+                            <button class="btn btn-danger" style="padding:0.4rem 0.6rem; font-size:0.85rem;" onclick="deleteSchemaConfirm('${schema.id}')">Delete</button>
+                        </div>
+                    </div>
+                    <div style="color:var(--text-muted); font-size:0.85rem;">
+                        ${schema.muscleGroups.length} groepen • ${schema.muscleGroups.reduce((sum, g) => sum + g.exercises.length, 0)} oefeningen
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+    
+    container.style.display = 'block';
+}
+
+function openAddSchemaModal() {
+    const name = prompt("Schema naam:");
+    if (!name) return;
+    const description = prompt("Beschrijving:");
+    if (description === null) return;
+    
+    addCustomSchema(name, description, []);
+    renderSchemasManager();
+    showToast("Schema aangemaakt! Voeg spiergroepen toe via bewerken.", "success");
+}
+
+function openEditSchemaModal(schemaId) {
+    showToast("Schema bewerken: werk in voorbereiding.", "success");
+    // TODO: Implement full schema editor
+}
+
+function deleteSchemaConfirm(id) {
+    if (confirm("Dit schema verwijderen?")) {
+        deleteCustomSchema(id);
+        renderSchemasManager();
+        renderSchemaSelection();
+        showToast("Schema verwijderd", "success");
+    }
+}
+
+
 function updateSettingsUI() {
     const settings = getSettings();
     const isDarkMode = !document.body.classList.contains('light-mode');
@@ -3527,6 +3743,10 @@ function updateSettingsUI() {
     updateThemeToggle(isDarkMode);
     const status = document.getElementById('themeStatus');
     if (status) status.textContent = `Thema: ${isDarkMode ? 'Donker' : 'Licht'}`;
+    
+    // Render managers
+    renderExercisesManager();
+    renderSchemasManager();
 }
 
 function updateBodyWeight(value) {

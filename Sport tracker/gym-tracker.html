@@ -2541,6 +2541,8 @@ function getAllMuscleGroups() {
 }
 
 function openAddExerciseModal() {
+    alert('FAB clicked!'); // Temporary debug
+    console.log('openAddExerciseModal called');
     const modal = document.getElementById('addExerciseModal');
     const selectEl = document.getElementById('customMuscleGroup');
     
@@ -2566,9 +2568,12 @@ function closeAddExerciseModal() {
 }
 
 function saveCustomExercise() {
+    console.log('saveCustomExercise called');
     const name = document.getElementById('customExerciseName').value.trim();
     const muscleGroupId = document.getElementById('customMuscleGroup').value;
     const met = parseFloat(document.getElementById('customExerciseMET').value) || 0;
+    
+    console.log('Form values:', { name, muscleGroupId, met });
     
     // Validation
     if (!name) {
@@ -2611,7 +2616,9 @@ function saveCustomExercise() {
     saveCustomExercises(custom);
     
     // Als er een actieve workout is, voeg de oefening toe aan de huidige workout
+    console.log('currentWorkout exists:', !!currentWorkout);
     if (currentWorkout) {
+        console.log('Adding exercise to current workout');
         const settings = getSettings();
         const sets = [];
         for (let i = 0; i < settings.defaultSets; i++) {
@@ -2634,6 +2641,7 @@ function saveCustomExercise() {
         renderExercises();
         showToast(`✅ Oefening '${name}' toegevoegd aan workout!`);
     } else {
+        console.log('No active workout, saving to library only');
         // Update lijst als je in oefeningen-tab zit
         const exercisesView = document.getElementById("exercisesView");
         if (exercisesView && exercisesView.style.display !== "none") {

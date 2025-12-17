@@ -2307,7 +2307,7 @@ document.addEventListener('DOMContentLoaded', function() {
         schemaFormMode = 'edit';
         editingSchemaId = id;
         const custom = getCustomSchemas();
-        const schema = custom[id];
+        const schema = custom.find(s => s.id === id);
         if (!schema) return;
         if (document.getElementById('schemaFormTitle')) document.getElementById('schemaFormTitle').innerText = 'Schema bewerken';
         if (document.getElementById('schemaNameInput')) document.getElementById('schemaNameInput').value = schema.name;

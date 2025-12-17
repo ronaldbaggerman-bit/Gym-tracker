@@ -844,9 +844,9 @@ h1 {
 }
 
 .set-row.completed {
-    background: rgba(52, 199, 89, 0.15);
-    border-color: var(--primary);
-    box-shadow: 0 0 20px rgba(52, 199, 89, 0.2);
+    background: var(--schema-accent-rgba-bg, rgba(52, 199, 89, 0.15));
+    border-color: var(--schema-accent, #34C759);
+    box-shadow: 0 0 20px var(--schema-accent-rgba-shadow, rgba(52, 199, 89, 0.2));
 }
 
 .set-row.new-pr {
@@ -914,9 +914,9 @@ h1 {
 }
 
 .checkbox.checked {
-    background: linear-gradient(135deg, #34C759 0%, #30B050 100%);
-    border-color: var(--primary);
-    box-shadow: 0 4px 12px rgba(52, 199, 89, 0.4);
+    background: linear-gradient(135deg, var(--schema-accent, #34C759) 0%, var(--schema-accent-2, #30B050) 100%);
+    border-color: var(--schema-accent, #34C759);
+    box-shadow: 0 4px 12px var(--schema-accent-rgba, rgba(52, 199, 89, 0.4));
 }
 
 .checkbox.checked::after {
@@ -2511,6 +2511,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
 
+                <div class="settings-item">
+                    <div class="settings-label">
+                        <span>Test Modus</span>
+                        <span class="settings-description">Korte timer (3 sec) voor testing</span>
+                    </div>
+                    <div class="settings-control">
+                        <div class="toggle-switch" id="testModeToggle" onclick="toggleTestMode()" title="Toggle test mode">
+                            <span class="toggle-icon">⏱️</span>
+                            <div class="toggle-slider"></div>
+                            <span class="toggle-icon">⚡</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="settings-divider"></div>
 
                 <h3>📦 Backup & Synchronisatie</h3>
@@ -2638,8 +2652,6 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </div>
 
-<div class="modal" id="settingsModal">
-
 <!-- Add Custom Exercise Modal -->
 <div class="modal" id="addExerciseModal">
     <div class="modal-content" style="max-width: 500px;">
@@ -2669,6 +2681,27 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="modal-footer">
             <button class="btn btn-secondary" onclick="closeAddExerciseModal()">Annuleren</button>
             <button class="btn btn-primary" onclick="saveCustomExercise()">Toevoegen</button>
+        </div>
+    </div>
+</div>
+
+<!-- Finish Workout Confirmation Modal -->
+<div class="modal" id="finishWorkoutModal">
+    <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-header">
+            <h2>🏁 Workout Voltooien</h2>
+            <button class="modal-close" onclick="closeFinishWorkoutModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div style="text-align: center; padding: 1rem 0;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">🎯</div>
+                <p style="margin: 0; font-size: 1.1rem; color: var(--text);">Weet je zeker dat je deze workout wilt voltooien?</p>
+                <p style="margin: 1rem 0 0 0; font-size: 0.9rem; color: var(--text-muted);">Dit kan niet ongedaan worden gemaakt.</p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeFinishWorkoutModal()">Annuleren</button>
+            <button class="btn btn-primary" onclick="confirmFinishWorkout()">Ja, Voltooien</button>
         </div>
     </div>
 </div>
@@ -2736,7 +2769,7 @@ const DEFAULT_SCHEMAS = [
         name: "Schema 1",
         description: "Upper Body Push/Pull",
         color: "#34C759",
-        icon: "",
+        icon: "🏋️‍♂️",
         muscleGroups: [
             {
                 id: "borst",
@@ -2782,7 +2815,7 @@ const DEFAULT_SCHEMAS = [
         name: "Schema 2",
         description: "Legs & Arms - Lower Body Focus",
         color: "#FF9500",
-        icon: "",
+        icon: "🦵",
         muscleGroups: [
             {
                 id: "benen",
@@ -2875,7 +2908,7 @@ function groupExercisesByMuscleGroup(exercises) {
     return Object.entries(groups).map(([name, exs]) => ({
         id: name.toLowerCase().replace(/\s+/g, '_'),
         name: name,
-        icon: "",
+        icon: "💪",
         exercises: exs
     }));
 }
@@ -2926,8 +2959,10 @@ let timerSeconds = 0;
 let timerRunning = false;
 let restTimerInterval = null;
 let restTimerRemaining = 0;
-const REST_DURATION_SECONDS = 90;
+let restTimerTotal = 0;
+const getRestDuration = () => getSettings().testMode ? 3 : 90;
 let progressState = { schemaId: null, exerciseId: null };
+let currentRestExerciseId = null;
 
 // CUSTOM EXERCISES MANAGEMENT
 function getCustomExercises() {
@@ -2987,7 +3022,8 @@ function getSettings() {
     const defaults = {
         bodyWeight: 75,
         defaultSets: 3,
-        loggingEnabled: false
+        loggingEnabled: false,
+        testMode: false
     };
     const stored = localStorage.getItem("gym_settings");
     return stored ? { ...defaults, ...JSON.parse(stored) } : defaults;
@@ -3362,6 +3398,21 @@ function closeAddExerciseModal() {
     document.getElementById('customExerciseMET').value = '';
 }
 
+function showFinishWorkoutModal() {
+    const modal = document.getElementById('finishWorkoutModal');
+    modal.classList.add('active');
+}
+
+function closeFinishWorkoutModal() {
+    const modal = document.getElementById('finishWorkoutModal');
+    modal.classList.remove('active');
+}
+
+function confirmFinishWorkout() {
+    closeFinishWorkoutModal();
+    proceedFinishWorkout();
+}
+
 function saveCustomExercise() {
     const name = document.getElementById('customExerciseName').value.trim();
     const muscleGroupId = document.getElementById('customMuscleGroup').value;
@@ -3486,7 +3537,8 @@ function forceReload() {
 function renderSchemaSelection() {
     const container = document.getElementById("schemaSelection");
     container.innerHTML = WORKOUT_DATA.schemas.map(schema => {
-        const totalExercises = schema.muscleGroups.reduce((sum, g) => sum + g.exercises.length, 0);
+        const muscleGroups = schema.muscleGroups || [];
+        const totalExercises = muscleGroups.reduce((sum, g) => sum + (g.exercises ? g.exercises.length : 0), 0);
         const classType = schema.id === "schema1" ? "push" : schema.id === "schema2" ? "legs" : "custom";
         const badgeText = schema.id === "schema1" ? "Upper" : schema.id === "schema2" ? "Lower" : "Custom";
         const { accent, accent2 } = getSchemaAccentPair(schema.color);
@@ -3496,14 +3548,14 @@ function renderSchemaSelection() {
             <div class="schema-card ${classType}" onclick="selectSchema('${schema.id}')" style="${styleVars}">
                 <div class="schema-content">
                     <div class="schema-header">
-                        <div class="schema-icon">${schema.icon}</div>
+                        <div class="schema-icon">${schema.icon || "💪"}</div>
                         <div class="schema-badge">${badgeText}</div>
                     </div>
                     <h3>${schema.name}</h3>
                     <p>${schema.description}</p>
                     <div class="schema-stats">
                         <div class="schema-stat">
-                            <span class="schema-stat-value">${schema.muscleGroups.length}</span>
+                            <span class="schema-stat-value">${muscleGroups.length}</span>
                             <span class="schema-stat-label">Groepen</span>
                         </div>
                         <div class="schema-stat">
@@ -3534,8 +3586,8 @@ function selectSchema(schemaId) {
         exercises: []
     };
     
-    schema.muscleGroups.forEach(group => {
-        group.exercises.forEach(exercise => {
+    (schema.muscleGroups || []).forEach(group => {
+        (group.exercises || []).forEach(exercise => {
             const sets = [];
             for (let i = 0; i < settings.defaultSets; i++) {
                 sets.push({
@@ -3548,7 +3600,7 @@ function selectSchema(schemaId) {
             currentWorkout.exercises.push({
                 ...exercise,
                 muscleGroup: group.name,
-                muscleGroupIcon: group.icon,
+                muscleGroupIcon: group.icon || "💪",
                 sets
             });
         });
@@ -3564,6 +3616,14 @@ function selectSchema(schemaId) {
     const { accent, accent2 } = getSchemaAccentPair(schema.color);
     timerCard.style.setProperty("--schema-accent", accent);
     timerCard.style.setProperty("--schema-accent-2", accent2);
+    
+    // Set schema colors for the workout
+    const activeWorkout = document.getElementById("activeWorkout");
+    activeWorkout.style.setProperty("--schema-accent", accent);
+    activeWorkout.style.setProperty("--schema-accent-2", accent2);
+    activeWorkout.style.setProperty("--schema-accent-rgba", hexToRgba(accent, 0.4));
+    activeWorkout.style.setProperty("--schema-accent-rgba-bg", hexToRgba(accent, 0.15));
+    activeWorkout.style.setProperty("--schema-accent-rgba-shadow", hexToRgba(accent, 0.2));
     
     renderExercises();
     startTimer();
@@ -3646,7 +3706,7 @@ function renderExerciseCard(exercise) {
     const collapseClass = collapsed ? 'collapse-btn collapsed' : 'collapse-btn';
     
     return `
-        <div class="exercise-card">
+        <div class="exercise-card" data-exercise-id="${exercise.id}">
             <div class="exercise-header">
                 <div class="exercise-title">
                     <div class="exercise-name">
@@ -3750,19 +3810,10 @@ function toggleSet(exerciseId, setIndex) {
     set.completed = !set.completed;
 
     if (set.completed && !wasCompleted) {
+        currentRestExerciseId = exerciseId;
         startRestTimer();
         checkAndShowPR(exercise, setIndex);
         focusOnTimer();
-
-        // If this exercise is now fully complete, auto-open the next incomplete exercise
-        const isExerciseDone = exercise.sets.every(s => s.completed);
-        if (isExerciseDone) {
-            const exIndex = currentWorkout.exercises.findIndex(ex => ex.id === exerciseId);
-            const next = currentWorkout.exercises.slice(exIndex + 1).find(ex => !ex.sets.every(s => s.completed));
-            if (next) {
-                collapsedExercises[next.id] = false;
-            }
-        }
     }
     
     renderExercises();
@@ -3985,9 +4036,10 @@ function updateTimerDisplay() {
 }
 
 // REST TIMER
-function startRestTimer(seconds = REST_DURATION_SECONDS) {
+function startRestTimer(seconds = getRestDuration()) {
     stopRestTimer(true);
     restTimerRemaining = seconds;
+    restTimerTotal = seconds;
     updateRestTimerUI();
     const card = document.getElementById("restTimerCard");
     if (card) card.style.display = "block";
@@ -4001,7 +4053,7 @@ function startRestTimer(seconds = REST_DURATION_SECONDS) {
 }
 
 function refreshRestTimer() {
-    startRestTimer(REST_DURATION_SECONDS);
+    startRestTimer(getRestDuration());
 }
 
 function stopRestTimer(auto = false) {
@@ -4010,6 +4062,21 @@ function stopRestTimer(auto = false) {
         restTimerInterval = null;
     }
     if (!auto) {
+        restTimerRemaining = 0;
+        const card = document.getElementById("restTimerCard");
+        if (card) card.style.display = "none";
+    } else {
+        // Timer finished automatically, return to the exercise
+        if (currentRestExerciseId) {
+            const exercise = currentWorkout?.exercises.find(ex => ex.id === currentRestExerciseId);
+            if (exercise) {
+                // Scroll to the exercise
+                const exerciseCard = document.querySelector(`[data-exercise-id="${currentRestExerciseId}"]`);
+                if (exerciseCard) {
+                    exerciseCard.scrollIntoView({ behavior: "smooth", block: "center" });
+                }
+            }
+        }
         restTimerRemaining = 0;
         const card = document.getElementById("restTimerCard");
         if (card) card.style.display = "none";
@@ -4023,7 +4090,7 @@ function updateRestTimerUI() {
     const card = document.getElementById("restTimerCard");
     if (!progress || !label || !card) return;
     const remaining = Math.max(0, restTimerRemaining || 0);
-    const pct = Math.max(0, Math.min(100, (remaining / REST_DURATION_SECONDS) * 100));
+    const pct = Math.max(0, Math.min(100, restTimerTotal > 0 ? (remaining / restTimerTotal) * 100 : 0));
     progress.style.width = `${pct}%`;
     const m = Math.floor(remaining / 60);
     const s = remaining % 60;
@@ -4040,7 +4107,10 @@ function pad(num) {
 // WORKOUT COMPLETION
 function finishWorkout() {
     if (!currentWorkout) return;
-    
+    showFinishWorkoutModal();
+}
+
+function proceedFinishWorkout() {
     const completedSets = currentWorkout.exercises.reduce((sum, ex) => {
         return sum + ex.sets.filter(s => s.completed).length;
     }, 0);
@@ -5110,6 +5180,14 @@ function toggleLogging() {
     updateLoggingToggle(newLoggingEnabled);
 }
 
+function toggleTestMode() {
+    const settings = getSettings();
+    const newTestMode = !settings.testMode;
+    settings.testMode = newTestMode;
+    saveSettings(settings);
+    updateTestModeToggle(newTestMode);
+}
+
 function updateThemeToggle(isDarkMode) {
     const toggle = document.getElementById('themeToggle');
     if (toggle) {
@@ -5126,6 +5204,13 @@ function updateLoggingToggle(isLoggingEnabled) {
     const logBtn = document.getElementById('showConsoleLogBtn');
     if (logBtn) {
         logBtn.style.display = isLoggingEnabled ? 'block' : 'none';
+    }
+}
+
+function updateTestModeToggle(isTestMode) {
+    const toggle = document.getElementById('testModeToggle');
+    if (toggle) {
+        toggle.classList.toggle('active', isTestMode);
     }
 }
 
@@ -5150,6 +5235,9 @@ function updateSettingsUI() {
     
     // Update logging toggle
     updateLoggingToggle(settings.loggingEnabled);
+    
+    // Update test mode toggle
+    updateTestModeToggle(settings.testMode);
 }
 
 function updateBodyWeight(value) {

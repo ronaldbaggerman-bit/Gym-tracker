@@ -2198,18 +2198,21 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (errorDiv) {
             errorDiv.style.display = 'none';
         }
-        const custom = getCustomSchemas();
-        console.log('[renderCustomSchemasList] custom schemas:', custom);
-        list.innerHTML = Object.values(custom).length === 0 ? '<em>Geen eigen schemas</em>' : '';
-        Object.values(custom).forEach(schema => {
+        const allSchemas = getAllSchemas();
+        console.log('[renderCustomSchemasList] all schemas:', allSchemas);
+        list.innerHTML = '';
+        allSchemas.forEach(schema => {
+            const isDefault = schema.id.startsWith('schema');
             const oefList = (schema.muscleGroups && schema.muscleGroups.length > 0)
                 ? schema.muscleGroups.map(g => g.exercises.map(e => e.name).join(", ")).join(" | ")
                 : '';
+            const actions = isDefault 
+                ? '<small style="color:#ccc;">(standaard - niet aanpasbaar)</small>'
+                : `<button onclick=\"editSchemaForm('${schema.id}')\">Bewerken</button> <button onclick=\"deleteCustomSchemaUI('${schema.id}')\">Verwijderen</button>`;
             list.innerHTML += `<div style="border:1px solid #ccc;padding:8px;margin:8px 0;background:${schema.color};color:#fff;">
                 <b>${schema.name}</b> <small>(${schema.id})</small><br>${schema.description || ''}<br>
                 <small>Oefeningen: ${oefList || 'geen'}</small><br>
-                <button onclick=\"editSchemaForm('${schema.id}')\">Bewerken</button>
-                <button onclick=\"deleteCustomSchemaUI('${schema.id}')\">Verwijderen</button>
+                ${actions}
             </div>`;
         });
         // Zorg dat de "Nieuw schema toevoegen" knop altijd zichtbaar is
@@ -2257,6 +2260,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     function deleteCustomSchemaUI(id) {
             console.log('[deleteCustomSchemaUI] called for id:', id);
+        if (id.startsWith('schema')) {
+            alert('Standaard schemas kunnen niet worden verwijderd.');
+            return;
+        }
         if (confirm('Weet je zeker dat je dit schema wilt verwijderen?')) {
             deleteCustomSchema(id);
             renderCustomSchemasList();
@@ -2264,6 +2271,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     function editSchemaForm(id) {
             console.log('[editSchemaForm] called for id:', id);
+        if (id.startsWith('schema')) {
+            alert('Standaard schemas kunnen niet worden bewerkt.');
+            return;
+        }
         schemaFormMode = 'edit';
         editingSchemaId = id;
         const custom = getCustomSchemas();

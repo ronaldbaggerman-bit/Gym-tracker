@@ -22,7 +22,7 @@
     </div>
     <div id="console-log-content"></div>
 </div>
-<button id="showConsoleLogBtn" onclick="document.getElementById('console-log-overlay').style.display='block'" style="position:fixed;bottom:12px;right:12px;z-index:99999;background:#34C759;color:#000;font-weight:bold;border:none;padding:8px 14px;border-radius:20px;box-shadow:0 2px 8px #000;">Log</button>
+<button id="showConsoleLogBtn" onclick="document.getElementById('console-log-overlay').style.display='block'" style="position:fixed;bottom:12px;right:12px;z-index:99999;background:#34C759;color:#000;font-weight:bold;border:none;padding:8px 14px;border-radius:20px;box-shadow:0 2px 8px #000;display:none;">Log</button>
 <style>
 * {
     margin: 0;
@@ -2083,6 +2083,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const content = document.getElementById('console-log-content');
     if (!overlay || !content) return;
     function appendLog(msg, type) {
+        if (!getSettings().loggingEnabled) return;
         const el = document.createElement('div');
         el.textContent = `[${type}] ${msg}`;
         el.style.marginBottom = '2px';
@@ -2428,6 +2429,20 @@ document.addEventListener('DOMContentLoaded', function() {
                             <span class="toggle-icon">🌙</span>
                             <div class="toggle-slider"></div>
                             <span class="toggle-icon">☀️</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-item">
+                    <div class="settings-label">
+                        <span>Debug Logging</span>
+                        <span class="settings-description">Toon console logs voor debugging</span>
+                    </div>
+                    <div class="settings-control">
+                        <div class="toggle-switch" id="loggingToggle" onclick="toggleLogging()" title="Toggle debug logging">
+                            <span class="toggle-icon">🔇</span>
+                            <div class="toggle-slider"></div>
+                            <span class="toggle-icon">🔊</span>
                         </div>
                     </div>
                 </div>
@@ -2836,7 +2851,8 @@ function getNextCustomExerciseId() {
 function getSettings() {
     const defaults = {
         bodyWeight: 75,
-        defaultSets: 3
+        defaultSets: 3,
+        loggingEnabled: false
     };
     const stored = localStorage.getItem("gym_settings");
     return stored ? { ...defaults, ...JSON.parse(stored) } : defaults;
@@ -4950,11 +4966,30 @@ function toggleDarkMode() {
     localStorage.setItem('gym_theme', newIsDark ? 'dark' : 'light');
 }
 
+function toggleLogging() {
+    const settings = getSettings();
+    const newLoggingEnabled = !settings.loggingEnabled;
+    settings.loggingEnabled = newLoggingEnabled;
+    saveSettings(settings);
+    updateLoggingToggle(newLoggingEnabled);
+}
+
 function updateThemeToggle(isDarkMode) {
     const toggle = document.getElementById('themeToggle');
     if (toggle) {
         // active state indicates Dark Mode ON
         toggle.classList.toggle('active', isDarkMode);
+    }
+}
+
+function updateLoggingToggle(isLoggingEnabled) {
+    const toggle = document.getElementById('loggingToggle');
+    if (toggle) {
+        toggle.classList.toggle('active', isLoggingEnabled);
+    }
+    const logBtn = document.getElementById('showConsoleLogBtn');
+    if (logBtn) {
+        logBtn.style.display = isLoggingEnabled ? 'block' : 'none';
     }
 }
 
@@ -4976,6 +5011,9 @@ function updateSettingsUI() {
     
     // Update theme toggle
     updateThemeToggle(isDarkMode);
+    
+    // Update logging toggle
+    updateLoggingToggle(settings.loggingEnabled);
 }
 
 function updateBodyWeight(value) {

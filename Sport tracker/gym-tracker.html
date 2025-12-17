@@ -14,6 +14,15 @@
     <title> Gym Tracker Pro</title>
 </head>
 <body>
+<!-- Console Log Overlay -->
+<div id="console-log-overlay" style="display:none;position:fixed;bottom:0;left:0;right:0;max-height:40vh;overflow-y:auto;z-index:99999;background:rgba(0,0,0,0.92);color:#fff;font-size:13px;font-family:monospace;padding:8px 12px;border-top:2px solid #34C759;box-shadow:0 -2px 16px #000;pointer-events:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <b>Console Log</b>
+        <button onclick="document.getElementById('console-log-overlay').style.display='none'" style="background:#222;color:#fff;border:none;padding:2px 10px;border-radius:6px;">Sluiten</button>
+    </div>
+    <div id="console-log-content"></div>
+</div>
+<button id="showConsoleLogBtn" onclick="document.getElementById('console-log-overlay').style.display='block'" style="position:fixed;bottom:12px;right:12px;z-index:99999;background:#34C759;color:#000;font-weight:bold;border:none;padding:8px 14px;border-radius:20px;box-shadow:0 2px 8px #000;">Log</button>
 <style>
 * {
     margin: 0;
@@ -2043,6 +2052,56 @@ h1 {
 </div></div>
 
 <script>
+// Voeg automatisch een test custom schema toe als er nog geen custom schemas zijn
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        const stored = localStorage.getItem('gym_custom_schemas');
+        if (!stored || stored === '{}' || stored === '[]') {
+            const testSchema = {
+                id: 'test-1',
+                name: 'Voorbeeld schema',
+                description: 'Dit is een automatisch toegevoegd testschema.',
+                color: '#34C759',
+                muscleGroups: [
+                    { id: 'custom', name: 'Custom', exercises: [
+                        { id: 1, name: 'Push-up', met: 5.0 },
+                        { id: 2, name: 'Squat', met: 5.0 }
+                    ]}
+                ]
+            };
+            // Opslaan als object (oude code gebruikt object, sommige als array)
+            localStorage.setItem('gym_custom_schemas', JSON.stringify({ [testSchema.id]: testSchema }));
+            console.log('[init] Test custom schema toegevoegd aan localStorage');
+        }
+    } catch (e) {
+        console.error('[init] Fout bij toevoegen test custom schema:', e);
+    }
+});
+// Console log overlay logic
+(function(){
+    const overlay = document.getElementById('console-log-overlay');
+    const content = document.getElementById('console-log-content');
+    if (!overlay || !content) return;
+    function appendLog(msg, type) {
+        const el = document.createElement('div');
+        el.textContent = `[${type}] ${msg}`;
+        el.style.marginBottom = '2px';
+        if(type==='error') el.style.color = '#FF3B30';
+        if(type==='warn') el.style.color = '#FFCC00';
+        content.appendChild(el);
+        overlay.style.display = 'block';
+        // Scroll to bottom
+        content.scrollTop = content.scrollHeight;
+    }
+    const origLog = console.log;
+    const origErr = console.error;
+    const origWarn = console.warn;
+    console.log = function(...args){ appendLog(args.join(' '), 'log'); origLog.apply(console, args); };
+    console.error = function(...args){ appendLog(args.join(' '), 'error'); origErr.apply(console, args); };
+    console.warn = function(...args){ appendLog(args.join(' '), 'warn'); origWarn.apply(console, args); };
+    window.addEventListener('error', function(e){ appendLog(e.message + ' @ ' + (e.filename||'') + ':' + (e.lineno||''), 'error'); });
+    window.addEventListener('unhandledrejection', function(e){ appendLog('Unhandled promise rejection: ' + (e.reason && e.reason.message ? e.reason.message : e.reason), 'error'); });
+})();
 // Basic boot error capture to reveal white-screen causes
 (function(){
     function showBootError(msg){
@@ -2071,8 +2130,199 @@ h1 {
             <button class="tab" data-view="progress" onclick="switchView('progress')"> Progressie</button>
             <button class="tab" data-view="prs" onclick="switchView('prs')"> PRs</button>
             <button class="tab" data-view="exercises" onclick="switchView('exercises')"> 💪 Oefeningen</button>
+            <button class="tab" data-view="schemas" onclick="switchView('schemas')"> 📋 Schema beheer</button>
             <button class="tab" data-view="settings" onclick="switchView('settings')"> ⚙️ Instellingen</button>
         </div>
+        <!-- Schema beheer View wordt verplaatst naar buiten de header, op gelijk niveau met andere views -->
+    <!-- Schema beheer View (verplaatst) -->
+    <div id="schemasView" class="view" style="display:none;">
+        <h2>Schema beheer</h2>
+        <div id="customSchemasList"></div>
+        <button id="addSchemaBtn" onclick="showAddSchemaForm()">Nieuw schema toevoegen</button>
+        <div id="addSchemaForm" style="display:none;">
+            <h3 id="schemaFormTitle">Nieuw schema</h3>
+            <input id="schemaNameInput" placeholder="Naam schema">
+            <input id="schemaDescInput" placeholder="Beschrijving">
+            <input id="schemaColorInput" type="color" value="#34C759">
+            <div id="schemaExercisesSection" style="margin:10px 0;display:none;">
+                <label>Oefeningen:</label>
+                <div id="schemaExercisesList"></div>
+                <input id="exerciseNameInput" placeholder="Oefening naam" style="width:60%">
+                <button onclick="addExerciseToSchemaForm()">Toevoegen</button>
+            </div>
+            <button id="schemaSaveBtn" onclick="saveNewSchema()">Opslaan</button>
+            <button onclick="hideAddSchemaForm()">Annuleren</button>
+        </div>
+        <div id="schemaUiError" style="display:none;color:#FF3B30;margin-top:10px;"></div>
+    </div>
+    <script>
+    // UI logica voor Schema beheer tabblad
+    let schemaFormMode = 'add'; // 'add' of 'edit'
+    let editingSchemaId = null;
+    let editingExercises = [];
+
+    function switchView(view) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+        const el = document.getElementById(view + 'View');
+        if (el) {
+            el.classList.add('active');
+            el.style.display = '';
+            if (view === 'schemas') renderCustomSchemasList();
+        }
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        const tab = document.querySelector('.tab[data-view="' + view + '"]');
+        if (tab) tab.classList.add('active');
+    }
+
+    // Fallback: altijd een view tonen na laden
+    document.addEventListener('DOMContentLoaded', function() {
+        const anyActive = document.querySelector('.view.active');
+        if (!anyActive) {
+            switchView('workout');
+        }
+    });
+
+    function renderCustomSchemasList() {
+        console.log('[renderCustomSchemasList] called');
+        const list = document.getElementById('customSchemasList');
+        const errorDiv = document.getElementById('schemaUiError');
+        if (!list) {
+            console.error('[renderCustomSchemasList] customSchemasList element not found');
+            if (errorDiv) {
+                errorDiv.style.display = '';
+                errorDiv.textContent = 'Kan lijst van schemas niet tonen (UI-fout). Probeer te herladen.';
+            }
+            return;
+        } else if (errorDiv) {
+            errorDiv.style.display = 'none';
+        }
+        const custom = getCustomSchemas();
+        console.log('[renderCustomSchemasList] custom schemas:', custom);
+        list.innerHTML = Object.values(custom).length === 0 ? '<em>Geen eigen schemas</em>' : '';
+        Object.values(custom).forEach(schema => {
+            const oefList = (schema.muscleGroups && schema.muscleGroups.length > 0)
+                ? schema.muscleGroups.map(g => g.exercises.map(e => e.name).join(", ")).join(" | ")
+                : '';
+            list.innerHTML += `<div style="border:1px solid #ccc;padding:8px;margin:8px 0;background:${schema.color};color:#fff;">
+                <b>${schema.name}</b> <small>(${schema.id})</small><br>${schema.description || ''}<br>
+                <small>Oefeningen: ${oefList || 'geen'}</small><br>
+                <button onclick=\"editSchemaForm('${schema.id}')\">Bewerken</button>
+                <button onclick=\"deleteCustomSchemaUI('${schema.id}')\">Verwijderen</button>
+            </div>`;
+        });
+        // Zorg dat de "Nieuw schema toevoegen" knop altijd zichtbaar is
+        const addBtn = document.getElementById('addSchemaBtn');
+        if (addBtn) addBtn.style.display = '';
+    }
+
+    function showAddSchemaForm() {
+            console.log('[showAddSchemaForm] called');
+        schemaFormMode = 'add';
+        editingSchemaId = null;
+        editingExercises = [];
+        if (document.getElementById('schemaFormTitle')) document.getElementById('schemaFormTitle').innerText = 'Nieuw schema';
+        if (document.getElementById('schemaNameInput')) document.getElementById('schemaNameInput').value = '';
+        if (document.getElementById('schemaDescInput')) document.getElementById('schemaDescInput').value = '';
+        if (document.getElementById('schemaColorInput')) document.getElementById('schemaColorInput').value = '#34C759';
+        if (document.getElementById('schemaExercisesSection')) document.getElementById('schemaExercisesSection').style.display = '';
+        renderSchemaExercisesList();
+        if (document.getElementById('addSchemaForm')) document.getElementById('addSchemaForm').style.display = '';
+        if (document.getElementById('schemaSaveBtn')) document.getElementById('schemaSaveBtn').onclick = saveNewSchema;
+        // Zorg dat de form altijd zichtbaar is als de knop is gebruikt
+        const addBtn = document.getElementById('addSchemaBtn');
+        if (addBtn) addBtn.style.display = '';
+    }
+    function hideAddSchemaForm() {
+            console.log('[hideAddSchemaForm] called');
+        if (document.getElementById('addSchemaForm')) document.getElementById('addSchemaForm').style.display = 'none';
+        // Reset save knop naar saveNewSchema na sluiten
+        if (document.getElementById('schemaSaveBtn')) document.getElementById('schemaSaveBtn').onclick = saveNewSchema;
+        // Zorg dat de "Nieuw schema toevoegen" knop altijd zichtbaar blijft
+        const addBtn = document.getElementById('addSchemaBtn');
+        if (addBtn) addBtn.style.display = '';
+    }
+    function saveNewSchema() {
+            console.log('[saveNewSchema] called');
+        const name = (document.getElementById('schemaNameInput')||{}).value ? document.getElementById('schemaNameInput').value.trim() : '';
+        const desc = (document.getElementById('schemaDescInput')||{}).value ? document.getElementById('schemaDescInput').value.trim() : '';
+        const color = (document.getElementById('schemaColorInput')||{}).value || '#34C759';
+        if (!name) return alert('Naam is verplicht');
+        if (!Array.isArray(editingExercises)) editingExercises = [];
+        const muscleGroups = [{ id: 'custom', name: 'Custom', exercises: editingExercises.slice() }];
+        addCustomSchema({ name, description: desc, color, muscleGroups });
+        hideAddSchemaForm();
+        renderCustomSchemasList();
+    }
+    function deleteCustomSchemaUI(id) {
+            console.log('[deleteCustomSchemaUI] called for id:', id);
+        if (confirm('Weet je zeker dat je dit schema wilt verwijderen?')) {
+            deleteCustomSchema(id);
+            renderCustomSchemasList();
+        }
+    }
+    function editSchemaForm(id) {
+            console.log('[editSchemaForm] called for id:', id);
+        schemaFormMode = 'edit';
+        editingSchemaId = id;
+        const custom = getCustomSchemas();
+        const schema = custom[id];
+        if (!schema) return;
+        if (document.getElementById('schemaFormTitle')) document.getElementById('schemaFormTitle').innerText = 'Schema bewerken';
+        if (document.getElementById('schemaNameInput')) document.getElementById('schemaNameInput').value = schema.name;
+        if (document.getElementById('schemaDescInput')) document.getElementById('schemaDescInput').value = schema.description;
+        if (document.getElementById('schemaColorInput')) document.getElementById('schemaColorInput').value = schema.color;
+        // Oefeningen laden
+        editingExercises = (schema.muscleGroups && schema.muscleGroups[0] && schema.muscleGroups[0].exercises)
+            ? schema.muscleGroups[0].exercises.map(e => ({ ...e })) : [];
+        if (document.getElementById('schemaExercisesSection')) document.getElementById('schemaExercisesSection').style.display = '';
+        renderSchemaExercisesList();
+        if (document.getElementById('addSchemaForm')) document.getElementById('addSchemaForm').style.display = '';
+        if (document.getElementById('schemaSaveBtn')) document.getElementById('schemaSaveBtn').onclick = saveEditSchema;
+    }
+    function saveEditSchema() {
+            console.log('[saveEditSchema] called');
+        const name = (document.getElementById('schemaNameInput')||{}).value ? document.getElementById('schemaNameInput').value.trim() : '';
+        const desc = (document.getElementById('schemaDescInput')||{}).value ? document.getElementById('schemaDescInput').value.trim() : '';
+        const color = (document.getElementById('schemaColorInput')||{}).value || '#34C759';
+        if (!name) return alert('Naam is verplicht');
+        if (!Array.isArray(editingExercises)) editingExercises = [];
+        const muscleGroups = [{ id: 'custom', name: 'Custom', exercises: editingExercises.slice() }];
+        updateCustomSchema(editingSchemaId, { name, description: desc, color, muscleGroups });
+        hideAddSchemaForm();
+        renderCustomSchemasList();
+    }
+    function addExerciseToSchemaForm() {
+            console.log('[addExerciseToSchemaForm] called');
+        const name = (document.getElementById('exerciseNameInput')||{}).value ? document.getElementById('exerciseNameInput').value.trim() : '';
+        if (!name) return;
+        if (!Array.isArray(editingExercises)) editingExercises = [];
+        // Uniek id genereren
+        const id = Date.now() + Math.floor(Math.random()*1000);
+        editingExercises.push({ id, name, met: 5.0 });
+        if (document.getElementById('exerciseNameInput')) document.getElementById('exerciseNameInput').value = '';
+        renderSchemaExercisesList();
+    }
+    function removeExerciseFromSchemaForm(idx) {
+            console.log('[removeExerciseFromSchemaForm] called for idx:', idx);
+        if (!Array.isArray(editingExercises)) editingExercises = [];
+        editingExercises.splice(idx, 1);
+        renderSchemaExercisesList();
+    }
+    function renderSchemaExercisesList() {
+            console.log('[renderSchemaExercisesList] called');
+        const list = document.getElementById('schemaExercisesList');
+        if (!list) return;
+        if (!Array.isArray(editingExercises)) editingExercises = [];
+        list.innerHTML = '';
+        editingExercises.forEach((ex, idx) => {
+            list.innerHTML += `<div style='display:flex;align-items:center;gap:8px;margin:2px 0;'>
+                <span>${ex.name}</span>
+                <button onclick="removeExerciseFromSchemaForm(${idx})" style='font-size:0.9em;'>Verwijder</button>
+            </div>`;
+        });
+    }
+    </script>
     </div>
 
     <!-- Workout View -->
@@ -2121,55 +2371,6 @@ h1 {
             </div>
 
             <div id="exercisesContainer"></div>
-
-            <!-- Inline Add Exercise Form (shown when FAB clicked) -->
-            <div id="inlineAddExercise" style="display: none; margin: 1rem 0; padding: 1rem; background: var(--dark-card); border-radius: 12px; border: 1px solid var(--border);">
-                <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
-                    <button id="addNewExerciseBtn" onclick="showNewExerciseForm()" style="flex: 1; padding: 0.5rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600;">Nieuwe oefening</button>
-                    <button id="addExistingExerciseBtn" onclick="showExistingExerciseForm()" style="flex: 1; padding: 0.5rem; background: var(--dark-lighter); color: var(--text); border: 1px solid var(--border); border-radius: 8px; font-weight: 600;">Bestaande oefening</button>
-                </div>
-                
-                <!-- New Exercise Form -->
-                <div id="newExerciseForm" style="display: block;">
-                    <h3 style="margin: 0 0 1rem 0; color: var(--primary);">➕ Voeg Nieuwe Oefening Toe</h3>
-                    <div style="display: grid; gap: 1rem;">
-                        <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Oefening Naam *</label>
-                            <input type="text" id="inlineExerciseName" placeholder="bijv. Bicep Curls" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--dark-lighter); color: var(--text);">
-                        </div>
-                        <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Spiergroep *</label>
-                            <select id="inlineMuscleGroup" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--dark-lighter); color: var(--text);">
-                                <option value="">-- Selecteer spiergroep --</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">MET Waarde *</label>
-                            <input type="number" id="inlineExerciseMET" placeholder="bijv. 5.0" step="0.1" min="1" max="15" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--dark-lighter); color: var(--text);">
-                        </div>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <button onclick="saveInlineExercise()" style="flex: 1; padding: 0.75rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600;">Toevoegen</button>
-                            <button onclick="hideInlineExerciseForm()" style="flex: 1; padding: 0.75rem; background: var(--dark-lighter); color: var(--text); border: 1px solid var(--border); border-radius: 8px; font-weight: 600;">Annuleren</button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Existing Exercise Form -->
-                <div id="existingExerciseForm" style="display: none;">
-                    <h3 style="margin: 0 0 1rem 0; color: var(--primary);">📚 Voeg Bestaande Oefening Toe</h3>
-                    <div id="existingExercisesList" style="max-height: 300px; overflow-y: auto; margin-bottom: 1rem;">
-                        <!-- Exercises will be populated here -->
-                    </div>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <button onclick="hideInlineExerciseForm()" style="flex: 1; padding: 0.75rem; background: var(--dark-lighter); color: var(--text); border: 1px solid var(--border); border-radius: 8px; font-weight: 600;">Annuleren</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Floating Button for Adding Custom Exercise -->
-            <button class="fab-add-exercise" id="fabAddExercise" onclick="showInlineExerciseForm()" title="Voeg oefening toe">
-                <span>+</span>
-            </button>
         </div>
     </div>
 
@@ -2285,11 +2486,63 @@ h1 {
             <div class="settings-section">
                 <h2>💪 Oefeningen</h2>
                 <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Overzicht van alle beschikbare oefeningen (standaard + eigen)</p>
+                <div style="margin-bottom: 1rem;">
+                    <button onclick="showInlineExerciseForm()" style="width: 100%; padding: 0.75rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600;">➕ Nieuwe Oefening Toevoegen</button>
+                </div>
                 <div id="exercisesList"></div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Inline Add Exercise Form (shown when FAB clicked) -->
+<div id="inlineAddExercise" style="display: none; margin: 1rem 0; padding: 1rem; background: var(--dark-card); border-radius: 12px; border: 1px solid var(--border);">
+    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+        <button id="addNewExerciseBtn" onclick="showNewExerciseForm()" style="flex: 1; padding: 0.5rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600;">Nieuwe oefening</button>
+        <button id="addExistingExerciseBtn" onclick="showExistingExerciseForm()" style="flex: 1; padding: 0.5rem; background: var(--dark-lighter); color: var(--text); border: 1px solid var(--border); border-radius: 8px; font-weight: 600;">Bestaande oefening</button>
+    </div>
+    
+    <!-- New Exercise Form -->
+    <div id="newExerciseForm" style="display: block;">
+        <h3 style="margin: 0 0 1rem 0; color: var(--primary);">➕ Voeg Nieuwe Oefening Toe</h3>
+        <div style="display: grid; gap: 1rem;">
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Oefening Naam *</label>
+                <input type="text" id="inlineExerciseName" placeholder="bijv. Bicep Curls" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--dark-lighter); color: var(--text);">
+            </div>
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Spiergroep *</label>
+                <select id="inlineMuscleGroup" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--dark-lighter); color: var(--text);">
+                    <option value="">-- Selecteer spiergroep --</option>
+                </select>
+            </div>
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">MET Waarde *</label>
+                <input type="number" id="inlineExerciseMET" placeholder="bijv. 5.0" step="0.1" min="1" max="15" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--dark-lighter); color: var(--text);">
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <button onclick="saveInlineExercise()" style="flex: 1; padding: 0.75rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600;">Toevoegen</button>
+                <button onclick="hideInlineExerciseForm()" style="flex: 1; padding: 0.75rem; background: var(--dark-lighter); color: var(--text); border: 1px solid var(--border); border-radius: 8px; font-weight: 600;">Annuleren</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Existing Exercise Form -->
+    <div id="existingExerciseForm" style="display: none;">
+        <h3 style="margin: 0 0 1rem 0; color: var(--primary);">📚 Voeg Bestaande Oefening Toe</h3>
+        <div id="existingExercisesList" style="max-height: 300px; overflow-y: auto; margin-bottom: 1rem;">
+            <!-- Exercises will be populated here -->
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+            <button onclick="hideInlineExerciseForm()" style="flex: 1; padding: 0.75rem; background: var(--dark-lighter); color: var(--text); border: 1px solid var(--border); border-radius: 8px; font-weight: 600;">Annuleren</button>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Button for Adding Custom Exercise -->
+<button class="fab-add-exercise" id="fabAddExercise" onclick="showInlineExerciseForm()" title="Voeg oefening toe">
+    <span>+</span>
+</button>
 
 <div class="bottom-actions" id="bottomActions">
     <button class="btn btn-secondary" onclick="cancelWorkout()"> Annuleren</button>
@@ -2397,87 +2650,145 @@ const APP_VERSION = "2025-12-13-16";
     }
 })();
 
+// Default schemas (niet aanpasbaar)
+const DEFAULT_SCHEMAS = [
+    {
+        id: "schema1",
+        name: "Schema 1",
+        description: "Upper Body Push/Pull",
+        color: "#34C759",
+        icon: "",
+        muscleGroups: [
+            {
+                id: "borst",
+                name: "Borst",
+                icon: "",
+                exercises: [
+                    { id: 101, name: "Chest Press", met: 5.0 },
+                    { id: 102, name: "DB Press", met: 5.0 },
+                    { id: 118, name: "DB Chest Turn Shoulder Press", met: 5.0 }
+                ]
+            },
+            {
+                id: "schouder",
+                name: "Schouder",
+                icon: "",
+                exercises: [
+                    { id: 103, name: "Flyes", met: 5.0 },
+                    { id: 104, name: "Pull Down", met: 5.0 },
+                    { id: 107, name: "Shoulder Press", met: 5.0 }
+                ]
+            },
+            {
+                id: "rug",
+                name: "Rug",
+                icon: "",
+                exercises: [
+                    { id: 105, name: "Seated Row", met: 5.0 }
+                ]
+            },
+            {
+                id: "triceps_biceps",
+                name: "Triceps / Biceps",
+                icon: "",
+                exercises: [
+                    { id: 106, name: "One Arm Row", met: 5.0 },
+                    { id: 108, name: "Front Side Raise", met: 5.0 }
+                ]
+            }
+        ]
+    },
+    {
+        id: "schema2",
+        name: "Schema 2",
+        description: "Legs & Arms - Lower Body Focus",
+        color: "#FF9500",
+        icon: "",
+        muscleGroups: [
+            {
+                id: "benen",
+                name: "Benen",
+                icon: "",
+                exercises: [
+                    { id: 109, name: "Leg Press", met: 5.0 },
+                    { id: 110, name: "Leg Curl", met: 5.0 },
+                    { id: 111, name: "Hack Squad", met: 5.0 }
+                ]
+            },
+            {
+                id: "triceps_biceps_2",
+                name: "Triceps / Biceps",
+                icon: "",
+                exercises: [
+                    { id: 112, name: "French Press", met: 5.0 },
+                    { id: 113, name: "Biceps Barbell Curl", met: 5.0 },
+                    { id: 114, name: "Incl. Dumbbell Curl", met: 5.0 },
+                    { id: 115, name: "Reverse Curl", met: 5.0 },
+                    { id: 116, name: "Triceps Extension", met: 5.0 },
+                    { id: 117, name: "Hammer Curl DB", met: 5.0 }
+                ]
+            }
+        ]
+    }
+];
+
+// CRUD voor custom schemas (opgeslagen als array in localStorage)
+function getCustomSchemas() {
+        console.log('[getCustomSchemas] called');
+    try {
+        const stored = localStorage.getItem("gym_custom_schemas");
+        return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveCustomSchemas(schemas) {
+    try {
+        localStorage.setItem("gym_custom_schemas", JSON.stringify(schemas));
+    } catch (e) {}
+}
+
+function getNextCustomSchemaId() {
+    const custom = getCustomSchemas();
+    let maxId = 0;
+    custom.forEach(s => {
+        const n = parseInt((s.id||'').replace('custom',''));
+        if (!isNaN(n) && n > maxId) maxId = n;
+    });
+    return `custom${maxId+1}`;
+}
+
+function getAllSchemas() {
+    return [...DEFAULT_SCHEMAS, ...getCustomSchemas()];
+}
+
+function addCustomSchema(schema) {
+    const custom = getCustomSchemas();
+    const id = getNextCustomSchemaId();
+    custom.push({ ...schema, id });
+    saveCustomSchemas(custom);
+}
+
+function updateCustomSchema(id, updates) {
+    const custom = getCustomSchemas();
+    const idx = custom.findIndex(s => s.id === id);
+    if (idx !== -1) {
+        custom[idx] = { ...custom[idx], ...updates };
+        saveCustomSchemas(custom);
+    }
+}
+
+function deleteCustomSchema(id) {
+    let custom = getCustomSchemas();
+    custom = custom.filter(s => s.id !== id);
+    saveCustomSchemas(custom);
+}
+
 const WORKOUT_DATA = {
-    schemas: [
-        {
-            id: "schema1",
-            name: "Schema 1",
-            description: "Upper Body Push/Pull",
-            color: "#34C759",
-            icon: "",
-            muscleGroups: [
-                {
-                    id: "borst",
-                    name: "Borst",
-                    icon: "",
-                    exercises: [
-                        { id: 101, name: "Chest Press", met: 5.0 },
-                        { id: 102, name: "DB Press", met: 5.0 },
-                        { id: 118, name: "DB Chest Turn Shoulder Press", met: 5.0 }
-                    ]
-                },
-                {
-                    id: "schouder",
-                    name: "Schouder",
-                    icon: "",
-                    exercises: [
-                        { id: 103, name: "Flyes", met: 5.0 },
-                        { id: 104, name: "Pull Down", met: 5.0 },
-                        { id: 107, name: "Shoulder Press", met: 5.0 }
-                    ]
-                },
-                {
-                    id: "rug",
-                    name: "Rug",
-                    icon: "",
-                    exercises: [
-                        { id: 105, name: "Seated Row", met: 5.0 }
-                    ]
-                },
-                {
-                    id: "triceps_biceps",
-                    name: "Triceps / Biceps",
-                    icon: "",
-                    exercises: [
-                        { id: 106, name: "One Arm Row", met: 5.0 },
-                        { id: 108, name: "Front Side Raise", met: 5.0 }
-                    ]
-                }
-            ]
-        },
-        {
-            id: "schema2",
-            name: "Schema 2",
-            description: "Legs & Arms - Lower Body Focus",
-            color: "#FF9500",
-            icon: "",
-            muscleGroups: [
-                {
-                    id: "benen",
-                    name: "Benen",
-                    icon: "",
-                    exercises: [
-                        { id: 109, name: "Leg Press", met: 5.0 },
-                        { id: 110, name: "Leg Curl", met: 5.0 },
-                        { id: 111, name: "Hack Squad", met: 5.0 }
-                    ]
-                },
-                {
-                    id: "triceps_biceps_2",
-                    name: "Triceps / Biceps",
-                    icon: "",
-                    exercises: [
-                        { id: 112, name: "French Press", met: 5.0 },
-                        { id: 113, name: "Biceps Barbell Curl", met: 5.0 },
-                        { id: 114, name: "Incl. Dumbbell Curl", met: 5.0 },
-                        { id: 115, name: "Reverse Curl", met: 5.0 },
-                        { id: 116, name: "Triceps Extension", met: 5.0 },
-                        { id: 117, name: "Hammer Curl DB", met: 5.0 }
-                    ]
-                }
-            ]
-        }
-    ]
+    get schemas() {
+        return getAllSchemas();
+    }
 };
 
 // STATE
@@ -4469,10 +4780,17 @@ function switchView(viewName) {
         "progress": "progressView",
         "prs": "prsView",
         "exercises": "exercisesView",
-        "settings": "settingsView"
+        "settings": "settingsView",
+        "schemas": "schemasView"
     };
     
-    document.getElementById(viewMap[viewName]).classList.add("active");
+    const targetViewId = viewMap[viewName];
+    const targetEl = targetViewId ? document.getElementById(targetViewId) : null;
+    if (targetEl && targetEl.classList) {
+        targetEl.classList.add("active");
+    } else {
+        console.warn('switchView: target view not found', viewName, targetViewId);
+    }
     
     // Render content
     if (viewName === "history") renderHistory();
@@ -4481,12 +4799,29 @@ function switchView(viewName) {
     if (viewName === "exercises") {
         renderExercisesList();
         document.getElementById("fabAddExercise").classList.add("visible");
+    } else if (viewName === "schemas") {
+        // Render schema beheer UI when switching to schemas
+        try { renderCustomSchemasList(); } catch (e) { console.warn('renderCustomSchemasList failed', e); }
     } else if (viewName !== "workout") {
         // Hide FAB unless in exercises view or workout view (workout view handles FAB in selectSchema)
         document.getElementById("fabAddExercise").classList.remove("visible");
     }
     if (viewName === "settings") updateSettingsUI();
 }
+
+// Ensure a view is visible after full load (defensive, avoids black screen)
+window.addEventListener('load', function() {
+    try {
+        const anyActive = document.querySelector('.view.active');
+        if (!anyActive) {
+            // Use currentView fallback or default to workout
+            switchView(typeof currentView === 'string' ? currentView : 'workout');
+        }
+    } catch (e) {
+        console.warn('Error ensuring active view on load', e);
+        try { switchView('workout'); } catch (err) {}
+    }
+});
 
 // BACKUP & IMPORT
 function exportBackup() {

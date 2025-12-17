@@ -2136,25 +2136,47 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
         <!-- Schema beheer View wordt verplaatst naar buiten de header, op gelijk niveau met andere views -->
     <!-- Schema beheer View (verplaatst) -->
-    <div id="schemasView" class="view" style="display:none;">
-        <h2>Schema beheer</h2>
-        <div id="customSchemasList"></div>
-        <button id="addSchemaBtn" onclick="showAddSchemaForm()">Nieuw schema toevoegen</button>
-        <div id="addSchemaForm" style="display:none;">
-            <h3 id="schemaFormTitle">Nieuw schema</h3>
-            <input id="schemaNameInput" placeholder="Naam schema">
-            <input id="schemaDescInput" placeholder="Beschrijving">
-            <input id="schemaColorInput" type="color" value="#34C759">
-            <div id="schemaExercisesSection" style="margin:10px 0;display:none;">
-                <label>Oefeningen:</label>
-                <div id="schemaExercisesList"></div>
-                <input id="exerciseNameInput" placeholder="Oefening naam" style="width:60%">
-                <button onclick="addExerciseToSchemaForm()">Toevoegen</button>
+    <div id="schemasView" class="view">
+        <div class="settings-container">
+            <div class="settings-section">
+                <h2>📋 Schema beheer</h2>
+                <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Overzicht van alle beschikbare schemas (standaard + eigen)</p>
+                <div id="customSchemasList"></div>
+                <div style="margin-top: 2rem;">
+                    <button id="addSchemaBtn" onclick="showAddSchemaForm()" style="width: 100%; padding: 0.75rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600;">➕ Nieuw Schema Toevoegen</button>
+                </div>
+                <div id="addSchemaForm" style="display:none; margin-top: 2rem; padding: 1.5rem; background: var(--dark-card); border-radius: 12px; border: 1px solid var(--border);">
+                    <h3 id="schemaFormTitle">Nieuw schema</h3>
+                    <div style="display: grid; gap: 1rem; margin-top: 1rem;">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Schema Naam *</label>
+                            <input id="schemaNameInput" type="text" placeholder="bijv. Full Body" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--dark-lighter); color: var(--text);">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Beschrijving</label>
+                            <input id="schemaDescInput" type="text" placeholder="bijv. Complete workout" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--dark-lighter); color: var(--text);">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Kleur *</label>
+                            <input id="schemaColorInput" type="color" value="#34C759" style="width: 100%; height: 3rem; border: 1px solid var(--border); border-radius: 8px; background: var(--dark-lighter);">
+                        </div>
+                        <div id="schemaExercisesSection" style="display:none;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Oefeningen</label>
+                            <div id="schemaExercisesList" style="max-height: 200px; overflow-y: auto; margin-bottom: 1rem;"></div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input id="exerciseNameInput" type="text" placeholder="Oefening naam" style="flex: 1; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--dark-lighter); color: var(--text);">
+                                <button onclick="addExerciseToSchemaForm()" style="padding: 0.75rem 1rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600;">Toevoegen</button>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                            <button id="schemaSaveBtn" onclick="saveNewSchema()" style="flex: 1; padding: 0.75rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600;">Opslaan</button>
+                            <button onclick="hideAddSchemaForm()" style="flex: 1; padding: 0.75rem; background: var(--dark-lighter); color: var(--text); border: 1px solid var(--border); border-radius: 8px; font-weight: 600;">Annuleren</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="schemaUiError" style="display:none;color:#FF3B30;margin-top:10px;"></div>
             </div>
-            <button id="schemaSaveBtn" onclick="saveNewSchema()">Opslaan</button>
-            <button onclick="hideAddSchemaForm()">Annuleren</button>
         </div>
-        <div id="schemaUiError" style="display:none;color:#FF3B30;margin-top:10px;"></div>
     </div>
     <script>
     // UI logica voor Schema beheer tabblad
@@ -2207,12 +2229,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 ? schema.muscleGroups.map(g => g.exercises.map(e => e.name).join(", ")).join(" | ")
                 : '';
             const actions = isDefault 
-                ? '<small style="color:#ccc;">(standaard - niet aanpasbaar)</small>'
-                : `<button onclick=\"editSchemaForm('${schema.id}')\">Bewerken</button> <button onclick=\"deleteCustomSchemaUI('${schema.id}')\">Verwijderen</button>`;
-            list.innerHTML += `<div style="border:1px solid #ccc;padding:8px;margin:8px 0;background:${schema.color};color:#fff;">
-                <b>${schema.name}</b> <small>(${schema.id})</small><br>${schema.description || ''}<br>
-                <small>Oefeningen: ${oefList || 'geen'}</small><br>
-                ${actions}
+                ? '<small style="color: var(--text-muted);">(standaard - niet aanpasbaar)</small>'
+                : `<button onclick=\"editSchemaForm('${schema.id}')\" style="padding: 0.5rem 1rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; margin-right: 0.5rem;">Bewerken</button> <button onclick=\"deleteCustomSchemaUI('${schema.id}')\" style="padding: 0.5rem 1rem; background: var(--danger); color: white; border: none; border-radius: 8px; font-weight: 600;">Verwijderen</button>`;
+            list.innerHTML += `<div style="background: ${schema.color}; color: white; padding: 1rem; border-radius: 12px; margin-bottom: 1rem; border: 1px solid var(--border);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                    <h3 style="margin: 0; font-size: 1.2rem; font-weight: 700;">${schema.name}</h3>
+                    <small style="color: rgba(255,255,255,0.7);">(${schema.id})</small>
+                </div>
+                ${schema.description ? `<p style="margin: 0.5rem 0; color: rgba(255,255,255,0.9);">${schema.description}</p>` : ''}
+                <p style="margin: 0.5rem 0; font-size: 0.9rem; color: rgba(255,255,255,0.8);"><strong>Oefeningen:</strong> ${oefList || 'geen'}</p>
+                <div style="margin-top: 1rem;">${actions}</div>
             </div>`;
         });
         // Zorg dat de "Nieuw schema toevoegen" knop altijd zichtbaar is

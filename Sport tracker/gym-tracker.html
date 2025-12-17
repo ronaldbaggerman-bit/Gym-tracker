@@ -2737,7 +2737,8 @@ function getCustomSchemas() {
         console.log('[getCustomSchemas] called');
     try {
         const stored = localStorage.getItem("gym_custom_schemas");
-        return stored ? JSON.parse(stored) : [];
+        const parsed = stored ? JSON.parse(stored) : [];
+        return Array.isArray(parsed) ? parsed : [];
     } catch (e) {
         return [];
     }
@@ -2760,7 +2761,12 @@ function getNextCustomSchemaId() {
 }
 
 function getAllSchemas() {
-    return [...DEFAULT_SCHEMAS, ...getCustomSchemas()];
+    const custom = getCustomSchemas();
+    if (!Array.isArray(custom)) {
+        console.error('getCustomSchemas did not return an array:', custom);
+        return [...DEFAULT_SCHEMAS];
+    }
+    return [...DEFAULT_SCHEMAS, ...custom];
 }
 
 function addCustomSchema(schema) {

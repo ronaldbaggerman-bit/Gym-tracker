@@ -2164,7 +2164,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Oefeningen</label>
                             <div id="schemaExercisesList" style="max-height: 200px; overflow-y: auto; margin-bottom: 1rem;"></div>
                             <div style="display: flex; gap: 0.5rem;">
-                                <input id="exerciseNameInput" type="text" placeholder="Oefening naam" style="flex: 1; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--dark-lighter); color: var(--text);">
+                                <select id="exerciseNameInput" style="flex: 1; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--dark-lighter); color: var(--text);">
+                                    <option value="">-- Selecteer oefening --</option>
+                                </select>
                                 <button onclick="addExerciseToSchemaForm()" style="padding: 0.75rem 1rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600;">Toevoegen</button>
                             </div>
                         </div>
@@ -2254,7 +2256,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (document.getElementById('schemaFormTitle')) document.getElementById('schemaFormTitle').innerText = 'Nieuw schema';
         if (document.getElementById('schemaNameInput')) document.getElementById('schemaNameInput').value = '';
         if (document.getElementById('schemaDescInput')) document.getElementById('schemaDescInput').value = '';
-        if (document.getElementById('schemaColorInput')) document.getElementById('schemaColorInput').value = '#34C759';
+        if (document.getElementById('schemaColorInput')) document.getElementById('schemaColorInput').value = getNextSchemaColor();
+        populateExerciseSelect();
         if (document.getElementById('schemaExercisesSection')) document.getElementById('schemaExercisesSection').style.display = '';
         renderSchemaExercisesList();
         if (document.getElementById('addSchemaForm')) document.getElementById('addSchemaForm').style.display = '';
@@ -2310,6 +2313,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (document.getElementById('schemaNameInput')) document.getElementById('schemaNameInput').value = schema.name;
         if (document.getElementById('schemaDescInput')) document.getElementById('schemaDescInput').value = schema.description;
         if (document.getElementById('schemaColorInput')) document.getElementById('schemaColorInput').value = schema.color;
+        populateExerciseSelect();
         // Oefeningen laden
         editingExercises = (schema.muscleGroups && schema.muscleGroups[0] && schema.muscleGroups[0].exercises)
             ? schema.muscleGroups[0].exercises.map(e => ({ ...e })) : [];
@@ -2329,6 +2333,18 @@ document.addEventListener('DOMContentLoaded', function() {
         updateCustomSchema(editingSchemaId, { name, description: desc, color, muscleGroups });
         hideAddSchemaForm();
         renderCustomSchemasList();
+    }
+    function populateExerciseSelect() {
+        const select = document.getElementById('exerciseNameInput');
+        if (!select) return;
+        select.innerHTML = '<option value="">-- Selecteer oefening --</option>';
+        const allExercises = getAllExercises();
+        allExercises.forEach(exercise => {
+            const option = document.createElement('option');
+            option.value = exercise.name;
+            option.textContent = `${exercise.name} (${exercise.muscleGroup || 'Custom'})`;
+            select.appendChild(option);
+        });
     }
     function addExerciseToSchemaForm() {
             console.log('[addExerciseToSchemaForm] called');
@@ -2812,6 +2828,30 @@ function getNextCustomSchemaId() {
     return `custom${maxId+1}`;
 }
 
+function getNextSchemaColor() {
+    const colorPalette = [
+        "#34C759", // Green (schema1)
+        "#FF9500", // Orange (schema2)
+        "#5AC8FA", // Blue
+        "#FF3B30", // Red
+        "#AF52DE", // Purple
+        "#FFCC00", // Yellow
+        "#32D74B", // Light Green
+        "#FF9F0A", // Dark Orange
+        "#64D2FF", // Light Blue
+        "#FF453A"  // Light Red
+    ];
+    const allSchemas = getAllSchemas();
+    const usedColors = allSchemas.map(s => s.color);
+    for (const color of colorPalette) {
+        if (!usedColors.includes(color)) {
+            return color;
+        }
+    }
+    // If all used, return first
+    return colorPalette[0];
+}
+
 function getAllSchemas() {
     const custom = getCustomSchemas();
     if (!Array.isArray(custom)) {
@@ -2875,6 +2915,36 @@ function saveCustomExercises(exercises) {
     try {
         localStorage.setItem("gym_custom_exercises", JSON.stringify(exercises));
     } catch (e) {}
+}
+
+function getAllExercises() {
+    const allExercises = [];
+    
+    // Add standard exercises
+    WORKOUT_DATA.schemas.forEach(schema => {
+        schema.muscleGroups.forEach(group => {
+            group.exercises.forEach(exercise => {
+                allExercises.push({
+                    ...exercise,
+                    muscleGroup: group.name
+                });
+            });
+        });
+    });
+    
+    // Add custom exercises
+    const custom = getCustomExercises();
+    Object.values(custom).forEach(exercise => {
+        allExercises.push({
+            ...exercise,
+            custom: true
+        });
+    });
+    
+    // Sort by name
+    allExercises.sort((a, b) => a.name.localeCompare(b.name));
+    
+    return allExercises;
 }
 
 function getNextCustomExerciseId() {
@@ -3389,7 +3459,8 @@ function renderSchemaSelection() {
     const container = document.getElementById("schemaSelection");
     container.innerHTML = WORKOUT_DATA.schemas.map(schema => {
         const totalExercises = schema.muscleGroups.reduce((sum, g) => sum + g.exercises.length, 0);
-        const classType = schema.id === "schema1" ? "push" : "legs";
+        const classType = schema.id === "schema1" ? "push" : schema.id === "schema2" ? "legs" : "custom";
+        const badgeText = schema.id === "schema1" ? "Upper" : schema.id === "schema2" ? "Lower" : "Custom";
         const { accent, accent2 } = getSchemaAccentPair(schema.color);
         const styleVars = `--schema-accent:${accent}; --schema-accent-2:${accent2};`;
         
@@ -3398,7 +3469,7 @@ function renderSchemaSelection() {
                 <div class="schema-content">
                     <div class="schema-header">
                         <div class="schema-icon">${schema.icon}</div>
-                        <div class="schema-badge">${schema.id === "schema1" ? "Upper" : "Lower"}</div>
+                        <div class="schema-badge">${badgeText}</div>
                     </div>
                     <h3>${schema.name}</h3>
                     <p>${schema.description}</p>

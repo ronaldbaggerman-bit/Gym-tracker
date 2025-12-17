@@ -2776,9 +2776,9 @@ const DEFAULT_SCHEMAS = [
                 name: "Borst",
                 icon: "",
                 exercises: [
-                    { id: 101, name: "Chest Press", met: 5.0 },
-                    { id: 102, name: "DB Press", met: 5.0 },
-                    { id: 118, name: "DB Chest Turn Shoulder Press", met: 5.0 }
+                    { id: 101, name: "Chest Press", met: 5.0, icon: "🏋️‍♂️" },
+                    { id: 102, name: "DB Press", met: 5.0, icon: "🏋️‍♀️" },
+                    { id: 118, name: "DB Chest Turn Shoulder Press", met: 5.0, icon: "🤸‍♂️" }
                 ]
             },
             {
@@ -2786,9 +2786,9 @@ const DEFAULT_SCHEMAS = [
                 name: "Schouder",
                 icon: "",
                 exercises: [
-                    { id: 103, name: "Flyes", met: 5.0 },
-                    { id: 104, name: "Pull Down", met: 5.0 },
-                    { id: 107, name: "Shoulder Press", met: 5.0 }
+                    { id: 103, name: "Flyes", met: 5.0, icon: "🦅" },
+                    { id: 104, name: "Pull Down", met: 5.0, icon: "🏗️" },
+                    { id: 107, name: "Shoulder Press", met: 5.0, icon: "🤸‍♀️" }
                 ]
             },
             {
@@ -2796,7 +2796,7 @@ const DEFAULT_SCHEMAS = [
                 name: "Rug",
                 icon: "",
                 exercises: [
-                    { id: 105, name: "Seated Row", met: 5.0 }
+                    { id: 105, name: "Seated Row", met: 5.0, icon: "🚣‍♂️" }
                 ]
             },
             {
@@ -2804,8 +2804,8 @@ const DEFAULT_SCHEMAS = [
                 name: "Triceps / Biceps",
                 icon: "",
                 exercises: [
-                    { id: 106, name: "One Arm Row", met: 5.0 },
-                    { id: 108, name: "Front Side Raise", met: 5.0 }
+                    { id: 106, name: "One Arm Row", met: 5.0, icon: "🚣‍♀️" },
+                    { id: 108, name: "Front Side Raise", met: 5.0, icon: "🤾‍♂️" }
                 ]
             }
         ]
@@ -2822,9 +2822,9 @@ const DEFAULT_SCHEMAS = [
                 name: "Benen",
                 icon: "",
                 exercises: [
-                    { id: 109, name: "Leg Press", met: 5.0 },
-                    { id: 110, name: "Leg Curl", met: 5.0 },
-                    { id: 111, name: "Hack Squad", met: 5.0 }
+                    { id: 109, name: "Leg Press", met: 5.0, icon: "🦵" },
+                    { id: 110, name: "Leg Curl", met: 5.0, icon: "🦵" },
+                    { id: 111, name: "Hack Squad", met: 5.0, icon: "🦵" }
                 ]
             },
             {
@@ -2832,12 +2832,12 @@ const DEFAULT_SCHEMAS = [
                 name: "Triceps / Biceps",
                 icon: "",
                 exercises: [
-                    { id: 112, name: "French Press", met: 5.0 },
-                    { id: 113, name: "Biceps Barbell Curl", met: 5.0 },
-                    { id: 114, name: "Incl. Dumbbell Curl", met: 5.0 },
-                    { id: 115, name: "Reverse Curl", met: 5.0 },
-                    { id: 116, name: "Triceps Extension", met: 5.0 },
-                    { id: 117, name: "Hammer Curl DB", met: 5.0 }
+                    { id: 112, name: "French Press", met: 5.0, icon: "💪" },
+                    { id: 113, name: "Biceps Barbell Curl", met: 5.0, icon: "💪" },
+                    { id: 114, name: "Incl. Dumbbell Curl", met: 5.0, icon: "💪" },
+                    { id: 115, name: "Reverse Curl", met: 5.0, icon: "💪" },
+                    { id: 116, name: "Triceps Extension", met: 5.0, icon: "💪" },
+                    { id: 117, name: "Hammer Curl DB", met: 5.0, icon: "💪" }
                 ]
             }
         ]
@@ -3347,6 +3347,7 @@ function saveInlineExercise() {
         met,
         muscleGroupId,
         muscleGroupName: muscleGroup.name,
+        icon: "💪",
         custom: true
     };
     saveCustomExercises(custom);
@@ -3456,6 +3457,7 @@ function saveCustomExercise() {
         met,
         muscleGroupId,
         muscleGroupName: muscleGroup.name,
+        icon: "💪",
         custom: true
     };
     saveCustomExercises(custom);
@@ -3710,7 +3712,7 @@ function renderExerciseCard(exercise) {
             <div class="exercise-header">
                 <div class="exercise-title">
                     <div class="exercise-name">
-                        ${exercise.name}
+                        ${exercise.icon || "💪"} ${exercise.name}
                         ${hasPR ? '<span class="pr-badge-inline"> PR!</span>' : ""}
                     </div>
                     <div class="exercise-meta">

@@ -2236,7 +2236,6 @@ document.addEventListener('DOMContentLoaded', function() {
             list.innerHTML += `<div style="background: ${schema.color}; color: white; padding: 1rem; border-radius: 12px; margin-bottom: 1rem; border: 1px solid var(--border);">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
                     <h3 style="margin: 0; font-size: 1.2rem; font-weight: 700;">${schema.name}</h3>
-                    <small style="color: rgba(255,255,255,0.7);">(${schema.id})</small>
                 </div>
                 ${schema.description ? `<p style="margin: 0.5rem 0; color: rgba(255,255,255,0.9);">${schema.description}</p>` : ''}
                 <p style="margin: 0.5rem 0; font-size: 0.9rem; color: rgba(255,255,255,0.8);"><strong>Oefeningen:</strong> ${oefList || 'geen'}</p>
@@ -2282,8 +2281,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const color = (document.getElementById('schemaColorInput')||{}).value || '#34C759';
         if (!name) return alert('Naam is verplicht');
         if (!Array.isArray(editingExercises)) editingExercises = [];
-        const muscleGroups = [{ id: 'custom', name: 'Custom', exercises: editingExercises.slice() }];
-        addCustomSchema({ name, description: desc, color, muscleGroups });
+        const muscleGroups = groupExercisesByMuscleGroup(editingExercises);
+        addCustomSchema({ name, description: desc, color, icon: "💪", muscleGroups });
         hideAddSchemaForm();
         renderCustomSchemasList();
     }
@@ -2314,9 +2313,15 @@ document.addEventListener('DOMContentLoaded', function() {
         if (document.getElementById('schemaDescInput')) document.getElementById('schemaDescInput').value = schema.description;
         if (document.getElementById('schemaColorInput')) document.getElementById('schemaColorInput').value = schema.color;
         populateExerciseSelect();
-        // Oefeningen laden
-        editingExercises = (schema.muscleGroups && schema.muscleGroups[0] && schema.muscleGroups[0].exercises)
-            ? schema.muscleGroups[0].exercises.map(e => ({ ...e })) : [];
+        // Oefeningen laden - alle oefeningen uit alle groepen
+        editingExercises = [];
+        if (schema.muscleGroups) {
+            schema.muscleGroups.forEach(group => {
+                if (group.exercises) {
+                    editingExercises.push(...group.exercises.map(e => ({ ...e })));
+                }
+            });
+        }
         if (document.getElementById('schemaExercisesSection')) document.getElementById('schemaExercisesSection').style.display = '';
         renderSchemaExercisesList();
         if (document.getElementById('addSchemaForm')) document.getElementById('addSchemaForm').style.display = '';
@@ -2329,8 +2334,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const color = (document.getElementById('schemaColorInput')||{}).value || '#34C759';
         if (!name) return alert('Naam is verplicht');
         if (!Array.isArray(editingExercises)) editingExercises = [];
-        const muscleGroups = [{ id: 'custom', name: 'Custom', exercises: editingExercises.slice() }];
-        updateCustomSchema(editingSchemaId, { name, description: desc, color, muscleGroups });
+        const muscleGroups = groupExercisesByMuscleGroup(editingExercises);
+        updateCustomSchema(editingSchemaId, { name, description: desc, color, icon: "💪", muscleGroups });
         hideAddSchemaForm();
         renderCustomSchemasList();
     }
@@ -2351,9 +2356,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const name = (document.getElementById('exerciseNameInput')||{}).value ? document.getElementById('exerciseNameInput').value.trim() : '';
         if (!name) return;
         if (!Array.isArray(editingExercises)) editingExercises = [];
+        // Find the exercise to get met and muscleGroup
+        const allExercises = getAllExercises();
+        const exercise = allExercises.find(e => e.name === name);
+        if (!exercise) return alert('Oefening niet gevonden');
+        // Check if already added
+        if (editingExercises.some(e => e.name === name)) return alert('Oefening al toegevoegd');
         // Uniek id genereren
         const id = Date.now() + Math.floor(Math.random()*1000);
-        editingExercises.push({ id, name, met: 5.0 });
+        editingExercises.push({ id, name, met: exercise.met, muscleGroup: exercise.muscleGroup || 'Custom' });
         if (document.getElementById('exerciseNameInput')) document.getElementById('exerciseNameInput').value = '';
         renderSchemaExercisesList();
     }
@@ -2850,6 +2861,22 @@ function getNextSchemaColor() {
     }
     // If all used, return first
     return colorPalette[0];
+}
+
+function groupExercisesByMuscleGroup(exercises) {
+    const groups = {};
+    exercises.forEach(ex => {
+        const groupName = ex.muscleGroup || 'Custom';
+        if (!groups[groupName]) {
+            groups[groupName] = [];
+        }
+        groups[groupName].push(ex);
+    });
+    return Object.entries(groups).map(([name, exs]) => ({
+        id: name.toLowerCase().replace(/\s+/g, '_'),
+        name: name,
+        exercises: exs
+    }));
 }
 
 function getAllSchemas() {

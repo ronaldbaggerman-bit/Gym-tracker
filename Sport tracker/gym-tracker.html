@@ -2875,6 +2875,7 @@ function groupExercisesByMuscleGroup(exercises) {
     return Object.entries(groups).map(([name, exs]) => ({
         id: name.toLowerCase().replace(/\s+/g, '_'),
         name: name,
+        icon: "",
         exercises: exs
     }));
 }

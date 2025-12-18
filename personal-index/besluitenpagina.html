@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Besluitenpagina - Project Dashboard</title>
+    <link rel="stylesheet" href="./common-styles.css">
+    <link rel="stylesheet" href="./besluitenpagina-styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚖️ Besluitenpagina</h1>
+            <div class="header-actions">
+                <button class="btn btn-primary" onclick="openDecisionModal()" title="Nieuw besluit toevoegen">+ Nieuw Besluit</button>
+            </div>
+        </header>
+
+        <nav class="page-nav">
+            <a href="./index.html" class="nav-link" title="Terug naar dashboard">🏠 Dashboard</a>
+            <a href="./actielijst.html" class="nav-link" title="Ga naar actielijst">📋 Actielijst</a>
+            <a href="./werknemerplanning.html" class="nav-link" title="Ga naar werknemerplanning">👥 Werknemerplanning</a>
+            <span class="nav-link active" title="Huidige pagina">⚖️ Besluitenpagina</span>
+        </nav>
+
+        <div class="project-tabs" id="projectTabs">
+            <!-- Project tabs will be rendered here -->
+        </div>
+
+        <div class="filters">
+            <button class="filter-btn active" data-filter="all">Alle</button>
+            <button class="filter-btn" data-filter="pending">In Behandeling</button>
+            <button class="filter-btn" data-filter="decided">Genomen</button>
+        </div>
+
+        <div class="decisions-grid" id="decisionsGrid">
+            <!-- Decisions will be rendered here -->
+        </div>
+    </div>
+
+    <!-- Decision Modal -->
+    <div class="modal" id="decisionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Nieuw Besluit</h2>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            <form id="decisionForm">
+                <div class="form-group">
+                    <label class="form-label" for="decisionTitle">Titel *</label>
+                    <input type="text" id="decisionTitle" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="decisionDescription">Beschrijving</label>
+                    <textarea id="decisionDescription" class="form-textarea"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Opties</label>
+                    <div class="options-list" id="optionsList">
+                        <div class="option-input">
+                            <input type="text" class="form-input" placeholder="Optie 1">
+                            <button type="button" class="icon-btn" onclick="removeOption(this)">🗑️</button>
+                        </div>
+                    </div>
+                    <button type="button" class="add-option-btn" onclick="addOption()">+ Optie Toevoegen</button>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="decisionStatus">Status</label>
+                    <select id="decisionStatus" class="form-select">
+                        <option value="pending">In Behandeling</option>
+                        <option value="decided">Genomen</option>
+                    </select>
+                </div>
+                <div class="form-group" id="decisionGroup" style="display: none;">
+                    <label class="form-label" for="decisionDecision">Genomen Besluit</label>
+                    <textarea id="decisionDecision" class="form-textarea" placeholder="Beschrijf het genomen besluit..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="decisionDate">Datum</label>
+                    <input type="date" id="decisionDate" class="form-input" value="">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="decisionProject">Project</label>
+                    <select id="decisionProject" class="form-select">
+                        <option value="">-- Selecteer project --</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Opslaan</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="./besluitenpagina-script.js"></script>
+</body>
+</html>

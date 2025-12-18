@@ -292,7 +292,7 @@ window.addEventListener('load', () => {
 
     // Load projects from shared storage
     const storedProjects = localStorage.getItem('projects');
-    if (storedProjects) projects = JSON.parse(storedProjects);
+    projects = storedProjects ? JSON.parse(storedProjects) : ['OneCRM', 'Tranch 4', 'PriceKeys'];
 
     updateProjectSelect();
     renderProjectTabs();

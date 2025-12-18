@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Integration tests for actual application functionality
  * Tests basic functionality and data operations
  * Run with: npm test

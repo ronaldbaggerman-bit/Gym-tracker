@@ -81,7 +81,7 @@ Write-Host ""
 $filesToCopy = @(
     "index.html",
     "werknemerplanning.html",
-    "vakantieplanning.html",
+    "besluitenpagina.html",
     "ONEDRIVE_SETUP.md",
     "CLOUD_SYNC_INSTRUCTIES.md"
 )

@@ -1598,10 +1598,15 @@ h1 {
         border-radius: 2px;
     }
 
-    /* Period selector mobile */
-    #periodSelector {
-        width: 100%;
-        margin-bottom: 1rem;
+    .period-buttons {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .period-btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+        min-height: 40px;
     }
 
     #exerciseSelector {
@@ -5081,6 +5086,8 @@ function setPeriod(period) {
     });
     renderStatistics();
 }
+
+function filterHistoryByPeriod(history, period) {
     const now = new Date();
     let startDate;
     switch (period) {

@@ -118,9 +118,9 @@ body::before {
     z-index: 1;
 }
 
-@media (min-width: 768px) {
+@media (max-width: 640px) {
     .container {
-        max-width: 768px;
+        padding: 0.75rem;
     }
 }
 
@@ -1523,6 +1523,90 @@ h1 {
         max-width: 100%;
         border-radius: 20px 20px 0 0;
     }
+
+    /* Statistics Page Mobile */
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .stat-card {
+        padding: 1rem;
+    }
+
+    .stat-icon {
+        font-size: 1.5rem;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+    }
+
+    .stat-sub {
+        font-size: 0.8rem;
+    }
+
+    .charts-section {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .chart-container {
+        padding: 1rem;
+    }
+
+    .chart-container h3 {
+        font-size: 1.2rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .chart-legend {
+        font-size: 0.8rem;
+        margin-top: 0.5rem;
+    }
+
+    .chart-legend-list {
+        margin-top: 1rem;
+    }
+
+    .legend-item {
+        font-size: 0.8rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .legend-color {
+        width: 12px;
+        height: 12px;
+        display: inline-block;
+        margin-right: 0.5rem;
+        border-radius: 2px;
+    }
+
+    /* Period selector mobile */
+    #periodSelector {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+
+    #exerciseSelector {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Header mobile adjustments */
+    .header {
+        padding: 0.75rem;
+        margin: -0.75rem -0.75rem 1rem -0.75rem;
+    }
+
+    .tab {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.75rem;
+    }
 }
 
 /* Form Groups */
@@ -1696,6 +1780,119 @@ h1 {
 .pr-card-stat strong {
     color: var(--text);
     font-weight: 700;
+}
+
+/* Statistics Styles */
+.statistics-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.statistics-header h2 {
+    margin: 0;
+}
+
+#periodSelector {
+    padding: 0.5rem;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--dark-card);
+    color: var(--text);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: var(--dark-card);
+    border-radius: 20px;
+    padding: 1.5rem;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    text-align: center;
+}
+
+.stat-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--gold);
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.stat-sub {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.charts-section {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+}
+
+.chart-container {
+    background: var(--dark-card);
+    border-radius: 20px;
+    padding: 1.5rem;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+}
+
+.chart-container h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    width: 100%;
+}
+
+.chart-container canvas {
+        width: 100% !important;
+        height: 200px !important;
+        max-width: 300px;
+
+.chart-legend {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.chart-legend-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-left: 1rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--text);
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
 }
 
 /* Responsive */
@@ -2077,32 +2274,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('[init] Fout bij toevoegen test custom schema:', e);
     }
 });
-// Console log overlay logic
-(function(){
-    const overlay = document.getElementById('console-log-overlay');
-    const content = document.getElementById('console-log-content');
-    if (!overlay || !content) return;
-    function appendLog(msg, type) {
-        if (!getSettings().loggingEnabled) return;
-        const el = document.createElement('div');
-        el.textContent = `[${type}] ${msg}`;
-        el.style.marginBottom = '2px';
-        if(type==='error') el.style.color = '#FF3B30';
-        if(type==='warn') el.style.color = '#FFCC00';
-        content.appendChild(el);
-        overlay.style.display = 'block';
-        // Scroll to bottom
-        content.scrollTop = content.scrollHeight;
-    }
-    const origLog = console.log;
-    const origErr = console.error;
-    const origWarn = console.warn;
-    console.log = function(...args){ appendLog(args.join(' '), 'log'); origLog.apply(console, args); };
-    console.error = function(...args){ appendLog(args.join(' '), 'error'); origErr.apply(console, args); };
-    console.warn = function(...args){ appendLog(args.join(' '), 'warn'); origWarn.apply(console, args); };
-    window.addEventListener('error', function(e){ appendLog(e.message + ' @ ' + (e.filename||'') + ':' + (e.lineno||''), 'error'); });
-    window.addEventListener('unhandledrejection', function(e){ appendLog('Unhandled promise rejection: ' + (e.reason && e.reason.message ? e.reason.message : e.reason), 'error'); });
-})();
+// Console log overlay logic - moved after getSettings definition
 // Basic boot error capture to reveal white-screen causes
 (function(){
     function showBootError(msg){
@@ -2129,7 +2301,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <button class="tab active" data-view="workout" onclick="switchView('workout')"> Workout</button>
             <button class="tab" data-view="history" onclick="switchView('history')"> Historie</button>
             <button class="tab" data-view="progress" onclick="switchView('progress')"> Progressie</button>
-            <button class="tab" data-view="prs" onclick="switchView('prs')"> PRs</button>
+            <button class="tab" data-view="statistics" onclick="switchView('statistics')"> Statistieken</button>
             <button class="tab" data-view="exercises" onclick="switchView('exercises')"> 💪 Oefeningen</button>
             <button class="tab" data-view="schemas" onclick="switchView('schemas')"> 📋 Schema beheer</button>
             <button class="tab" data-view="settings" onclick="switchView('settings')"> ⚙️ Instellingen</button>
@@ -2450,9 +2622,18 @@ document.addEventListener('DOMContentLoaded', function() {
         <div id="progressContainer"></div>
     </div>
 
-    <!-- PRs View -->
-    <div id="prsView" class="view">
-        <div id="prsContainer"></div>
+    <!-- Statistics View -->
+    <div id="statisticsView" class="view">
+        <div class="statistics-header">
+            <h2>📊 Statistieken</h2>
+            <select id="periodSelector" onchange="renderStatistics()">
+                <option value="week">Deze week</option>
+                <option value="month">Deze maand</option>
+                <option value="year">Dit jaar</option>
+                <option value="all">Alles</option>
+            </select>
+        </div>
+        <div id="statisticsContainer"></div>
     </div>
 
     <!-- Settings View -->
@@ -3035,6 +3216,33 @@ function saveSettings(settings) {
     } catch (e) {}
 }
 
+// Console log overlay logic
+(function(){
+    const overlay = document.getElementById('console-log-overlay');
+    const content = document.getElementById('console-log-content');
+    if (!overlay || !content) return;
+    function appendLog(msg, type) {
+        if (!getSettings().loggingEnabled) return;
+        const el = document.createElement('div');
+        el.textContent = `[${type}] ${msg}`;
+        el.style.marginBottom = '2px';
+        if(type==='error') el.style.color = '#FF3B30';
+        if(type==='warn') el.style.color = '#FFCC00';
+        content.appendChild(el);
+        overlay.style.display = 'block';
+        // Scroll to bottom
+        content.scrollTop = content.scrollHeight;
+    }
+    const origLog = console.log;
+    const origErr = console.error;
+    const origWarn = console.warn;
+    console.log = function(...args){ appendLog(args.join(' '), 'log'); origLog.apply(console, args); };
+    console.error = function(...args){ appendLog(args.join(' '), 'error'); origErr.apply(console, args); };
+    console.warn = function(...args){ appendLog(args.join(' '), 'warn'); origWarn.apply(console, args); };
+    window.addEventListener('error', function(e){ appendLog(e.message + ' @ ' + (e.filename||'') + ':' + (e.lineno||''), 'error'); });
+    window.addEventListener('unhandledrejection', function(e){ appendLog('Unhandled promise rejection: ' + (e.reason && e.reason.message ? e.reason.message : e.reason), 'error'); });
+})();
+
 // COLOR HELPERS
 function shadeColor(hex, percent) {
     if (typeof hex !== "string" || !/^#([0-9A-Fa-f]{6})$/.test(hex)) return hex || "#34C759";
@@ -3043,12 +3251,12 @@ function shadeColor(hex, percent) {
     const r = (num >> 16) + amt;
     const g = ((num >> 8) & 0x00FF) + amt;
     const b = (num & 0x0000FF) + amt;
-    return `#${(
+    return '#' + (
         0x1000000 +
         (r < 255 ? (r < 0 ? 0 : r) : 255) * 0x10000 +
         (g < 255 ? (g < 0 ? 0 : g) : 255) * 0x100 +
         (b < 255 ? (b < 0 ? 0 : b) : 255)
-    ).toString(16).slice(1)}`;
+    ).toString(16).slice(1);
 }
 
 function getSchemaAccentPair(color) {
@@ -3065,12 +3273,12 @@ function getSchemaColor(schemaId) {
 }
 
 function hexToRgba(hex, alpha = 0.35) {
-    if (typeof hex !== "string" || !/^#([0-9A-Fa-f]{6})$/.test(hex)) return `rgba(52, 199, 89, ${alpha})`;
+    if (typeof hex !== "string" || !/^#([0-9A-Fa-f]{6})$/.test(hex)) return 'rgba(52, 199, 89, ' + alpha + ')';
     const num = parseInt(hex.slice(1), 16);
     const r = (num >> 16) & 255;
     const g = (num >> 8) & 255;
     const b = num & 255;
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + alpha + ')';
 }
 
 // CUSTOM EXERCISE MANAGEMENT
@@ -3513,7 +3721,7 @@ function init() {
     migratePRsHackSquatToHackSquad();
     migrateUnifyHackSquadIds();
     renderHistory();
-    renderPRs();
+    // renderStatistics() called on view switch
 }
 
 document.addEventListener("DOMContentLoaded", init);
@@ -4706,41 +4914,484 @@ function renderHistoryList() {
 }
 
 // PRS RENDERING
-function renderPRs() {
-    const prs = getPRs();
-    const container = document.getElementById("prsContainer");
-    const prList = Object.values(prs).sort((a, b) => new Date(b.date) - new Date(a.date));
+function renderStatistics() {
+    const period = document.getElementById('periodSelector').value;
+    const history = getWorkoutHistory();
+    const filteredHistory = filterHistoryByPeriod(history, period);
     
-    if (prList.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon"></div>
-                <h3>Geen PRs</h3>
-                <p>Voltooi workouts om persoonlijke records bij te houden!</p>
-            </div>
-        `;
+    const stats = calculateStatistics(filteredHistory);
+    
+    const container = document.getElementById("statisticsContainer");
+    
+    if (filteredHistory.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-state-icon"></div><h3>Geen workouts</h3><p>Voltooi workouts om statistieken te zien!</p></div>';
         return;
     }
     
-    container.innerHTML = `
-        <div class="pr-list">
-            ${prList.map(pr => `
-                <div class="pr-card">
-                    <div class="pr-card-header">
-                        <div>
-                            <div class="pr-card-title">${pr.exerciseName}</div>
-                            <div class="pr-card-date">${formatDate(new Date(pr.date))}</div>
-                        </div>
-                        <div class="pr-value">${pr.weight}kg</div>
-                    </div>
-                    <div class="pr-card-stats">
-                        <div class="pr-card-stat"><strong>${pr.reps}</strong> reps</div>
-                        <div class="pr-card-stat"><strong>${pr.oneRM.toFixed(1)}kg</strong> 1RM</div>
-                    </div>
-                </div>
-            `).join("")}
-        </div>
-    `;
+    container.innerHTML =
+        '<div class="stats-grid">' +
+            '<div class="stat-card">' +
+                '<div class="stat-icon">⏱️</div>' +
+                '<div class="stat-value">' + stats.totalTime.hours + 'h ' + stats.totalTime.minutes + 'm</div>' +
+                '<div class="stat-label">Totale workout tijd</div>' +
+                '<div class="stat-sub">Gemiddeld ' + stats.avgTime + ' min/workout</div>' +
+            '</div>' +
+            '<div class="stat-card">' +
+                '<div class="stat-icon">🔥</div>' +
+                '<div class="stat-value">' + stats.totalCalories + '</div>' +
+                '<div class="stat-label">Geschatte kcal</div>' +
+                '<div class="stat-sub">Gemiddeld ' + stats.avgCalories + ' kcal/workout</div>' +
+            '</div>' +
+            '<div class="stat-card">' +
+                '<div class="stat-icon">🏋️</div>' +
+                '<div class="stat-value">' + stats.totalWorkouts + '</div>' +
+                '<div class="stat-label">Workouts voltooid</div>' +
+                '<div class="stat-sub">' + stats.frequency + ' per week</div>' +
+            '</div>' +
+            '<div class="stat-card">' +
+                '<div class="stat-icon">💪</div>' +
+                '<div class="stat-value">' + stats.totalVolume + 'kg</div>' +
+                '<div class="stat-label">Totaal volume</div>' +
+                '<div class="stat-sub">Gewicht × reps</div>' +
+            '</div>' +
+            '<div class="stat-card">' +
+                '<div class="stat-icon">🔄</div>' +
+                '<div class="stat-value">' + stats.longestStreak + '</div>' +
+                '<div class="stat-label">Langste streak</div>' +
+                '<div class="stat-sub">Huidig: ' + stats.currentStreak + ', Gem: ' + stats.avgStreak + ' dagen</div>' +
+            '</div>' +
+            '<div class="stat-card">' +
+                '<div class="stat-icon">📈</div>' +
+                '<div class="stat-value">' + stats.progress + '%</div>' +
+                '<div class="stat-label">Progressie</div>' +
+                '<div class="stat-sub">Vs vorige periode</div>' +
+            '</div>' +
+            '<div class="stat-card">' +
+                '<div class="stat-icon">🎯</div>' +
+                '<div class="stat-value">' + stats.totalSets + '</div>' +
+                '<div class="stat-label">Totaal sets</div>' +
+                '<div class="stat-sub">Voltooid in periode</div>' +
+            '</div>' +
+            '<div class="stat-card">' +
+                '<div class="stat-icon">🔢</div>' +
+                '<div class="stat-value">' + stats.avgReps + '</div>' +
+                '<div class="stat-label">Gemiddelde reps</div>' +
+                '<div class="stat-sub">Per set</div>' +
+            '</div>' +
+            '<div class="stat-card">' +
+                '<div class="stat-icon">🏆</div>' +
+                '<div class="stat-value">' + stats.topExercise + '</div>' +
+                '<div class="stat-label">Meest getraind</div>' +
+                '<div class="stat-sub">Oefening (sets)</div>' +
+            '</div>' +
+            '<div class="stat-card">' +
+                '<div class="stat-icon">⚖️</div>' +
+                '<div class="stat-value">' + stats.weightDistribution.light + '% / ' + stats.weightDistribution.medium + '% / ' + stats.weightDistribution.heavy + '%</div>' +
+                '<div class="stat-label">Gewicht balans</div>' +
+                '<div class="stat-sub">Licht / Medium / Zwaar</div>' +
+            '</div>' +
+        '</div>' +
+        '<div class="charts-section">' +
+            '<div class="chart-container">' +
+                '<h3>Volume Progressie</h3>' +
+                '<select id="exerciseSelector" onchange="renderVolumeChart(filterHistoryByPeriod(getWorkoutHistory(), document.getElementById(\'periodSelector\').value))">' +
+                    '<option value="total">Totaal Volume</option>' +
+                '</select>' +
+                '<canvas id="volumeChart" width="350" height="200"></canvas>' +
+                '<div class="chart-legend">Totaal gewicht × reps per workout over tijd</div>' +
+            '</div>' +
+            '<div class="chart-container">' +
+                '<h3>Workout Frequentie</h3>' +
+                '<canvas id="frequencyChart" width="350" height="200"></canvas>' +
+                '<div class="chart-legend">Aantal workouts per periode (bij week: per kalenderweek, bij maand: per maand)</div>' +
+            '</div>' +
+            '<div class="chart-container">' +
+                '<h3>Workout Duur Distributie</h3>' +
+                '<canvas id="durationChart" width="350" height="200"></canvas>' +
+                '<div class="chart-legend">Verdeling van workout lengtes</div>' +
+            '</div>' +
+            '<div class="chart-container">' +
+                '<h3>Spiergroepen</h3>' +
+                '<canvas id="muscleChart" width="200" height="200"></canvas>' +
+                '<div class="chart-legend-list"><!-- legend here --></div>' +
+            '</div>' +
+        '</div>';
+    
+    // Fill exercise selector
+    const exerciseSelector = document.getElementById('exerciseSelector');
+    exerciseSelector.innerHTML = '<option value="total">Totaal Volume</option>';
+    const exerciseCount = {};
+    filteredHistory.forEach(w => {
+        if (w.exercises) {
+            w.exercises.forEach(ex => {
+                const name = ex.name || 'Unknown';
+                exerciseCount[name] = (exerciseCount[name] || 0) + 1;
+            });
+        }
+    });
+    Object.entries(exerciseCount).sort((a, b) => b[1] - a[1]).slice(0, 3).forEach(([name]) => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        exerciseSelector.appendChild(option);
+    });
+    renderVolumeChart(filteredHistory);
+    renderFrequencyChart(filteredHistory, period);
+    renderDurationChart(stats.durationBins);
+    renderMuscleChart(filteredHistory, stats.kcalPerMuscle);
+}
+
+function filterHistoryByPeriod(history, period) {
+    const now = new Date();
+    let startDate;
+    switch (period) {
+        case 'week':
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            break;
+        case 'month':
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            break;
+        case 'year':
+            startDate = new Date(now.getFullYear(), 0, 1);
+            break;
+        default:
+            return history; // 'all'
+    }
+    return history.filter(w => new Date(w.startTime) >= startDate);
+}
+
+function calculateStatistics(history) {
+    if (history.length === 0) return {
+        totalTime: { hours: 0, minutes: 0 },
+        totalCalories: 0,
+        totalWorkouts: 0,
+        totalVolume: 0,
+        longestStreak: 0,
+        progress: 0,
+        avgTime: 0,
+        avgCalories: 0,
+        frequency: 0,
+        totalSets: 0,
+        avgReps: 0,
+        topExercise: 'Geen',
+        weightDistribution: { light: 0, medium: 0, heavy: 0 },
+        durationBins: { '0-30': 0, '30-60': 0, '60-90': 0, '90+': 0 },
+        currentStreak: 0,
+        avgStreak: 0,
+        kcalPerMuscle: {}
+    };
+    
+    let totalTime = 0;
+    let totalCalories = 0;
+    let totalVolume = 0;
+    let totalSets = 0;
+    let totalReps = 0;
+    let exerciseCount = {};
+    let weightDist = { light: 0, medium: 0, heavy: 0 };
+    let durationBins = { '0-30': 0, '30-60': 0, '60-90': 0, '90+': 0 };
+    let kcalPerMuscle = {};
+    let dates = history.map(w => new Date(w.startTime).toDateString()).sort();
+    let uniqueDates = [...new Set(dates)];
+    let longestStreak = 0;
+    let currentStreak = 0;
+    let streakSum = 0;
+    let streakCount = 0;
+    
+    // Calculate streaks
+    for (let i = 0; i < uniqueDates.length; i++) {
+        if (i === 0 || new Date(uniqueDates[i]).getTime() - new Date(uniqueDates[i-1]).getTime() === 24 * 60 * 60 * 1000) {
+            currentStreak++;
+        } else {
+            if (currentStreak > 0) {
+                longestStreak = Math.max(longestStreak, currentStreak);
+                streakSum += currentStreak;
+                streakCount++;
+            }
+            currentStreak = 1;
+        }
+    }
+    if (currentStreak > 0) {
+        longestStreak = Math.max(longestStreak, currentStreak);
+        streakSum += currentStreak;
+        streakCount++;
+    }
+    let avgStreak = streakCount > 0 ? Math.round(streakSum / streakCount) : 0;
+    
+    history.forEach(w => {
+        totalTime += w.duration || 0;
+        totalCalories += estimateCalories(w);
+        const durationMin = Math.floor((w.duration || 0) / 60);
+        if (durationMin < 30) durationBins['0-30']++;
+        else if (durationMin < 60) durationBins['30-60']++;
+        else if (durationMin < 90) durationBins['60-90']++;
+        else durationBins['90+']++;
+        
+        if (w.exercises) {
+            w.exercises.forEach(ex => {
+                const muscle = ex.muscleGroup || 'Other';
+                kcalPerMuscle[muscle] = (kcalPerMuscle[muscle] || 0) + estimateCalories({ exercises: [ex], duration: w.duration });
+                if (ex.sets) {
+                    ex.sets.forEach(set => {
+                        totalSets++;
+                        totalReps += set.reps || 0;
+                        totalVolume += (set.weight || 0) * (set.reps || 0);
+                        const weight = set.weight || 0;
+                        if (weight < 50) weightDist.light++;
+                        else if (weight <= 100) weightDist.medium++;
+                        else weightDist.heavy++;
+                    });
+                }
+                const exName = ex.name || 'Unknown';
+                exerciseCount[exName] = (exerciseCount[exName] || 0) + (ex.sets ? ex.sets.length : 0);
+            });
+        }
+    });
+    
+    const topExercise = Object.entries(exerciseCount).sort((a, b) => b[1] - a[1])[0] || ['Geen', 0];
+    const avgReps = totalSets > 0 ? Math.round(totalReps / totalSets) : 0;
+    const total = weightDist.light + weightDist.medium + weightDist.heavy;
+    const weightDistribution = total > 0 ? {
+        light: Math.round((weightDist.light / total) * 100),
+        medium: Math.round((weightDist.medium / total) * 100),
+        heavy: Math.round((weightDist.heavy / total) * 100)
+    } : { light: 0, medium: 0, heavy: 0 };
+    
+    const hours = Math.floor(totalTime / 3600);
+    const minutes = Math.floor((totalTime % 3600) / 60);
+    const avgTime = history.length > 0 ? Math.round(totalTime / history.length / 60) : 0;
+    const avgCalories = history.length > 0 ? Math.round(totalCalories / history.length) : 0;
+    const frequency = Math.round((history.length / 7) * 10) / 10;
+    
+    // Progress
+    let progress = 0;
+    if (history.length > 1) {
+        const mid = Math.floor(history.length / 2);
+        const recent = history.slice(0, mid);
+        const older = history.slice(mid);
+        const recentAvg = recent.reduce((sum, w) => sum + (w.exercises ? w.exercises.reduce((s, ex) => s + (ex.sets ? ex.sets.reduce((ss, set) => ss + (set.weight * set.reps), 0) : 0), 0) : 0), 0) / recent.length;
+        const olderAvg = older.reduce((sum, w) => sum + (w.exercises ? w.exercises.reduce((s, ex) => s + (ex.sets ? ex.sets.reduce((ss, set) => ss + (set.weight * set.reps), 0) : 0), 0) : 0), 0) / older.length;
+        progress = olderAvg > 0 ? Math.round(((recentAvg - olderAvg) / olderAvg) * 100) : 0;
+    }
+    
+    return {
+        totalTime: { hours, minutes },
+        totalCalories: Math.round(totalCalories),
+        totalWorkouts: history.length,
+        totalVolume: Math.round(totalVolume),
+        longestStreak,
+        progress,
+        avgTime,
+        avgCalories,
+        frequency,
+        totalSets,
+        avgReps,
+        topExercise: topExercise[0] + ' (' + topExercise[1] + ')',
+        weightDistribution,
+        durationBins,
+        currentStreak,
+        avgStreak,
+        kcalPerMuscle
+    };
+}
+
+function estimateCalories(workout) {
+    let calories = 0;
+    const duration = (workout.duration || 0) / 60; // seconden naar minuten
+    if (workout.exercises) {
+        workout.exercises.forEach(ex => {
+            if (ex.sets) {
+                ex.sets.forEach(set => {
+                    // Rough estimate: 5 kcal per minute for strength training, adjusted by intensity
+                    const intensity = Math.min((set.weight || 0) / 100, 2); // cap at 2x
+                    calories += 5 * (duration / workout.exercises.length) * intensity;
+                });
+            }
+        });
+    }
+    return Math.round(calories);
+}
+
+function renderVolumeChart(history) {
+    const canvas = document.getElementById('volumeChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const selectedExercise = document.getElementById('exerciseSelector').value;
+    const data = history.map(w => {
+        let volume = 0;
+        if (w.exercises) {
+            w.exercises.forEach(ex => {
+                if (selectedExercise === 'total' || ex.name === selectedExercise) {
+                    if (ex.sets) ex.sets.forEach(set => volume += (set.weight || 0) * (set.reps || 0));
+                }
+            });
+        }
+        return { date: new Date(w.startTime), volume };
+    }).sort((a, b) => a.date - b.date);
+    
+    // Simple line chart
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (data.length < 2) return;
+    const maxVolume = Math.max(...data.map(d => d.volume));
+    const minDate = data[0].date;
+    const maxDate = data[data.length - 1].date;
+    const dateRange = maxDate - minDate;
+    
+    ctx.beginPath();
+    ctx.strokeStyle = '#007bff';
+    ctx.lineWidth = 2;
+    data.forEach((d, i) => {
+        const x = 50 + ((d.date - minDate) / dateRange) * (canvas.width - 100);
+        const y = canvas.height - 50 - (d.volume / maxVolume) * (canvas.height - 100);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    
+    // Axes labels
+    ctx.fillStyle = '#fff';
+    ctx.font = '12px Arial';
+    // Y-axis
+    ctx.fillText('0', 5, canvas.height - 45);
+    ctx.fillText(maxVolume.toFixed(0), 5, 15);
+    // X-axis
+    ctx.fillText(minDate.getMonth() + 1 + '/' + minDate.getDate(), 50, canvas.height - 5);
+    ctx.fillText(maxDate.getMonth() + 1 + '/' + maxDate.getDate(), canvas.width - 100, canvas.height - 5);
+}
+
+function renderFrequencyChart(history, period) {
+    const canvas = document.getElementById('frequencyChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Group by week or month
+    const grouped = {};
+    history.forEach(w => {
+        const date = new Date(w.startTime);
+        const key = period === 'week' ? date.getFullYear() + '-W' + Math.ceil((date.getDate() - date.getDay() + 1) / 7) : date.getFullYear() + '-' + date.getMonth();
+        grouped[key] = (grouped[key] || 0) + 1;
+    });
+    const labels = Object.keys(grouped).sort().map(key => {
+        if (period === 'week') {
+            const [year, w] = key.split('-W');
+            return 'W' + w + ' ' + year;
+        } else {
+            const [year, month] = key.split('-');
+            const months = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+            return months[parseInt(month)] + ' ' + year;
+        }
+    });
+    const rawLabels = Object.keys(grouped).sort(); // for values
+    const values = rawLabels.map(l => grouped[l]);
+    
+    // Bar chart
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const barWidth = (canvas.width - 100) / labels.length;
+    const maxVal = Math.max(...values);
+    values.forEach((v, i) => {
+        const x = 50 + i * barWidth;
+        const height = (v / maxVal) * (canvas.height - 100);
+        const y = canvas.height - 50 - height;
+        ctx.fillStyle = '#007bff';
+        ctx.fillRect(x, y, barWidth - 5, height);
+        // Label on bar
+        ctx.fillStyle = '#fff';
+        ctx.fillText(v.toString(), x + barWidth / 2 - 5, y - 5);
+        // X label
+        ctx.save();
+        ctx.translate(x + barWidth / 2, canvas.height - 20);
+        ctx.rotate(-Math.PI / 4);
+        ctx.fillText(labels[i], 0, 0);
+        ctx.restore();
+    });
+    // Y-axis
+    ctx.fillStyle = '#fff';
+    ctx.fillText('0', 5, canvas.height - 45);
+    ctx.fillText(maxVal.toString(), 5, 55);
+}
+
+function renderDurationChart(durationBins) {
+    const canvas = document.getElementById('durationChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const labels = Object.keys(durationBins);
+    const values = Object.values(durationBins);
+    const barWidth = (canvas.width - 100) / labels.length;
+    const maxVal = Math.max(...values);
+    values.forEach((v, i) => {
+        const x = 50 + i * barWidth;
+        const height = (v / maxVal) * (canvas.height - 100);
+        const y = canvas.height - 50 - height;
+        ctx.fillStyle = '#17a2b8';
+        ctx.fillRect(x, y, barWidth - 5, height);
+        ctx.fillStyle = '#fff';
+        ctx.fillText(v.toString(), x + barWidth / 2 - 5, y - 5);
+        ctx.fillText(labels[i], x + barWidth / 2 - 15, canvas.height - 20);
+    });
+    ctx.fillStyle = '#fff';
+    ctx.fillText('0', 5, canvas.height - 45);
+    ctx.fillText(maxVal.toString(), 5, 55);
+}
+
+function renderMuscleChart(history, kcalPerMuscle) {
+    const canvas = document.getElementById('muscleChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const muscleCount = {};
+    
+    // Get all possible muscle groups from WORKOUT_DATA
+    const allMuscles = new Set();
+    WORKOUT_DATA.schemas.forEach(s => {
+        s.muscleGroups.forEach(g => {
+            allMuscles.add(g.name);
+        });
+    });
+    
+    // Count from history
+    history.forEach(w => {
+        if (w.exercises) {
+            w.exercises.forEach(ex => {
+                const muscle = ex.muscleGroup || 'Other';
+                muscleCount[muscle] = (muscleCount[muscle] || 0) + (ex.sets ? ex.sets.length : 0);
+            });
+        }
+    });
+    
+    // Ensure all muscles are included, even if 0
+    allMuscles.forEach(m => {
+        if (!(m in muscleCount)) muscleCount[m] = 0;
+    });
+    
+    const total = Object.values(muscleCount).reduce((a, b) => a + b, 0);
+    const colors = ['#ff6384', '#36a2eb', '#cc65fe', '#ffce56', '#4bc0c0', '#ff9f40', '#ff6384', '#c9cbcf'];
+    let startAngle = 0;
+    let i = 0;
+    const legendItems = [];
+    Object.entries(muscleCount).sort((a, b) => b[1] - a[1]).forEach(([muscle, count]) => {
+        const sliceAngle = total > 0 ? (count / total) * 2 * Math.PI : 0;
+        if (count > 0) {
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, canvas.height / 2);
+            ctx.arc(canvas.width / 2, canvas.height / 2, 80, startAngle, startAngle + sliceAngle);
+            ctx.closePath();
+            ctx.fillStyle = colors[i % colors.length];
+            ctx.fill();
+        }
+        legendItems.push({ color: count > 0 ? colors[i % colors.length] : '#ccc', label: muscle, percentage: total > 0 ? Math.round((count / total) * 100) : 0, kcal: Math.round(kcalPerMuscle[muscle] || 0) });
+        startAngle += sliceAngle;
+        i++;
+    });
+    
+    // Add legend to the right
+    const legendContainer = canvas.parentNode.querySelector('.chart-legend-list');
+    legendContainer.innerHTML = ''; // Clear previous legend
+    legendItems.forEach(item => {
+        const itemEl = document.createElement('div');
+        itemEl.className = 'legend-item';
+        itemEl.innerHTML = '<span class="legend-color" style="background: ' + item.color + '"></span> ' + item.label + ' (' + item.percentage + '%)';
+        legendContainer.appendChild(itemEl);
+    });
 }
 
 // EXERCISES VIEW
@@ -5008,7 +5659,7 @@ function switchView(viewName) {
         "workout": "workoutView",
         "history": "historyView",
         "progress": "progressView",
-        "prs": "prsView",
+        "statistics": "statisticsView",
         "exercises": "exercisesView",
         "settings": "settingsView",
         "schemas": "schemasView"
@@ -5024,7 +5675,7 @@ function switchView(viewName) {
     
     // Render content
     if (viewName === "history") renderHistory();
-    if (viewName === "prs") renderPRs();
+    if (viewName === "statistics") renderStatistics();
     if (viewName === "progress") renderProgress();
     if (viewName === "exercises") {
         renderExercisesList();

@@ -120,7 +120,7 @@ body::before {
 
 @media (max-width: 640px) {
     .container {
-        padding: 0.75rem;
+        padding: 0.5rem; /* Further reduce padding for mobile */
     }
 }
 
@@ -1526,12 +1526,12 @@ h1 {
 
     /* Statistics Page Mobile */
     .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: 1fr; /* Single column for better mobile layout */
         gap: 1rem;
     }
 
     .stat-card {
-        padding: 1rem;
+        padding: 0.75rem; /* Reduce padding for mobile */
     }
 
     .stat-icon {
@@ -1556,26 +1556,40 @@ h1 {
     }
 
     .chart-container {
-        padding: 1rem;
+        padding: 0.75rem; /* Reduce padding for mobile */
+        flex-direction: column; /* Stack content vertically on mobile */
+        align-items: flex-start; /* Align to start instead of center */
     }
 
     .chart-container h3 {
         font-size: 1.2rem;
         margin-bottom: 0.75rem;
+        width: 100%;
+        text-align: center;
+    }
+
+    .chart-container canvas {
+        width: 100% !important;
+        height: 200px !important;
+        max-width: none; /* Remove max-width restriction on mobile */
     }
 
     .chart-legend {
         font-size: 0.8rem;
         margin-top: 0.5rem;
+        text-align: center;
+        width: 100%;
     }
 
     .chart-legend-list {
         margin-top: 1rem;
+        width: 100%;
     }
 
     .legend-item {
         font-size: 0.8rem;
         margin-bottom: 0.25rem;
+        justify-content: center; /* Center legend items */
     }
 
     .legend-color {

@@ -5746,8 +5746,11 @@ function handleImportFile(event) {
     
     const reader = new FileReader();
     reader.onload = function(e) {
+        console.log("Import: File loaded, length:", e.target.result.length);
+        console.log("Import: First 200 chars:", e.target.result.substring(0, 200));
         try {
             const data = JSON.parse(e.target.result);
+            console.log("Import: JSON parsed successfully, keys:", Object.keys(data));
             
             if (data.workouts) localStorage.setItem("workout_history", JSON.stringify(data.workouts));
             if (data.prs) localStorage.setItem("workout_prs", JSON.stringify(data.prs));
@@ -5760,6 +5763,7 @@ function handleImportFile(event) {
             renderPRs();
             loadSettings();
         } catch (error) {
+            console.error("Import error:", error);
             showToast("Ongeldige backup file", "error");
         }
     };

@@ -1806,12 +1806,32 @@ h1 {
     margin: 0;
 }
 
-#periodSelector {
-    padding: 0.5rem;
-    border-radius: 10px;
+.period-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.period-btn {
+    padding: 0.5rem 1rem;
     border: 1px solid var(--border);
     background: var(--dark-card);
     color: var(--text);
+    border-radius: 10px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-height: 44px; /* iOS touch target */
+}
+
+.period-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.period-btn:hover {
+    background: var(--hover);
 }
 
 .stats-grid {
@@ -2638,12 +2658,13 @@ document.addEventListener('DOMContentLoaded', function() {
     <div id="statisticsView" class="view">
         <div class="statistics-header">
             <h2>📊 Statistieken</h2>
-            <select id="periodSelector" onchange="renderStatistics()">
-                <option value="week">Deze week</option>
-                <option value="month">Deze maand</option>
-                <option value="year">Dit jaar</option>
-                <option value="all">Alles</option>
-            </select>
+            <input type="hidden" id="periodSelector" value="week">
+            <div class="period-buttons" role="group" aria-label="Selecteer periode">
+                <button type="button" class="period-btn active" data-period="week" onclick="setPeriod('week')">Deze week</button>
+                <button type="button" class="period-btn" data-period="month" onclick="setPeriod('month')">Deze maand</button>
+                <button type="button" class="period-btn" data-period="year" onclick="setPeriod('year')">Dit jaar</button>
+                <button type="button" class="period-btn" data-period="all" onclick="setPeriod('all')">Alles</button>
+            </div>
         </div>
         <div id="statisticsContainer"></div>
     </div>
@@ -4941,64 +4962,64 @@ function renderStatistics() {
     }
     
     container.innerHTML =
-        '<div class="stats-grid">' +
-            '<div class="stat-card">' +
-                '<div class="stat-icon">⏱️</div>' +
-                '<div class="stat-value">' + stats.totalTime.hours + 'h ' + stats.totalTime.minutes + 'm</div>' +
+        '<div class="stats-grid" role="grid" aria-label="Workout statistieken">' +
+            '<div class="stat-card" role="gridcell" tabindex="0">' +
+                '<div class="stat-icon" aria-hidden="true">⏱️</div>' +
+                '<div class="stat-value" aria-label="Totale workout tijd">' + stats.totalTime.hours + 'h ' + stats.totalTime.minutes + 'm</div>' +
                 '<div class="stat-label">Totale workout tijd</div>' +
                 '<div class="stat-sub">Gemiddeld ' + stats.avgTime + ' min/workout</div>' +
             '</div>' +
-            '<div class="stat-card">' +
-                '<div class="stat-icon">🔥</div>' +
-                '<div class="stat-value">' + stats.totalCalories + '</div>' +
+            '<div class="stat-card" role="gridcell" tabindex="0">' +
+                '<div class="stat-icon" aria-hidden="true">🔥</div>' +
+                '<div class="stat-value" aria-label="Geschatte calorieën">' + stats.totalCalories + '</div>' +
                 '<div class="stat-label">Geschatte kcal</div>' +
                 '<div class="stat-sub">Gemiddeld ' + stats.avgCalories + ' kcal/workout</div>' +
             '</div>' +
-            '<div class="stat-card">' +
-                '<div class="stat-icon">🏋️</div>' +
-                '<div class="stat-value">' + stats.totalWorkouts + '</div>' +
+            '<div class="stat-card" role="gridcell" tabindex="0">' +
+                '<div class="stat-icon" aria-hidden="true">🏋️</div>' +
+                '<div class="stat-value" aria-label="Aantal workouts">' + stats.totalWorkouts + '</div>' +
                 '<div class="stat-label">Workouts voltooid</div>' +
                 '<div class="stat-sub">' + stats.frequency + ' per week</div>' +
             '</div>' +
-            '<div class="stat-card">' +
-                '<div class="stat-icon">💪</div>' +
-                '<div class="stat-value">' + stats.totalVolume + 'kg</div>' +
+            '<div class="stat-card" role="gridcell" tabindex="0">' +
+                '<div class="stat-icon" aria-hidden="true">💪</div>' +
+                '<div class="stat-value" aria-label="Totaal volume">' + stats.totalVolume + 'kg</div>' +
                 '<div class="stat-label">Totaal volume</div>' +
                 '<div class="stat-sub">Gewicht × reps</div>' +
             '</div>' +
-            '<div class="stat-card">' +
-                '<div class="stat-icon">🔄</div>' +
-                '<div class="stat-value">' + stats.longestStreak + '</div>' +
+            '<div class="stat-card" role="gridcell" tabindex="0">' +
+                '<div class="stat-icon" aria-hidden="true">🔄</div>' +
+                '<div class="stat-value" aria-label="Langste streak">' + stats.longestStreak + '</div>' +
                 '<div class="stat-label">Langste streak</div>' +
                 '<div class="stat-sub">Huidig: ' + stats.currentStreak + ', Gem: ' + stats.avgStreak + ' dagen</div>' +
             '</div>' +
-            '<div class="stat-card">' +
-                '<div class="stat-icon">📈</div>' +
-                '<div class="stat-value">' + stats.progress + '%</div>' +
+            '<div class="stat-card" role="gridcell" tabindex="0">' +
+                '<div class="stat-icon" aria-hidden="true">📈</div>' +
+                '<div class="stat-value" aria-label="Progressie">' + stats.progress + '%</div>' +
                 '<div class="stat-label">Progressie</div>' +
                 '<div class="stat-sub">Vs vorige periode</div>' +
             '</div>' +
-            '<div class="stat-card">' +
-                '<div class="stat-icon">🎯</div>' +
-                '<div class="stat-value">' + stats.totalSets + '</div>' +
+            '<div class="stat-card" role="gridcell" tabindex="0">' +
+                '<div class="stat-icon" aria-hidden="true">🎯</div>' +
+                '<div class="stat-value" aria-label="Totaal sets">' + stats.totalSets + '</div>' +
                 '<div class="stat-label">Totaal sets</div>' +
                 '<div class="stat-sub">Voltooid in periode</div>' +
             '</div>' +
-            '<div class="stat-card">' +
-                '<div class="stat-icon">🔢</div>' +
-                '<div class="stat-value">' + stats.avgReps + '</div>' +
+            '<div class="stat-card" role="gridcell" tabindex="0">' +
+                '<div class="stat-icon" aria-hidden="true">🔢</div>' +
+                '<div class="stat-value" aria-label="Gemiddelde reps">' + stats.avgReps + '</div>' +
                 '<div class="stat-label">Gemiddelde reps</div>' +
                 '<div class="stat-sub">Per set</div>' +
             '</div>' +
-            '<div class="stat-card">' +
-                '<div class="stat-icon">🏆</div>' +
-                '<div class="stat-value">' + stats.topExercise + '</div>' +
+            '<div class="stat-card" role="gridcell" tabindex="0">' +
+                '<div class="stat-icon" aria-hidden="true">🏆</div>' +
+                '<div class="stat-value" aria-label="Meest getrainde oefening">' + stats.topExercise + '</div>' +
                 '<div class="stat-label">Meest getraind</div>' +
                 '<div class="stat-sub">Oefening (sets)</div>' +
             '</div>' +
-            '<div class="stat-card">' +
-                '<div class="stat-icon">⚖️</div>' +
-                '<div class="stat-value">' + stats.weightDistribution.light + '% / ' + stats.weightDistribution.medium + '% / ' + stats.weightDistribution.heavy + '%</div>' +
+            '<div class="stat-card" role="gridcell" tabindex="0">' +
+                '<div class="stat-icon" aria-hidden="true">⚖️</div>' +
+                '<div class="stat-value" aria-label="Gewicht balans">' + stats.weightDistribution.light + '% / ' + stats.weightDistribution.medium + '% / ' + stats.weightDistribution.heavy + '%</div>' +
                 '<div class="stat-label">Gewicht balans</div>' +
                 '<div class="stat-sub">Licht / Medium / Zwaar</div>' +
             '</div>' +
@@ -5053,7 +5074,13 @@ function renderStatistics() {
     renderMuscleChart(filteredHistory, stats.kcalPerMuscle);
 }
 
-function filterHistoryByPeriod(history, period) {
+function setPeriod(period) {
+    document.getElementById('periodSelector').value = period;
+    document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.period === period);
+    });
+    renderStatistics();
+}
     const now = new Date();
     let startDate;
     switch (period) {

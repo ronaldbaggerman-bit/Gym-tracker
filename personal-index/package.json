@@ -1,0 +1,25 @@
+{
+  "name": "personal-index",
+  "version": "1.0.0",
+  "description": "Personal productivity dashboard with task management, employee planning, and decision tracking",
+  "main": "index.html",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "setupFilesAfterEnv": ["<rootDir>/tests/setup.js"],
+    "testMatch": ["**/tests/**/*.test.js", "**/tests/integration-tests.js"],
+    "collectCoverageFrom": [
+      "**/*-script.js",
+      "!**/node_modules/**",
+      "!**/tests/**"
+    ]
+  }
+}

@@ -15,7 +15,7 @@ C:\Users\Baggerman\OneDrive\
     ├── index.html
     ├── werknemerplanning.html
     ├── actielijst.html (als je die hebt)
-    ├── vakantieplanning.html
+    ├── besluitenpagina.html
     └── ONEDRIVE_SETUP.md
 ```
 

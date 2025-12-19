@@ -1,0 +1,320 @@
+/* Werknemerplanning specifieke stijlen */
+
+.header-actions {
+    justify-content: flex-start;
+}
+
+.controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.view-selector {
+    display: flex;
+    gap: 0.5rem;
+    background: var(--dark-lighter);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.25rem;
+}
+
+.view-btn {
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.view-btn.active {
+    background: var(--primary);
+    color: white;
+}
+
+.date-range {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.date-range input {
+    padding: 0.5rem 1rem;
+    background: var(--dark-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+}
+
+/* Stats */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: var(--dark-lighter);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+/* Warnings */
+.alerts {
+    margin-bottom: 2rem;
+}
+
+.alerts-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    padding: 0.5rem 0;
+    margin-bottom: 1rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.alerts-toggle {
+    transition: transform 0.2s ease;
+}
+
+.alerts-content {
+    transition: max-height 0.3s ease;
+    overflow: hidden;
+}
+
+.alerts-content.collapsed {
+    max-height: 0;
+    margin-bottom: 0;
+}
+
+.alert {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid var(--warning);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    color: var(--text);
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.alert-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.alert-content h3 {
+    margin-bottom: 0.25rem;
+}
+
+.alert-content p {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+/* Planning Grid */
+.planning-container {
+    background: var(--dark-lighter);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow-x: auto;
+    padding: 1rem;
+}
+
+.planning-grid {
+    display: grid;
+    gap: 1rem;
+    min-width: max-content;
+}
+
+.planning-row {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 1rem;
+    align-items: center;
+}
+
+.planning-header {
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    text-align: center;
+    min-width: 80px;
+}
+
+.planning-cells {
+    display: grid;
+    gap: 0.5rem;
+    grid-auto-flow: column;
+}
+
+.planning-cell {
+    padding: 0.75rem;
+    background: var(--dark-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    text-align: center;
+    font-size: 0.8rem;
+    min-width: 80px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.planning-cell:hover {
+    border-color: var(--primary);
+    background: var(--dark-lighter);
+}
+
+.planning-cell.present {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: var(--success);
+    color: var(--success);
+}
+
+.planning-cell.vacation {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: #3b82f6;
+    color: #3b82f6;
+}
+
+.planning-cell.parttime {
+    background: rgba(245, 158, 11, 0.2);
+    border-color: var(--warning);
+    color: var(--warning);
+}
+
+.planning-cell.sick {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+.planning-cell.low-occupancy {
+    background: rgba(239, 68, 68, 0.3);
+    border-color: var(--danger);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+}
+
+.planning-cell.weekend {
+    background: rgba(100, 116, 139, 0.15);
+}
+
+.planning-cell.weekend.present {
+    background: rgba(100, 116, 139, 0.3);
+    border-color: var(--text-muted);
+}
+
+.planning-header.weekend {
+    background: rgba(100, 116, 139, 0.2);
+    color: var(--text-muted);
+}
+
+.week-number {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    padding: 0.5rem;
+    background: var(--dark-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    text-align: center;
+    min-width: 80px;
+}
+
+.week-number-spacer {
+    padding: 0.5rem;
+    visibility: hidden;
+    min-width: 80px;
+}
+
+.project-tabs {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+
+.project-tab {
+    padding: 0.75rem 1.25rem;
+    background: var(--dark-lighter);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.project-tab:hover {
+    border-color: var(--primary);
+    background: var(--dark-card);
+}
+
+.project-tab.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.project-tab .count {
+    margin-left: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+.employee-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.employee-card {
+    background: var(--dark-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.employee-name {
+    font-weight: 600;
+    color: var(--text);
+}
+
+/* Notification animations */
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}

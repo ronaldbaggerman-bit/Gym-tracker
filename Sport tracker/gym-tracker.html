@@ -1427,6 +1427,40 @@ h1 {
     transform: scale(0.95);
 }
 
+.fab-voice-add {
+    position: fixed;
+    bottom: 170px; /* Above the regular FAB */
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--dark-card);
+    color: var(--text);
+    border: 2px solid var(--primary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.fab-voice-add.visible {
+    display: flex;
+}
+
+.fab-voice-add:hover {
+    transform: scale(1.1);
+    background: var(--primary);
+    color: white;
+}
+
+.fab-voice-add:active {
+    transform: scale(0.95);
+}
+
 /* Modal Styles */
 .modal {
     position: fixed;
@@ -2898,6 +2932,11 @@ document.addEventListener('DOMContentLoaded', function() {
     <span>+</span>
 </button>
 
+<!-- Floating Button for Voice Adding Exercise -->
+<button class="fab-voice-add" id="fabVoiceAdd" onclick="startVoiceAdd()" title="Spraakherkenning - zeg een oefening">
+    <span>🎤</span>
+</button>
+
 <div class="bottom-actions" id="bottomActions">
     <button class="btn btn-secondary" onclick="cancelWorkout()"> Annuleren</button>
     <button class="btn btn-primary" onclick="finishWorkout()"> Voltooien</button>
@@ -3802,6 +3841,10 @@ function init() {
     migrateUnifyHackSquadIds();
     renderHistory();
     // renderStatistics() called on view switch
+    
+    // Initialize mobile enhancements
+    initSwipeGestures();
+    initSpeechRecognition();
 }
 
 document.addEventListener("DOMContentLoaded", init);
@@ -3900,6 +3943,7 @@ function selectSchema(schemaId) {
     document.getElementById("activeWorkout").style.display = "block";
     document.getElementById("bottomActions").classList.add("active");
     document.getElementById("fabAddExercise").classList.add("visible");
+    document.getElementById("fabVoiceAdd").classList.add("visible");
     
     // Update timer card color based on schema
     const timerCard = document.getElementById("timerCard");
@@ -4021,7 +4065,7 @@ function renderExerciseCard(exercise) {
                     </div>
                 ` : ""}
                 ${exercise.sets.map((set, idx) => `
-                    <div class="set-row ${set.completed ? "completed" : ""}">
+                    <div class="set-row ${set.completed ? "completed" : ""}" data-exercise-id="${exercise.id}" data-set-index="${idx}">
                         <div class="set-input-group">
                             <div style="display:flex; align-items:center; gap:0.5rem;">
                                 <button class="btn btn-secondary" style="padding:0.4rem 0.6rem" onclick="adjustSet(${exercise.id}, ${idx}, 'reps', -1)">−</button>
@@ -4382,6 +4426,8 @@ function stopRestTimer(auto = false) {
         }
     } else {
         // Timer finished automatically, return to the exercise
+        hapticFeedback([200, 100, 200]); // Double vibration for timer completion
+        
         if (currentRestExerciseId) {
             const exercise = currentWorkout?.exercises.find(ex => ex.id === currentRestExerciseId);
             if (exercise) {
@@ -4468,6 +4514,7 @@ function resetWorkout() {
     document.getElementById("bottomActions").classList.remove("active");
     document.getElementById("timerCard").classList.remove("running");
     document.getElementById("fabAddExercise").classList.remove("visible");
+    document.getElementById("fabVoiceAdd").classList.remove("visible");
     hideInlineExerciseForm();
     closeAddExerciseModal();
     
@@ -5762,6 +5809,220 @@ function calculateOneRepMax(weight, reps) {
     return Math.round(weight * (1 + reps / 30));
 }
 
+// MOBILE ENHANCEMENTS
+// Haptic feedback for mobile devices
+function hapticFeedback(pattern = [50]) {
+    if ('vibrate' in navigator) {
+        navigator.vibrate(pattern);
+    }
+}
+
+// Swipe gesture handling for set rows
+function initSwipeGestures() {
+    document.addEventListener('touchstart', handleTouchStart, { passive: false });
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd, { passive: false });
+}
+
+let touchStartX = 0;
+let touchStartY = 0;
+let touchCurrentX = 0;
+let touchCurrentY = 0;
+let swipingElement = null;
+let swipeThreshold = 80; // Minimum swipe distance
+
+function handleTouchStart(e) {
+    const touch = e.touches[0];
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+    
+    // Find if we're touching a set row
+    const target = e.target.closest('.set-row');
+    if (target) {
+        swipingElement = target;
+        swipingElement.style.transition = 'none';
+    }
+}
+
+function handleTouchMove(e) {
+    if (!swipingElement) return;
+    
+    const touch = e.touches[0];
+    touchCurrentX = touch.clientX;
+    touchCurrentY = touch.clientY;
+    
+    const deltaX = touchCurrentX - touchStartX;
+    const deltaY = touchCurrentY - touchStartY;
+    
+    // Only allow horizontal swipes (more horizontal than vertical movement)
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+        e.preventDefault();
+        swipingElement.style.transform = `translateX(${deltaX}px)`;
+        
+        // Add visual feedback
+        if (Math.abs(deltaX) > swipeThreshold) {
+            if (deltaX > 0) {
+                swipingElement.style.background = 'linear-gradient(90deg, rgba(52, 199, 89, 0.1) 0%, transparent 50%)';
+            } else {
+                swipingElement.style.background = 'linear-gradient(90deg, transparent 50%, rgba(255, 59, 48, 0.1) 100%)';
+            }
+        } else {
+            swipingElement.style.background = '';
+        }
+    }
+}
+
+function handleTouchEnd(e) {
+    if (!swipingElement) return;
+    
+    const deltaX = touchCurrentX - touchStartX;
+    const deltaY = touchCurrentY - touchStartY;
+    
+    // Reset visual feedback
+    swipingElement.style.background = '';
+    swipingElement.style.transition = '';
+    
+    // Check if it's a valid swipe
+    if (Math.abs(deltaX) > swipeThreshold && Math.abs(deltaX) > Math.abs(deltaY)) {
+        const exerciseId = parseInt(swipingElement.dataset.exerciseId);
+        const setIndex = parseInt(swipingElement.dataset.setIndex);
+        
+        if (deltaX > 0) {
+            // Swipe right - complete set
+            completeSetWithHaptic(exerciseId, setIndex);
+        } else {
+            // Swipe left - delete set
+            deleteSetWithConfirmation(exerciseId, setIndex);
+        }
+    }
+    
+    // Reset transform
+    swipingElement.style.transform = '';
+    swipingElement = null;
+}
+
+function completeSetWithHaptic(exerciseId, setIndex) {
+    const exercise = currentWorkout.exercises.find(ex => ex.id === exerciseId);
+    if (!exercise) return;
+    
+    const set = exercise.sets[setIndex];
+    if (!set.completed && (!set.reps || !set.weight)) {
+        showToast("Vul eerst reps en gewicht in", "error");
+        return;
+    }
+    
+    set.completed = true;
+    hapticFeedback([30, 50, 30]); // Short vibration pattern
+    startRestTimer();
+    checkAndShowPR(exercise, setIndex);
+    focusOnTimer();
+    renderExercises();
+    updateStats();
+    showToast("Set voltooid! 💪", "success");
+}
+
+function deleteSetWithConfirmation(exerciseId, setIndex) {
+    if (confirm('Set verwijderen?')) {
+        const exercise = currentWorkout.exercises.find(ex => ex.id === exerciseId);
+        if (!exercise || exercise.sets.length <= 1) return;
+        
+        exercise.sets.splice(setIndex, 1);
+        hapticFeedback([100]); // Longer vibration for deletion
+        renderExercises();
+        updateStats();
+        showToast("Set verwijderd", "info");
+    }
+}
+
+// Speech recognition for quick exercise adding
+function initSpeechRecognition() {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        console.log('Speech recognition not supported');
+        return;
+    }
+    
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    
+    recognition.lang = 'nl-NL'; // Dutch language
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    
+    recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript.toLowerCase();
+        console.log('Speech recognized:', transcript);
+        
+        // Try to match exercise names
+        const matchedExercise = findExerciseBySpeech(transcript);
+        if (matchedExercise) {
+            addExerciseToWorkout(matchedExercise.id);
+            hapticFeedback([50, 50, 50]);
+            showToast(`"${matchedExercise.name}" toegevoegd! 🎤`, "success");
+        } else {
+            showToast("Oefening niet herkend. Probeer opnieuw.", "error");
+        }
+    };
+    
+    recognition.onerror = function(event) {
+        console.error('Speech recognition error:', event.error);
+        showToast("Spraakherkenning mislukt", "error");
+    };
+    
+    // Make recognition globally available
+    window.speechRecognition = recognition;
+}
+
+function findExerciseBySpeech(transcript) {
+    // Common Dutch exercise name mappings
+    const exerciseMappings = {
+        'bench press': 'Chest Press',
+        'bankdrukken': 'Chest Press',
+        'push up': 'Push-up',
+        'pushup': 'Push-up',
+        'opdrukken': 'Push-up',
+        'squat': 'Hack Squad',
+        'squats': 'Hack Squad',
+        'kniebuiging': 'Hack Squad',
+        'deadlift': 'Pull Down',
+        'deadlifts': 'Pull Down',
+        'rugtrekken': 'Pull Down',
+        'pull down': 'Pull Down',
+        'shoulder press': 'Shoulder Press',
+        'schouderdrukken': 'Shoulder Press',
+        'bicep curl': 'Biceps Barbell Curl',
+        'biceps curl': 'Biceps Barbell Curl',
+        'bicep curls': 'Biceps Barbell Curl',
+        'biceps curls': 'Biceps Barbell Curl',
+        'bizep curl': 'Biceps Barbell Curl',
+        'leg press': 'Leg Press',
+        'beenpers': 'Leg Press',
+        'leg curl': 'Leg Curl',
+        'hamstring curl': 'Leg Curl',
+        'beenkrul': 'Leg Curl'
+    };
+    
+    // Check for exact matches first
+    for (const [key, value] of Object.entries(exerciseMappings)) {
+        if (transcript.includes(key)) {
+            // Find the actual exercise object
+            const allExercises = getAllExercises();
+            const exercise = Object.values(allExercises).find(ex => ex.name === value);
+            if (exercise) return exercise;
+        }
+    }
+    
+    return null;
+}
+
+function startVoiceAdd() {
+    if (window.speechRecognition) {
+        window.speechRecognition.start();
+        showToast("Luistert... Spreek een oefening uit 🎤", "info");
+    } else {
+        showToast("Spraakherkenning niet ondersteund op dit apparaat", "error");
+    }
+}
+
 // Render 1RM overview for all exercises in the selected schema
 function renderOneRepMaxOverview(container, history, schemaId) {
     const schemaWorkouts = history.filter(w => w.schemaId === schemaId);
@@ -5872,12 +6133,14 @@ function switchView(viewName) {
     if (viewName === "exercises") {
         renderExercisesList();
         document.getElementById("fabAddExercise").classList.add("visible");
+        document.getElementById("fabVoiceAdd").classList.add("visible");
     } else if (viewName === "schemas") {
         // Render schema beheer UI when switching to schemas
         try { renderCustomSchemasList(); } catch (e) { console.warn('renderCustomSchemasList failed', e); }
     } else if (viewName !== "workout") {
         // Hide FAB unless in exercises view or workout view (workout view handles FAB in selectSchema)
         document.getElementById("fabAddExercise").classList.remove("visible");
+        document.getElementById("fabVoiceAdd").classList.remove("visible");
     }
     if (viewName === "settings") updateSettingsUI();
 }

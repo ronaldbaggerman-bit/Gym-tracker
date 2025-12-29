@@ -377,6 +377,171 @@ h1 {
     color: var(--text-muted);
 }
 
+/* Template Grid Styles */
+.template-grid {
+    margin-bottom: 2rem;
+}
+
+.template-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.template-header h2 {
+    color: var(--text);
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.template-list {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+.template-card {
+    background: linear-gradient(135deg, var(--dark-card) 0%, var(--dark-elevated) 100%);
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.template-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    border-color: var(--primary);
+}
+
+.template-card:active {
+    transform: translateY(0);
+}
+
+.template-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.template-card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+}
+
+.template-card-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.template-card .btn-icon {
+    padding: 0.5rem;
+    background: var(--dark-lighter);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.template-card .btn-icon:hover {
+    background: var(--danger);
+    color: white;
+}
+
+.template-card-description {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+}
+
+.template-card-stats {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.template-card-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.template-card-stat-value {
+    font-weight: 700;
+    color: var(--primary);
+    font-size: 1.1rem;
+}
+
+.template-card-stat-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .template-list {
+        grid-template-columns: 1fr;
+    }
+    
+    .template-card {
+        padding: 1rem;
+    }
+    
+    .template-card-title {
+        font-size: 1.1rem;
+    }
+}
+
+/* Workout Selection Header */
+.workout-selection-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.workout-selection-header h2 {
+    color: var(--text);
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+}
+
+.workout-selection-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.selection-tab {
+    padding: 0.75rem 1.5rem;
+    background: var(--dark-lighter);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.selection-tab.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.selection-tab:hover:not(.active) {
+    background: var(--dark-card);
+    border-color: var(--primary);
+}
+
 /* Timer Card */
 .timer-card {
     --schema-accent: var(--primary);
@@ -526,6 +691,18 @@ h1 {
     background: var(--dark-elevated);
     color: var(--text);
     border: 1px solid var(--border);
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--primary);
+    border: 2px solid var(--primary);
+    font-weight: 600;
+}
+
+.btn-outline:hover {
+    background: var(--primary);
+    color: white;
 }
 
 .btn-danger {
@@ -2729,8 +2906,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
     <!-- Workout View -->
     <div id="workoutView" class="view active">
+        <!-- Workout Selection Header -->
+        <div class="workout-selection-header">
+            <h2>🏋️‍♂️ Kies je Workout</h2>
+            <div class="workout-selection-tabs">
+                <button id="schemaTab" class="selection-tab active" onclick="showSchemaSelection()">Schema's</button>
+                <button id="templateTab" class="selection-tab" onclick="showTemplatesView()">Templates</button>
+            </div>
+        </div>
+        
         <div id="schemaSelection" class="schema-grid">
             <!-- Dynamically filled -->
+        </div>
+
+        <!-- Workout Templates Section -->
+        <div id="templateSelection" class="template-grid" style="display: none;">
+            <div class="template-header">
+                <h2>📋 Mijn Workout Templates</h2>
+                <p style="color: var(--text-muted); margin: 0.5rem 0 1rem 0;">Snel starten met je favoriete routines</p>
+                <button onclick="showTemplateSelection()" style="padding: 0.5rem 1rem; background: var(--dark-lighter); color: var(--text); border: 1px solid var(--border); border-radius: 8px; font-weight: 600;">← Terug naar Schema's</button>
+            </div>
+            <div id="templateList" class="template-list">
+                <!-- Templates will be populated here -->
+            </div>
         </div>
 
         <div id="activeWorkout" style="display: none;">
@@ -2994,6 +3192,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <div class="bottom-actions" id="bottomActions">
     <button class="btn btn-secondary" onclick="cancelWorkout()"> Annuleren</button>
+    <button class="btn btn-outline" onclick="showSaveTemplateDialog()" title="Sla deze workout op als template">📋 Template</button>
     <button class="btn btn-primary" onclick="finishWorkout()"> Voltooien</button>
 </div>
 
@@ -3961,6 +4160,140 @@ function renderSchemaSelection() {
     }).join("");
 }
 
+function renderTemplateSelection() {
+    const container = document.getElementById("templateList");
+    const templates = getWorkoutTemplates();
+    
+    if (templates.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">📋</div>
+                <h3 style="margin-bottom: 0.5rem;">Geen templates gevonden</h3>
+                <p>Voltooi eerst een workout en sla deze op als template om snel te kunnen starten.</p>
+                <button onclick="showSchemaSelection()" style="margin-top: 1rem; padding: 0.75rem 1.5rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600;">
+                    Bekijk Schema's
+                </button>
+            </div>
+        `;
+        return;
+    document.getElementById("schemaTab").classList.add("active");
+    document.getElementById("templateTab").classList.remove("active");
+}
+
+function showTemplatesView() {
+    document.getElementById("schemaSelection").style.display = "none";
+    document.getElementById("templateSelection").style.display = "block";
+    document.getElementById("schemaTab").classList.remove("active");
+    document.getElementById("templateTab").classList.add("active")x.sets.length, 0);
+        const totalVolume = template.exercises.reduce((sum, ex) => 
+            sum + ex.sets.reduce((s, set) => s + (set.weight * set.reps), 0), 0);
+        
+        return `
+            <div class="template-card" onclick="selectTemplate('${template.id}')">
+                <div class="template-card-header">
+                    <h3 class="template-card-title">${template.name}</h3>
+                    <div class="template-card-actions">
+                        <button class="btn-icon" onclick="event.stopPropagation(); deleteTemplate('${template.id}')" title="Verwijder template">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+                ${template.description ? `<p class="template-card-description">${template.description}</p>` : ''}
+                <div class="template-card-stats">
+                    <div class="template-card-stat">
+                        <span class="template-card-stat-value">${totalExercises}</span>
+                        <span class="template-card-stat-label">Oefeningen</span>
+                    </div>
+                    <div class="template-card-stat">
+                        <span class="template-card-stat-value">${totalSets}</span>
+                        <span class="template-card-stat-label">Sets</span>
+                    </div>
+                    <div class="template-card-stat">
+                        <span class="template-card-stat-value">${totalVolume}kg</span>
+                        <span class="template-card-stat-label">Volume</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join("");
+}
+
+function showTemplateSelection() {
+    document.getElementById("schemaSelection").style.display = "grid";
+    document.getElementById("templateSelection").style.display = "none";
+    document.getElementById("schemaTab").classList.add("active");
+    document.getElementById("templateTab").classList.remove("active");
+}
+
+function showSchemaSelection() {
+    document.getElementById("schemaSelection").style.display = "grid";
+    document.getElementById("templateSelection").style.display = "none";
+    document.getElementById("schemaTab").classList.add("active");
+    document.getElementById("templateTab").classList.remove("active");
+}
+
+function showTemplatesView() {
+    document.getElementById("schemaSelection").style.display = "none";
+    document.getElementById("templateSelection").style.display = "block";
+    renderTemplateSelection();
+}
+
+function selectTemplate(templateId) {
+    const workout = loadWorkoutFromTemplate(templateId);
+    if (!workout) {
+        showToast("Template niet gevonden", "error");
+        return;
+    }
+    
+    currentWorkout = workout;
+    
+    document.getElementById("schemaSelection").style.display = "none";
+    document.getElementById("templateSelection").style.display = "none";
+    document.getElementById("activeWorkout").style.display = "block";
+    document.getElementById("bottomActions").classList.add("active");
+    document.getElementById("fabAddExercise").classList.add("visible");
+    document.getElementById("fabVoiceAdd").classList.add("visible");
+    
+    // Set schema colors for the workout
+    const schema = WORKOUT_DATA.schemas.find(s => s.id === workout.schemaId);
+    if (schema) {
+        const { accent, accent2 } = getSchemaAccentPair(schema.color);
+        const timerCard = document.getElementById("timerCard");
+        timerCard.style.setProperty("--schema-accent", accent);
+        timerCard.style.setProperty("--schema-accent-2", accent2);
+        
+        const activeWorkout = document.getElementById("activeWorkout");
+        activeWorkout.style.setProperty("--schema-accent", accent);
+        activeWorkout.style.setProperty("--schema-accent-2", accent2);
+        activeWorkout.style.setProperty("--schema-accent-rgba", hexToRgba(accent, 0.4));
+        activeWorkout.style.setProperty("--schema-accent-rgba-bg", hexToRgba(accent, 0.15));
+        activeWorkout.style.setProperty("--schema-accent-rgba-shadow", hexToRgba(accent, 0.2));
+    }
+    
+    renderExercises();
+    startTimer();
+}
+
+function deleteTemplate(templateId) {
+    if (confirm("Weet je zeker dat je deze template wilt verwijderen?")) {
+        deleteWorkoutTemplate(templateId);
+        renderTemplateSelection();
+        showToast("Template verwijderd", "success");
+    }
+}
+
+function showSaveTemplateDialog() {
+    const templateName = prompt("Geef je template een naam:", `Workout ${new Date().toLocaleDateString('nl-NL')}`);
+    if (!templateName || !templateName.trim()) return;
+    
+    const description = prompt("Beschrijving (optioneel):", "");
+    
+    if (currentWorkout) {
+        const template = saveWorkoutAsTemplate(currentWorkout, templateName.trim(), description.trim());
+        showToast(`Template "${template.name}" opgeslagen!`, "success");
+    }
+}
+
 function selectSchema(schemaId) {
     const schema = WORKOUT_DATA.schemas.find(s => s.id === schemaId);
     if (!schema) return;
@@ -4596,6 +4929,69 @@ function saveWorkout(workout) {
 function getWorkoutHistory() {
     const stored = localStorage.getItem("workout_history");
     return stored ? JSON.parse(stored) : [];
+}
+
+// WORKOUT TEMPLATES
+function getWorkoutTemplates() {
+    const stored = localStorage.getItem("workout_templates");
+    return stored ? JSON.parse(stored) : [];
+}
+
+function saveWorkoutTemplates(templates) {
+    localStorage.setItem("workout_templates", JSON.stringify(templates));
+}
+
+function saveWorkoutAsTemplate(workout, templateName, description = "") {
+    const templates = getWorkoutTemplates();
+    
+    // Create template from current workout (without completed status and start time)
+    const template = {
+        id: `template_${Date.now()}`,
+        name: templateName,
+        description: description,
+        createdAt: new Date().toISOString(),
+        schemaId: workout.schemaId,
+        schemaName: workout.schemaName,
+        exercises: workout.exercises.map(ex => ({
+            id: ex.id,
+            name: ex.name,
+            met: ex.met,
+            muscleGroup: ex.muscleGroup,
+            muscleGroupIcon: ex.muscleGroupIcon,
+            sets: ex.sets.map(set => ({
+                reps: set.reps,
+                weight: set.weight,
+                completed: false // Always start fresh
+            }))
+        }))
+    };
+    
+    templates.push(template);
+    saveWorkoutTemplates(templates);
+    return template;
+}
+
+function loadWorkoutFromTemplate(templateId) {
+    const templates = getWorkoutTemplates();
+    const template = templates.find(t => t.id === templateId);
+    if (!template) return null;
+    
+    // Convert template back to workout format
+    return {
+        schemaId: template.schemaId,
+        schemaName: template.schemaName,
+        startTime: new Date().toISOString(),
+        exercises: template.exercises.map(ex => ({
+            ...ex,
+            sets: ex.sets.map(set => ({ ...set })) // Deep copy
+        }))
+    };
+}
+
+function deleteWorkoutTemplate(templateId) {
+    const templates = getWorkoutTemplates();
+    const filtered = templates.filter(t => t.id !== templateId);
+    saveWorkoutTemplates(filtered);
 }
 
 // DATA MIGRATION: Move today's "Hack Squat" entries to "Hack Squad"

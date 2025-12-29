@@ -1939,6 +1939,7 @@ h1 {
         width: 100% !important;
         height: 200px !important;
         max-width: 300px;
+    }
 
 .chart-legend {
     margin-top: 0.5rem;
@@ -2311,6 +2312,8 @@ h1 {
         color: var(--dark);
         opacity: 0.9;
     }
+
+}
 
 </style>
 
@@ -2968,7 +2971,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script>// WORKOUT DATA
 // App version for cache-busting (always bump by 1)
-const APP_VERSION = "2025-12-17-02";
+const APP_VERSION = "2025-12-17-03";
 // Enforce versioned URL so clients always fetch the latest build
 (async function enforceVersionedUrl() {
     try {
@@ -6025,22 +6028,22 @@ function updateDefaultSets(value) {
 // Test function for rest timer overlay
 function testRestTimerOverlay() {
     console.log("=== TESTING REST TIMER OVERLAY ===");
-    
+
     // Check if elements exist
     const overlay = document.getElementById("restTimerOverlay");
     const progress = document.getElementById("restTimerProgress");
     const label = document.getElementById("restTimerLabel");
-    
+
     console.log("Elements check:");
     console.log("- Overlay:", overlay);
     console.log("- Progress:", progress);
     console.log("- Label:", label);
-    
+
     if (!overlay || !progress || !label) {
         console.error("CRITICAL: Some elements are missing!");
         return;
     }
-    
+
     // Disable test mode for proper testing
     const settings = getSettings();
     if (settings.testMode) {
@@ -6049,15 +6052,9 @@ function testRestTimerOverlay() {
         updateTestModeToggle(false);
         console.log("Test mode disabled");
     }
-    
+
     console.log("Starting 10-second test timer...");
     startRestTimer(10);
-}       const overlay = document.getElementById("restTimerOverlay");
-        console.log("Overlay display:", overlay.style.display);
-        console.log("Overlay classes:", overlay.className);
-        console.log("restTimerRemaining:", restTimerRemaining);
-        console.log("restTimerInterval:", restTimerInterval);
-    }, 10000);
 }
 
 // Initialize on load

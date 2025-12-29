@@ -2971,7 +2971,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script>// WORKOUT DATA
 // App version for cache-busting (always bump by 1)
-const APP_VERSION = "2025-12-17-03";
+const APP_VERSION = "2025-12-17-04";
 // Enforce versioned URL so clients always fetch the latest build
 (async function enforceVersionedUrl() {
     try {
@@ -4231,7 +4231,7 @@ function updateStats() {
 }
 
 function calculateKcal(volume, durationMinutes, bodyWeight) {
-    const met = 5.0;
+    const met = 4.5;
     return (met * bodyWeight * (durationMinutes / 60)) * 1.2;
 }
 

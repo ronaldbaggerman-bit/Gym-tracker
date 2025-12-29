@@ -2337,8 +2337,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 color: '#34C759',
                 muscleGroups: [
                     { id: 'custom', name: 'Custom', exercises: [
-                        { id: 1, name: 'Push-up', met: 5.0 },
-                        { id: 2, name: 'Squat', met: 5.0 }
+                        { id: 1, name: 'Push-up', met: 4.5 },
+                        { id: 2, name: 'Squat', met: 4.5 }
                     ]}
                 ]
             };
@@ -2872,7 +2872,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <div>
                 <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">MET Waarde *</label>
-                <input type="number" id="inlineExerciseMET" placeholder="bijv. 5.0" step="0.1" min="1" max="15" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--dark-lighter); color: var(--text);">
+                <input type="number" id="inlineExerciseMET" placeholder="bijv. 4.5" step="0.1" min="1" max="15" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--dark-lighter); color: var(--text);">
             </div>
             <div style="display: flex; gap: 0.5rem;">
                 <button onclick="saveInlineExercise()" style="flex: 1; padding: 0.75rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600;">Toevoegen</button>
@@ -2933,7 +2933,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <div class="form-group">
                 <label>MET Waarde * (Metabolic Equivalent)</label>
-                <input type="number" id="customExerciseMET" placeholder="bijv. 5.0" step="0.1" min="1" max="15" class="form-input">
+                <input type="number" id="customExerciseMET" placeholder="bijv. 4.5" step="0.1" min="1" max="15" class="form-input">
             </div>
             <div class="form-group">
                 <label style="font-size: 0.85rem; color: var(--text-muted);">💡 MET bepaalt calorieverbruik. Typische waarden: 3-5 (cardio), 5-8 (kracht)</label>
@@ -2971,7 +2971,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script>// WORKOUT DATA
 // App version for cache-busting (always bump by 1)
-const APP_VERSION = "2025-12-17-04";
+const APP_VERSION = "2025-12-17-06";
 // Enforce versioned URL so clients always fetch the latest build
 (async function enforceVersionedUrl() {
     try {
@@ -3065,8 +3065,8 @@ const DEFAULT_SCHEMAS = [
                 name: "Triceps / Biceps",
                 icon: "",
                 exercises: [
-                    { id: 106, name: "One Arm Row", met: 5.0, icon: "🚣‍♀️" },
-                    { id: 108, name: "Front Side Raise", met: 5.0, icon: "🤾‍♂️" }
+                    { id: 106, name: "One Arm Row", met: 4.5, icon: "🚣‍♀️" },
+                    { id: 108, name: "Front Side Raise", met: 4.5, icon: "🤾‍♂️" }
                 ]
             }
         ]
@@ -3083,9 +3083,9 @@ const DEFAULT_SCHEMAS = [
                 name: "Benen",
                 icon: "",
                 exercises: [
-                    { id: 109, name: "Leg Press", met: 5.0, icon: "🦵" },
-                    { id: 110, name: "Leg Curl", met: 5.0, icon: "🦵" },
-                    { id: 111, name: "Hack Squad", met: 5.0, icon: "🦵" }
+                    { id: 109, name: "Leg Press", met: 4.5, icon: "🦵" },
+                    { id: 110, name: "Leg Curl", met: 4.5, icon: "🦵" },
+                    { id: 111, name: "Hack Squad", met: 4.5, icon: "🦵" }
                 ]
             },
             {
@@ -3093,12 +3093,12 @@ const DEFAULT_SCHEMAS = [
                 name: "Triceps / Biceps",
                 icon: "",
                 exercises: [
-                    { id: 112, name: "French Press", met: 5.0, icon: "💪" },
-                    { id: 113, name: "Biceps Barbell Curl", met: 5.0, icon: "💪" },
-                    { id: 114, name: "Incl. Dumbbell Curl", met: 5.0, icon: "💪" },
-                    { id: 115, name: "Reverse Curl", met: 5.0, icon: "💪" },
-                    { id: 116, name: "Triceps Extension", met: 5.0, icon: "💪" },
-                    { id: 117, name: "Hammer Curl DB", met: 5.0, icon: "💪" }
+                    { id: 112, name: "French Press", met: 4.5, icon: "💪" },
+                    { id: 113, name: "Biceps Barbell Curl", met: 4.5, icon: "💪" },
+                    { id: 114, name: "Incl. Dumbbell Curl", met: 4.5, icon: "💪" },
+                    { id: 115, name: "Reverse Curl", met: 4.5, icon: "💪" },
+                    { id: 116, name: "Triceps Extension", met: 4.5, icon: "💪" },
+                    { id: 117, name: "Hammer Curl DB", met: 4.5, icon: "💪" }
                 ]
             }
         ]
@@ -5670,6 +5670,9 @@ function renderProgress() {
     
     // Initial render
     updateProgressChart();
+    
+    // Add 1RM overview section
+    renderOneRepMaxOverview(container, history, progressState.schemaId);
 }
 
 function updateProgressChart() {
@@ -5751,6 +5754,83 @@ function updateProgressChart() {
     if (legend) {
         legend.innerHTML = hasPR ? `PR: ${prWeight}kg <span style="color:#FFCC00; margin-left:0.5rem;">★</span>` : '';
     }
+}
+
+// Calculate 1RM using Epley formula: weight * (1 + reps/30)
+function calculateOneRepMax(weight, reps) {
+    if (!weight || weight <= 0 || !reps || reps <= 0) return 0;
+    return Math.round(weight * (1 + reps / 30));
+}
+
+// Render 1RM overview for all exercises in the selected schema
+function renderOneRepMaxOverview(container, history, schemaId) {
+    const schemaWorkouts = history.filter(w => w.schemaId === schemaId);
+    if (schemaWorkouts.length === 0) return;
+    
+    // Collect all exercises and their best 1RM
+    const exerciseOneRMs = {};
+    
+    schemaWorkouts.forEach(workout => {
+        workout.exercises.forEach(exercise => {
+            if (!exerciseOneRMs[exercise.id]) {
+                exerciseOneRMs[exercise.id] = {
+                    id: exercise.id,
+                    name: exercise.name,
+                    best1RM: 0,
+                    date: null
+                };
+            }
+            
+            // Find the best set in this workout
+            exercise.sets.forEach(set => {
+                if (set.completed && set.weight && set.reps) {
+                    const oneRM = calculateOneRepMax(parseFloat(set.weight), parseInt(set.reps));
+                    if (oneRM > exerciseOneRMs[exercise.id].best1RM) {
+                        exerciseOneRMs[exercise.id].best1RM = oneRM;
+                        exerciseOneRMs[exercise.id].date = new Date(workout.startTime);
+                    }
+                }
+            });
+        });
+    });
+    
+    // Filter out exercises with no 1RM data
+    const exercisesWithData = Object.values(exerciseOneRMs).filter(ex => ex.best1RM > 0);
+    
+    if (exercisesWithData.length === 0) return;
+    
+    // Sort by 1RM descending
+    exercisesWithData.sort((a, b) => b.best1RM - a.best1RM);
+    
+    const oneRMSection = document.createElement('div');
+    oneRMSection.style.cssText = `
+        margin-top: 2rem;
+        background: var(--dark-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+    `;
+    
+    oneRMSection.innerHTML = `
+        <div style="margin-bottom: 1rem;">
+            <div style="font-weight: 800; font-size: 1.1rem;">1 Rep Max Overzicht</div>
+            <div style="color: var(--text-muted); font-size: 0.9rem;">Berekende maximale kracht per oefening</div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+            ${exercisesWithData.map(exercise => `
+                <div style="background: var(--dark-elevated); border: 1px solid var(--border); border-radius: 12px; padding: 1rem;">
+                    <div style="font-weight: 700; color: var(--text); margin-bottom: 0.5rem;">${exercise.name}</div>
+                    <div style="font-size: 1.5rem; font-weight: 800; color: #34C759; margin-bottom: 0.25rem;">${exercise.best1RM} kg</div>
+                    <div style="color: var(--text-muted); font-size: 0.8rem;">
+                        ${exercise.date ? `Laatste update: ${exercise.date.toLocaleDateString('nl-NL')}` : ''}
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+    
+    container.appendChild(oneRMSection);
 }
 
 // VIEW SWITCHING

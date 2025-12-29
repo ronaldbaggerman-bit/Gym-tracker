@@ -6024,14 +6024,34 @@ function updateDefaultSets(value) {
 
 // Test function for rest timer overlay
 function testRestTimerOverlay() {
+    console.log("=== TESTING REST TIMER OVERLAY ===");
+    
+    // Check if elements exist
+    const overlay = document.getElementById("restTimerOverlay");
+    const progress = document.getElementById("restTimerProgress");
+    const label = document.getElementById("restTimerLabel");
+    
+    console.log("Elements check:");
+    console.log("- Overlay:", overlay);
+    console.log("- Progress:", progress);
+    console.log("- Label:", label);
+    
+    if (!overlay || !progress || !label) {
+        console.error("CRITICAL: Some elements are missing!");
+        return;
+    }
+    
     // Disable test mode for proper testing
     const settings = getSettings();
     if (settings.testMode) {
         settings.testMode = false;
         saveSettings(settings);
         updateTestModeToggle(false);
+        console.log("Test mode disabled");
     }
-    startRestTimer(10); // Test with 10 seconds
+    
+    console.log("Starting 10-second test timer...");
+    startRestTimer(10);
 }       const overlay = document.getElementById("restTimerOverlay");
         console.log("Overlay display:", overlay.style.display);
         console.log("Overlay classes:", overlay.className);

@@ -4322,10 +4322,18 @@ function startRestTimer(seconds = getRestDuration()) {
     restTimerTotal = seconds;
     updateRestTimerUI();
     const overlay = document.getElementById("restTimerOverlay");
+    console.log("Overlay element:", overlay);
     if (overlay) {
+        console.log("Setting overlay to display: flex");
         overlay.style.display = "flex";
-        setTimeout(() => overlay.classList.add("active"), 10);
+        setTimeout(() => {
+            overlay.classList.add("active");
+            console.log("Added active class to overlay");
+        }, 10);
+    } else {
+        console.error("restTimerOverlay element not found!");
     }
+    
     // Use setTimeout instead of setInterval for more reliable timing
     function tickTimer() {
         console.log("Timer tick:", restTimerRemaining, "seconds remaining");
@@ -4387,13 +4395,19 @@ function stopRestTimer(auto = false) {
 function updateRestTimerUI() {
     const progress = document.getElementById("restTimerProgress");
     const label = document.getElementById("restTimerLabel");
-    if (!progress || !label) return;
+    console.log("updateRestTimerUI called - progress:", progress, "label:", label, "remaining:", restTimerRemaining);
+    if (!progress || !label) {
+        console.error("Progress or label element not found!");
+        return;
+    }
     const remaining = Math.max(0, restTimerRemaining || 0);
     const pct = Math.max(0, Math.min(100, restTimerTotal > 0 ? (remaining / restTimerTotal) * 100 : 0));
     progress.style.width = `${pct}%`;
     const m = Math.floor(remaining / 60);
     const s = remaining % 60;
-    label.textContent = `Rust: ${m}:${s.toString().padStart(2, '0')}`;
+    const timeText = `Rust: ${m}:${s.toString().padStart(2, '0')}`;
+    label.textContent = timeText;
+    console.log("Updated UI - time:", timeText, "progress:", pct + "%");
 }
 
 function pad(num) {

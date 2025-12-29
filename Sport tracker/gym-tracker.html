@@ -4366,26 +4366,19 @@ function refreshRestTimer() {
 }
 
 function stopRestTimer(auto = false) {
-    console.log("stopRestTimer called, auto:", auto, "remaining:", restTimerRemaining, "interval:", restTimerInterval);
     if (restTimerInterval) {
-        console.log("Clearing interval");
-        clearTimeout(restTimerInterval); // Changed from clearInterval to clearTimeout
+        clearTimeout(restTimerInterval);
         restTimerInterval = null;
     }
     if (!auto) {
         restTimerRemaining = 0;
         const overlay = document.getElementById("restTimerOverlay");
         if (overlay) {
-            console.log("Hiding overlay manually");
             overlay.classList.remove("active");
-            setTimeout(() => {
-                overlay.style.display = "none";
-                console.log("Overlay hidden manually");
-            }, 300);
+            overlay.style.display = "none"; // Direct hide without timeout
         }
     } else {
         // Timer finished automatically, return to the exercise
-        console.log("Timer finished automatically");
         if (currentRestExerciseId) {
             const exercise = currentWorkout?.exercises.find(ex => ex.id === currentRestExerciseId);
             if (exercise) {
@@ -4399,12 +4392,8 @@ function stopRestTimer(auto = false) {
         restTimerRemaining = 0;
         const overlay = document.getElementById("restTimerOverlay");
         if (overlay) {
-            console.log("Hiding overlay automatically");
             overlay.classList.remove("active");
-            setTimeout(() => {
-                overlay.style.display = "none";
-                console.log("Overlay hidden automatically");
-            }, 300);
+            overlay.style.display = "none"; // Direct hide without timeout
         }
     }
     updateRestTimerUI();
@@ -6060,6 +6049,44 @@ function debugShowOverlay() {
         overlay.style.display = "flex";
         overlay.classList.add("active");
         console.log("Overlay should now be visible");
+        
+        // Set a test timer
+        restTimerRemaining = 10;
+        restTimerTotal = 10;
+        updateRestTimerUI();
+        
+        console.log("Set timer to 10 seconds for testing");
+    } else {
+        console.error("Overlay element not found");
+    }
+}
+
+// Debug function to keep overlay visible
+function debugKeepOverlayVisible() {
+    console.log("Keeping overlay visible for 30 seconds");
+    const overlay = document.getElementById("restTimerOverlay");
+    if (overlay) {
+        overlay.style.display = "flex";
+        overlay.classList.add("active");
+        
+        // Set a test timer
+        restTimerRemaining = 30;
+        restTimerTotal = 30;
+        updateRestTimerUI();
+        
+        // Start a timer that doesn't hide the overlay
+        let count = 30;
+        const interval = setInterval(() => {
+            count--;
+            restTimerRemaining = count;
+            updateRestTimerUI();
+            if (count <= 0) {
+                clearInterval(interval);
+                console.log("Test timer finished, but overlay stays visible");
+            }
+        }, 1000);
+        
+        console.log("Overlay set to stay visible for 30 seconds");
     } else {
         console.error("Overlay element not found");
     }

@@ -1461,6 +1461,61 @@ h1 {
     transform: scale(0.95);
 }
 
+/* Mobile Enhancements */
+.set-row {
+    transition: transform 0.2s ease, background 0.2s ease;
+    touch-action: pan-y; /* Allow vertical scrolling but prevent horizontal swipe conflicts */
+    user-select: none; /* Prevent text selection during swipe */
+    -webkit-user-select: none;
+    -webkit-touch-callout: none; /* Disable callout on iOS */
+    -webkit-tap-highlight-color: transparent; /* Remove tap highlight */
+}
+
+.set-row.swipe-active {
+    transform: translateX(var(--swipe-x, 0));
+    z-index: 10; /* Bring to front during swipe */
+}
+
+.set-row.swipe-active .set-input,
+.set-row.swipe-active .checkbox {
+    pointer-events: none; /* Disable interactions during swipe */
+}
+
+/* Better touch targets for mobile */
+@media (max-width: 768px) {
+    .set-input {
+        min-height: 44px; /* iOS minimum touch target */
+        font-size: 16px; /* Prevent zoom on iOS */
+    }
+    
+    .btn {
+        min-height: 44px;
+        padding: 0.75rem 1rem;
+    }
+    
+    .checkbox {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+    }
+    
+    .fab-add-exercise,
+    .fab-voice-add {
+        width: 60px;
+        height: 60px;
+        bottom: 110px;
+    }
+    
+    .fab-voice-add {
+        bottom: 180px;
+    }
+}
+
+/* Prevent horizontal scroll during swipe */
+body.swipe-active {
+    overflow-x: hidden;
+}
+
 /* Modal Styles */
 .modal {
     position: fixed;
@@ -3000,7 +3055,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         </div>
         <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeFinishWorkoutModal()">Annuleren</button>
+            <button class="btn bt7-secondary" onclick="closeFinishWorkoutModal()">Annuleren</button>
             <button class="btn btn-primary" onclick="confirmFinishWorkout()">Ja, Voltooien</button>
         </div>
     </div>
@@ -5799,6 +5854,7 @@ function updateProgressChart() {
         </svg>
     `;
     if (legend) {
+        document.body.classList.add('swipe-active');
         legend.innerHTML = hasPR ? `PR: ${prWeight}kg <span style="color:#FFCC00; margin-left:0.5rem;">★</span>` : '';
     }
 }
@@ -5835,12 +5891,15 @@ function handleTouchStart(e) {
     const touch = e.touches[0];
     touchStartX = touch.clientX;
     touchStartY = touch.clientY;
+    touchCurrentX = touchStartX;
+    touchCurrentY = touchStartY;
     
     // Find if we're touching a set row
     const target = e.target.closest('.set-row');
     if (target) {
         swipingElement = target;
         swipingElement.style.transition = 'none';
+        swipingElement.classList.add('swipe-active');
     }
 }
 
@@ -5855,19 +5914,28 @@ function handleTouchMove(e) {
     const deltaY = touchCurrentY - touchStartY;
     
     // Only allow horizontal swipes (more horizontal than vertical movement)
-    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 15) { // Increased threshold
         e.preventDefault();
-        swipingElement.style.transform = `translateX(${deltaX}px)`;
         
-        // Add visual feedback
-        if (Math.abs(deltaX) > swipeThreshold) {
-            if (deltaX > 0) {
-                swipingElement.style.background = 'linear-gradient(90deg, rgba(52, 199, 89, 0.1) 0%, transparent 50%)';
+        // Limit swipe distance to prevent over-swiping
+        const limitedDeltaX = Math.max(-120, Math.min(120, deltaX));
+        swipingElement.style.transform = `translateX(${limitedDeltaX}px)`;
+        
+        // Enhanced visual feedback with opacity changes
+        if (Math.abs(limitedDeltaX) > swipeThreshold) {
+            if (limitedDeltaX > 0) {
+                swipingElement.style.background = 'linear-gradient(90deg, rgba(52, 199, 89, 0.15) 0%, rgba(52, 199, 89, 0.05) 50%, transparent 100%)';
+                swipingElement.style.borderLeft = '4px solid #34C759';
+                swipingElement.style.borderRight = 'none';
             } else {
-                swipingElement.style.background = 'linear-gradient(90deg, transparent 50%, rgba(255, 59, 48, 0.1) 100%)';
+                swipingElement.style.background = 'linear-gradient(90deg, transparent 0%, rgba(255, 59, 48, 0.05) 50%, rgba(255, 59, 48, 0.15) 100%)';
+                swipingElement.style.borderRight = '4px solid #FF3B30';
+                swipingElement.style.borderLeft = 'none';
             }
         } else {
             swipingElement.style.background = '';
+            swipingElement.style.borderLeft = '';
+            swipingElement.style.borderRight = '';
         }
     }
 }
@@ -5880,10 +5948,14 @@ function handleTouchEnd(e) {
     
     // Reset visual feedback
     swipingElement.style.background = '';
+    swipingElement.style.borderLeft = '';
+    swipingElement.style.borderRight = '';
     swipingElement.style.transition = '';
+    document.body.classList.remove('swipe-active');
+    swipingElement.classList.remove('swipe-active');
     
     // Check if it's a valid swipe
-    if (Math.abs(deltaX) > swipeThreshold && Math.abs(deltaX) > Math.abs(deltaY)) {
+    if (Math.abs(deltaX) > swipeThreshold && Math.abs(deltaX) > Math.abs(deltaY) * 2) { // More strict horizontal check
         const exerciseId = parseInt(swipingElement.dataset.exerciseId);
         const setIndex = parseInt(swipingElement.dataset.setIndex);
         
@@ -5894,10 +5966,11 @@ function handleTouchEnd(e) {
             // Swipe left - delete set
             deleteSetWithConfirmation(exerciseId, setIndex);
         }
+    } else {
+        // Not a valid swipe, reset position
+        swipingElement.style.transform = '';
     }
     
-    // Reset transform
-    swipingElement.style.transform = '';
     swipingElement = null;
 }
 
@@ -5973,37 +6046,87 @@ function initSpeechRecognition() {
 }
 
 function findExerciseBySpeech(transcript) {
-    // Common Dutch exercise name mappings
+    // Common Dutch exercise name mappings - expanded list
     const exerciseMappings = {
+        // Chest exercises
         'bench press': 'Chest Press',
         'bankdrukken': 'Chest Press',
+        'bankdruk': 'Chest Press',
         'push up': 'Push-up',
         'pushup': 'Push-up',
+        'push ups': 'Push-up',
         'opdrukken': 'Push-up',
+        'opdruk': 'Push-up',
+        'flyes': 'Flyes',
+        'vlinders': 'Flyes',
+        'butterfly': 'Flyes',
+        'chest press': 'Chest Press',
+        'borstpers': 'Chest Press',
+        
+        // Back exercises
+        'pull down': 'Pull Down',
+        'pull down': 'Pull Down',
+        'rugtrekken': 'Pull Down',
+        'rug trek': 'Pull Down',
+        'seated row': 'Seated Row',
+        'rijmachine': 'Seated Row',
+        'one arm row': 'One Arm Row',
+        'eenarmig roeien': 'One Arm Row',
+        'een arm roeien': 'One Arm Row',
+        
+        // Shoulder exercises
+        'shoulder press': 'Shoulder Press',
+        'schouderdrukken': 'Shoulder Press',
+        'schouderdruk': 'Shoulder Press',
+        'front raise': 'Front Side Raise',
+        'front raises': 'Front Side Raise',
+        'voorste heffen': 'Front Side Raise',
+        'side raise': 'Front Side Raise',
+        'zijdse heffen': 'Front Side Raise',
+        
+        // Leg exercises
         'squat': 'Hack Squad',
         'squats': 'Hack Squad',
         'kniebuiging': 'Hack Squad',
-        'deadlift': 'Pull Down',
-        'deadlifts': 'Pull Down',
-        'rugtrekken': 'Pull Down',
-        'pull down': 'Pull Down',
-        'shoulder press': 'Shoulder Press',
-        'schouderdrukken': 'Shoulder Press',
+        'knie buiging': 'Hack Squad',
+        'leg press': 'Leg Press',
+        'beenpers': 'Leg Press',
+        'been pers': 'Leg Press',
+        'leg curl': 'Leg Curl',
+        'hamstring curl': 'Leg Curl',
+        'hamstring': 'Leg Curl',
+        'beenkrul': 'Leg Curl',
+        'hack squat': 'Hack Squad',
+        'hack squat': 'Hack Squad',
+        
+        // Arm exercises
         'bicep curl': 'Biceps Barbell Curl',
         'biceps curl': 'Biceps Barbell Curl',
         'bicep curls': 'Biceps Barbell Curl',
         'biceps curls': 'Biceps Barbell Curl',
         'bizep curl': 'Biceps Barbell Curl',
-        'leg press': 'Leg Press',
-        'beenpers': 'Leg Press',
-        'leg curl': 'Leg Curl',
-        'hamstring curl': 'Leg Curl',
-        'beenkrul': 'Leg Curl'
+        'hammer curl': 'Hammer Curl DB',
+        'hammer curls': 'Hammer Curl DB',
+        'hamer curl': 'Hammer Curl DB',
+        'french press': 'French Press',
+        'french press': 'French Press',
+        'triceps extension': 'Triceps Extension',
+        'triceps extensions': 'Triceps Extension',
+        'triceps': 'Triceps Extension',
+        'incline curl': 'Incl. Dumbbell Curl',
+        'incline curls': 'Incl. Dumbbell Curl',
+        'schuin curl': 'Incl. Dumbbell Curl',
+        'reverse curl': 'Reverse Curl',
+        'reverse curls': 'Reverse Curl',
+        'omgekeerde curl': 'Reverse Curl'
     };
+    
+    // Clean transcript
+    const cleanTranscript = transcript.toLowerCase().trim();
     
     // Check for exact matches first
     for (const [key, value] of Object.entries(exerciseMappings)) {
-        if (transcript.includes(key)) {
+        if (cleanTranscript.includes(key)) {
             // Find the actual exercise object
             const allExercises = getAllExercises();
             const exercise = Object.values(allExercises).find(ex => ex.name === value);

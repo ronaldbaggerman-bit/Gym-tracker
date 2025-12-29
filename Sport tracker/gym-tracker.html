@@ -4326,15 +4326,19 @@ function startRestTimer(seconds = getRestDuration()) {
         overlay.style.display = "flex";
         setTimeout(() => overlay.classList.add("active"), 10);
     }
-    restTimerInterval = setInterval(() => {
+    // Use setTimeout instead of setInterval for more reliable timing
+    function tickTimer() {
         console.log("Timer tick:", restTimerRemaining, "seconds remaining");
         restTimerRemaining = Math.max(0, restTimerRemaining - 1);
         updateRestTimerUI();
         if (restTimerRemaining <= 0) {
             console.log("Timer finished, stopping");
             stopRestTimer(true);
+        } else {
+            restTimerInterval = setTimeout(tickTimer, 1000);
         }
-    }, 1000);
+    }
+    restTimerInterval = setTimeout(tickTimer, 1000);
 }
 
 function refreshRestTimer() {
@@ -4342,7 +4346,9 @@ function refreshRestTimer() {
 }
 
 function stopRestTimer(auto = false) {
+    console.log("stopRestTimer called, auto:", auto, "remaining:", restTimerRemaining);
     if (restTimerInterval) {
+        console.log("Clearing interval");
         clearInterval(restTimerInterval);
         restTimerInterval = null;
     }
@@ -4350,11 +4356,13 @@ function stopRestTimer(auto = false) {
         restTimerRemaining = 0;
         const overlay = document.getElementById("restTimerOverlay");
         if (overlay) {
+            console.log("Hiding overlay manually");
             overlay.classList.remove("active");
             setTimeout(() => overlay.style.display = "none", 300);
         }
     } else {
         // Timer finished automatically, return to the exercise
+        console.log("Timer finished automatically");
         if (currentRestExerciseId) {
             const exercise = currentWorkout?.exercises.find(ex => ex.id === currentRestExerciseId);
             if (exercise) {
@@ -4368,6 +4376,7 @@ function stopRestTimer(auto = false) {
         restTimerRemaining = 0;
         const overlay = document.getElementById("restTimerOverlay");
         if (overlay) {
+            console.log("Hiding overlay automatically");
             overlay.classList.remove("active");
             setTimeout(() => overlay.style.display = "none", 300);
         }
@@ -6000,7 +6009,27 @@ function updateDefaultSets(value) {
 
 // Test function for rest timer overlay
 function testRestTimerOverlay() {
+    // Disable test mode for proper testing
+    const settings = getSettings();
+    if (settings.testMode) {
+        settings.testMode = false;
+        saveSettings(settings);
+        updateTestModeToggle(false);
+        console.log("Test mode disabled for proper timer testing");
+    }
+    
+    console.log("Starting test timer with 10 seconds");
     startRestTimer(10); // Test with 10 seconds
+    
+    // Keep overlay visible for debugging
+    setTimeout(() => {
+        console.log("10 seconds passed, checking if overlay is still visible");
+        const overlay = document.getElementById("restTimerOverlay");
+        console.log("Overlay display:", overlay.style.display);
+        console.log("Overlay classes:", overlay.className);
+        console.log("restTimerRemaining:", restTimerRemaining);
+        console.log("restTimerInterval:", restTimerInterval);
+    }, 10000);
 }
 
 // Initialize on load

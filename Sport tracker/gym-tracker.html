@@ -632,12 +632,12 @@ h1 {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.8);
     display: none;
-    z-index: 1000;
+    z-index: 9999;
     align-items: center;
     justify-content: center;
-    backdrop-filter: blur(2px);
+    backdrop-filter: blur(3px);
 }
 
 .rest-timer-card {
@@ -2668,8 +2668,8 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
 
             <!-- Rest Timer Overlay -->
-            <div class="rest-timer-overlay" id="restTimerOverlay" onclick="stopRestTimer()">
-                <div class="rest-timer-card" id="restTimerCard" onclick="event.stopPropagation()">
+            <div class="rest-timer-overlay" id="restTimerOverlay">
+                <div class="rest-timer-card" id="restTimerCard">
                     <div class="rest-timer-header">
                         <div class="rest-timer-title" id="restTimerLabel">Rust: 1:30</div>
                         <div class="rest-timer-actions">
@@ -4349,11 +4349,10 @@ function startRestTimer(seconds = getRestDuration()) {
     
     // Use setTimeout instead of setInterval for more reliable timing
     function tickTimer() {
-        console.log("Timer tick:", restTimerRemaining, "seconds remaining");
         restTimerRemaining = Math.max(0, restTimerRemaining - 1);
         updateRestTimerUI();
         if (restTimerRemaining <= 0) {
-            console.log("Timer finished, stopping");
+            console.log("Timer finished");
             stopRestTimer(true);
         } else {
             restTimerInterval = setTimeout(tickTimer, 1000);
@@ -4367,10 +4366,10 @@ function refreshRestTimer() {
 }
 
 function stopRestTimer(auto = false) {
-    console.log("stopRestTimer called, auto:", auto, "remaining:", restTimerRemaining);
+    console.log("stopRestTimer called, auto:", auto, "remaining:", restTimerRemaining, "interval:", restTimerInterval);
     if (restTimerInterval) {
         console.log("Clearing interval");
-        clearInterval(restTimerInterval);
+        clearTimeout(restTimerInterval); // Changed from clearInterval to clearTimeout
         restTimerInterval = null;
     }
     if (!auto) {
@@ -4379,7 +4378,10 @@ function stopRestTimer(auto = false) {
         if (overlay) {
             console.log("Hiding overlay manually");
             overlay.classList.remove("active");
-            setTimeout(() => overlay.style.display = "none", 300);
+            setTimeout(() => {
+                overlay.style.display = "none";
+                console.log("Overlay hidden manually");
+            }, 300);
         }
     } else {
         // Timer finished automatically, return to the exercise
@@ -4399,7 +4401,10 @@ function stopRestTimer(auto = false) {
         if (overlay) {
             console.log("Hiding overlay automatically");
             overlay.classList.remove("active");
-            setTimeout(() => overlay.style.display = "none", 300);
+            setTimeout(() => {
+                overlay.style.display = "none";
+                console.log("Overlay hidden automatically");
+            }, 300);
         }
     }
     updateRestTimerUI();
@@ -4408,19 +4413,13 @@ function stopRestTimer(auto = false) {
 function updateRestTimerUI() {
     const progress = document.getElementById("restTimerProgress");
     const label = document.getElementById("restTimerLabel");
-    console.log("updateRestTimerUI called - progress:", progress, "label:", label, "remaining:", restTimerRemaining);
-    if (!progress || !label) {
-        console.error("Progress or label element not found!");
-        return;
-    }
+    if (!progress || !label) return;
     const remaining = Math.max(0, restTimerRemaining || 0);
     const pct = Math.max(0, Math.min(100, restTimerTotal > 0 ? (remaining / restTimerTotal) * 100 : 0));
     progress.style.width = `${pct}%`;
     const m = Math.floor(remaining / 60);
     const s = remaining % 60;
-    const timeText = `Rust: ${m}:${s.toString().padStart(2, '0')}`;
-    label.textContent = timeText;
-    console.log("Updated UI - time:", timeText, "progress:", pct + "%");
+    label.textContent = `Rust: ${m}:${s.toString().padStart(2, '0')}`;
 }
 
 function pad(num) {

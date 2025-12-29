@@ -4327,9 +4327,11 @@ function startRestTimer(seconds = getRestDuration()) {
         setTimeout(() => overlay.classList.add("active"), 10);
     }
     restTimerInterval = setInterval(() => {
+        console.log("Timer tick:", restTimerRemaining, "seconds remaining");
         restTimerRemaining = Math.max(0, restTimerRemaining - 1);
         updateRestTimerUI();
         if (restTimerRemaining <= 0) {
+            console.log("Timer finished, stopping");
             stopRestTimer(true);
         }
     }, 1000);

@@ -6030,66 +6030,8 @@ function testRestTimerOverlay() {
         settings.testMode = false;
         saveSettings(settings);
         updateTestModeToggle(false);
-        console.log("Test mode disabled for proper timer testing");
     }
-    
-    console.log("Starting test timer with 10 seconds");
     startRestTimer(10); // Test with 10 seconds
-    
-    // Keep overlay visible for debugging
-    setTimeout(() => {
-        console.log("10 seconds passed, checking if overlay is still visible");
- 
-
-// Debug function to manually show overlay
-function debugShowOverlay() {
-    console.log("Manually showing overlay for debugging");
-    const overlay = document.getElementById("restTimerOverlay");
-    if (overlay) {
-        overlay.style.display = "flex";
-        overlay.classList.add("active");
-        console.log("Overlay should now be visible");
-        
-        // Set a test timer
-        restTimerRemaining = 10;
-        restTimerTotal = 10;
-        updateRestTimerUI();
-        
-        console.log("Set timer to 10 seconds for testing");
-    } else {
-        console.error("Overlay element not found");
-    }
-}
-
-// Debug function to keep overlay visible
-function debugKeepOverlayVisible() {
-    console.log("Keeping overlay visible for 30 seconds");
-    const overlay = document.getElementById("restTimerOverlay");
-    if (overlay) {
-        overlay.style.display = "flex";
-        overlay.classList.add("active");
-        
-        // Set a test timer
-        restTimerRemaining = 30;
-        restTimerTotal = 30;
-        updateRestTimerUI();
-        
-        // Start a timer that doesn't hide the overlay
-        let count = 30;
-        const interval = setInterval(() => {
-            count--;
-            restTimerRemaining = count;
-            updateRestTimerUI();
-            if (count <= 0) {
-                clearInterval(interval);
-                console.log("Test timer finished, but overlay stays visible");
-            }
-        }, 1000);
-        
-        console.log("Overlay set to stay visible for 30 seconds");
-    } else {
-        console.error("Overlay element not found");
-    }
 }       const overlay = document.getElementById("restTimerOverlay");
         console.log("Overlay display:", overlay.style.display);
         console.log("Overlay classes:", overlay.className);

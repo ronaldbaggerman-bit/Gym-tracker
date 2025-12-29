@@ -4358,25 +4358,20 @@ function stopRestTimer(auto = false) {
             overlay.classList.remove("active");
             setTimeout(() => overlay.style.display = "none", 300);
         }
-            }
+    }
+    updateRestTimerUI();
+}
+
+function updateRestTimerUI() {
+    const progress = document.getElementById("restTimerProgress");
+    const label = document.getElementById("restTimerLabel");
     if (!progress || !label) return;
     const remaining = Math.max(0, restTimerRemaining || 0);
     const pct = Math.max(0, Math.min(100, restTimerTotal > 0 ? (remaining / restTimerTotal) * 100 : 0));
     progress.style.width = `${pct}%`;
     const m = Math.floor(remaining / 60);
     const s = remaining % 60;
-    label.textContent = `Rust: ${m}:${s.toString().padStart(2, '0')}`;onst label = document.getElementById("restTimerLabel");
-    const card = document.getElementById("restTimerCard");
-    if (!progress || !label || !card) return;
-    const remaining = Math.max(0, restTimerRemaining || 0);
-    const pct = Math.max(0, Math.min(100, restTimerTotal > 0 ? (remaining / restTimerTotal) * 100 : 0));
-    progress.style.width = `${pct}%`;
-    const m = Math.floor(remaining / 60);
-    const s = remaining % 60;
     label.textContent = `Rust: ${m}:${s.toString().padStart(2, '0')}`;
-    if (remaining === 0 && !restTimerInterval) {
-        card.style.display = "none";
-    }
 }
 
 function pad(num) {

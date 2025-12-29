@@ -4070,6 +4070,7 @@ function updateSet(exerciseId, setIndex, field, value) {
 }
 
 function toggleSet(exerciseId, setIndex) {
+    console.log("toggleSet called", exerciseId, setIndex);
     const exercise = currentWorkout.exercises.find(ex => ex.id === exerciseId);
     if (!exercise) return;
     
@@ -4084,6 +4085,7 @@ function toggleSet(exerciseId, setIndex) {
     set.completed = !set.completed;
 
     if (set.completed && !wasCompleted) {
+        console.log("Starting rest timer");
         currentRestExerciseId = exerciseId;
         startRestTimer();
         checkAndShowPR(exercise, setIndex);
@@ -4314,12 +4316,16 @@ function updateTimerDisplay() {
 
 // REST TIMER
 function startRestTimer(seconds = getRestDuration()) {
+    console.log("startRestTimer called with", seconds, "seconds");
     stopRestTimer(true);
     restTimerRemaining = seconds;
     restTimerTotal = seconds;
     updateRestTimerUI();
-    const card = document.getElementById("restTimerCard");
-    if (card) card.style.display = "block";
+    const overlay = document.getElementById("restTimerOverlay");
+    if (overlay) {
+        overlay.style.display = "flex";
+        setTimeout(() => overlay.classList.add("active"), 10);
+    }
     restTimerInterval = setInterval(() => {
         restTimerRemaining = Math.max(0, restTimerRemaining - 1);
         updateRestTimerUI();
@@ -4335,7 +4341,12 @@ function refreshRestTimer() {
 
 function stopRestTimer(auto = false) {
     if (restTimerInterval) {
-        clearIoverlay = document.getElementById("restTimerOverlay");
+        clearInterval(restTimerInterval);
+        restTimerInterval = null;
+    }
+    if (!auto) {
+        restTimerRemaining = 0;
+        const overlay = document.getElementById("restTimerOverlay");
         if (overlay) {
             overlay.classList.remove("active");
             setTimeout(() => overlay.style.display = "none", 300);

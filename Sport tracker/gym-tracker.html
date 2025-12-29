@@ -640,8 +640,21 @@ h1 {
     backdrop-filter: blur(2px);
 }
 
-.rest-timer-card {1.5rem;
-    gap: 0.75rem;
+.rest-timer-card {
+    background: var(--dark-card);
+    border: 2px solid var(--primary);
+    border-radius: 24px;
+    padding: 2rem;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    max-width: 320px;
+    width: 90%;
+    text-align: center;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.rest-timer-overlay.active .rest-timer-card {
+    transform: scale(1);
 }
 
 .rest-timer-title {
@@ -6038,7 +6051,20 @@ function testRestTimerOverlay() {
     // Keep overlay visible for debugging
     setTimeout(() => {
         console.log("10 seconds passed, checking if overlay is still visible");
-        const overlay = document.getElementById("restTimerOverlay");
+ 
+
+// Debug function to manually show overlay
+function debugShowOverlay() {
+    console.log("Manually showing overlay for debugging");
+    const overlay = document.getElementById("restTimerOverlay");
+    if (overlay) {
+        overlay.style.display = "flex";
+        overlay.classList.add("active");
+        console.log("Overlay should now be visible");
+    } else {
+        console.error("Overlay element not found");
+    }
+}       const overlay = document.getElementById("restTimerOverlay");
         console.log("Overlay display:", overlay.style.display);
         console.log("Overlay classes:", overlay.className);
         console.log("restTimerRemaining:", restTimerRemaining);

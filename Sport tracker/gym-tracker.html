@@ -3662,7 +3662,7 @@ label.invalid {
 
 <script>
 // APP VERSION
-const APP_VERSION = "2025-12-30-04";
+const APP_VERSION = "2025-12-30-05";
 
 // AUDIO CONTEXT for haptic feedback fallbacks
 let audioContext = null;
@@ -4260,6 +4260,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
 
+                <div class="settings-item">
+                    <div class="settings-label">
+                        <span>Spraakherkenning</span>
+                        <span class="settings-description">Microfoonknop voor gesproken oefeningen</span>
+                    </div>
+                    <div class="settings-control">
+                        <div class="toggle-switch" id="voiceRecognitionToggle" onclick="toggleVoiceRecognition()" title="Toggle voice recognition">
+                            <span class="toggle-icon">🔇</span>
+                            <div class="toggle-slider"></div>
+                            <span class="toggle-icon">🎤</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="settings-divider"></div>
 
                 <h3>📦 Backup & Synchronisatie</h3>
@@ -4776,7 +4790,8 @@ function getSettings() {
         metValue: 4.5,
         defaultSets: 3,
         loggingEnabled: false,
-        testMode: false
+        testMode: false,
+        voiceRecognitionEnabled: false
     };
     const stored = localStorage.getItem("gym_settings");
     return stored ? { ...defaults, ...JSON.parse(stored) } : defaults;
@@ -5297,7 +5312,12 @@ function init() {
     
     // Initialize mobile enhancements
     initSwipeGestures();
-    initSpeechRecognition();
+    
+    // Initialize voice recognition only if enabled in settings
+    const settings = getSettings();
+    if (settings.voiceRecognitionEnabled) {
+        initSpeechRecognition();
+    }
 
     // Initialize iOS 17+ features
     console.log('🚀 Initializing iOS 17+ features...');
@@ -9391,6 +9411,16 @@ function toggleTestMode() {
     updateTestModeToggle(newTestMode);
 }
 
+function toggleVoiceRecognition() {
+    const settings = getSettings();
+    const newVoiceEnabled = !settings.voiceRecognitionEnabled;
+    settings.voiceRecognitionEnabled = newVoiceEnabled;
+    saveSettings(settings);
+    updateVoiceRecognitionToggle(newVoiceEnabled);
+    // Update FAB visibility
+    updateVoiceFABVisibility(newVoiceEnabled);
+}
+
 function updateThemeToggle(isDarkMode) {
     const toggle = document.getElementById('themeToggle');
     if (toggle) {
@@ -9405,7 +9435,14 @@ function updateLoggingToggle(isLoggingEnabled) {
         toggle.classList.toggle('active', isLoggingEnabled);
     }
     const logBtn = document.getElementById('showConsoleLogBtn');
-    if (logBtn) {
+ 
+
+function updateVoiceRecognitionToggle(isVoiceEnabled) {
+    const toggle = document.getElementById('voiceRecognitionToggle');
+    if (toggle) {
+        toggle.classList.toggle('active', isVoiceEnabled);
+    }
+}   if (logBtn) {
         logBtn.style.display = isLoggingEnabled ? 'block' : 'none';
     }
 }
@@ -9414,6 +9451,20 @@ function updateTestModeToggle(isTestMode) {
     const toggle = document.getElementById('testModeToggle');
     if (toggle) {
         toggle.classList.toggle('active', isTestMode);
+    }
+}
+
+function updateVoiceRecognitionToggle(isVoiceEnabled) {
+    const toggle = document.getElementById('voiceRecognitionToggle');
+    if (toggle) {
+        toggle.classList.toggle('active', isVoiceEnabled);
+    }
+}
+
+function updateVoiceFABVisibility(isVisible) {
+    const voiceFAB = document.getElementById('fabVoiceAdd');
+    if (voiceFAB) {
+        voiceFAB.style.display = isVisible ? 'flex' : 'none';
     }
 }
 
@@ -9428,6 +9479,9 @@ function updateSettingsUI() {
     }
     
     // Update body weight input
+    
+    // Update voice recognition toggle
+    updateVoiceRecognitionToggle(settings.voiceRecognitionEnabled);
     const bodyWeightInput = document.getElementById('bodyWeightInput');
     if (bodyWeightInput) {
         bodyWeightInput.value = settings.bodyWeight;

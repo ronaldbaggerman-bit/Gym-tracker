@@ -3662,7 +3662,7 @@ label.invalid {
 
 <script>
 // APP VERSION
-const APP_VERSION = "2025-12-30-01";
+const APP_VERSION = "2025-12-30-02";
 
 // AUDIO CONTEXT for haptic feedback fallbacks
 let audioContext = null;
@@ -8341,43 +8341,81 @@ function tryVibration(pattern) {
 function audioFeedback(pattern) {
     console.log('🔊 Using audio feedback for haptic simulation');
 
+    // Check device type for different audio handling
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
+
+    console.log('📱 Device detection - iOS:', isIOS, 'Android:', isAndroid);
+
     try {
-        // Create a new audio context for immediate playback (like forceAudioFeedback)
+        // Create a new audio context for immediate playback
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        // Resume if suspended (required for autoplay policies)
-        if (audioCtx.state === 'suspended') {
+        // Different handling for different platforms
+        if (isAndroid) {
+            // Android is stricter - try a more aggressive approach
+            console.log('🤖 Android detected - using aggressive audio approach');
+
+            // Force resume and play immediately, don't wait for promise
             audioCtx.resume().then(() => {
-                playAudioFeedback(audioCtx, pattern);
+                console.log('✅ Android audio context resumed');
+                playAudioFeedback(audioCtx, pattern, true); // Pass flag for Android
             }).catch(error => {
-                console.error('❌ Failed to resume audio context:', error);
-                enhancedVisualFeedback(pattern);
+                console.error('❌ Android audio resume failed:', error);
+                // Try playing anyway
+                playAudioFeedback(audioCtx, pattern, true);
             });
+
+            // Also try playing immediately without waiting
+            setTimeout(() => {
+                if (audioCtx.state === 'running') {
+                    playAudioFeedback(audioCtx, pattern, true);
+                }
+            }, 100);
+
         } else {
-            playAudioFeedback(audioCtx, pattern);
+            // iOS and other platforms - standard approach
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume().then(() => {
+                    playAudioFeedback(audioCtx, pattern, false);
+                }).catch(error => {
+                    console.error('❌ Failed to resume audio context:', error);
+                    enhancedVisualFeedback(pattern);
+                });
+            } else {
+                playAudioFeedback(audioCtx, pattern, false);
+            }
         }
 
-        function playAudioFeedback(ctx, pattern) {
+        function playAudioFeedback(ctx, pattern, isAndroid = false) {
             try {
                 const oscillator = ctx.createOscillator();
                 const gainNode = ctx.createGain();
 
-                // Configure for tactile-like feedback (low frequency, more audible)
-                oscillator.frequency.setValueAtTime(200, ctx.currentTime); // Slightly higher for better audibility
-                oscillator.type = 'sine';
-
-                // Longer, more audible envelope
-                gainNode.gain.setValueAtTime(0, ctx.currentTime);
-                gainNode.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.01); // Louder
-                gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15); // Longer decay
+                // Different settings for Android vs iOS
+                if (isAndroid) {
+                    // Android: Higher frequency, louder, longer for better audibility
+                    oscillator.frequency.setValueAtTime(400, ctx.currentTime);
+                    oscillator.type = 'square'; // Square wave is more audible on Android
+                    gainNode.gain.setValueAtTime(0, ctx.currentTime);
+                    gainNode.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 0.01); // Much louder
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3); // Longer
+                    oscillator.stop(ctx.currentTime + 0.3);
+                } else {
+                    // iOS: Original settings
+                    oscillator.frequency.setValueAtTime(200, ctx.currentTime);
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0, ctx.currentTime);
+                    gainNode.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.01);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+                    oscillator.stop(ctx.currentTime + 0.15);
+                }
 
                 oscillator.connect(gainNode);
                 gainNode.connect(ctx.destination);
-
                 oscillator.start(ctx.currentTime);
-                oscillator.stop(ctx.currentTime + 0.15);
 
-                console.log('✅ Audio feedback played');
+                console.log(`✅ Audio feedback played (${isAndroid ? 'Android' : 'iOS'} mode)`);
 
                 // Add visual indicator for audio feedback
                 const indicator = document.createElement('div');

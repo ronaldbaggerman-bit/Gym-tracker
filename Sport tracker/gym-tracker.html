@@ -3676,7 +3676,7 @@ function initAudioContext() {
             console.error('❌ Failed to initialize audio context:', error);
         }
     }
-    
+
     // Resume context if suspended (required by browser autoplay policies)
     if (audioContext && audioContext.state === 'suspended') {
         audioContext.resume().then(() => {
@@ -3685,6 +3685,8 @@ function initAudioContext() {
             console.error('❌ Failed to resume audio context:', error);
         });
     }
+
+    return audioContext;
 }
 
 // Voeg automatisch een test custom schema toe als er nog geen custom schemas zijn
@@ -10023,6 +10025,13 @@ function testSimpleVibration() {
 
     if ('vibrate' in navigator) {
         try {
+            // Check if we're in PWA mode (required for iOS vibration)
+            const isPWA = window.navigator.standalone === true ||
+                         window.matchMedia('(display-mode: standalone)').matches ||
+                         document.referrer.includes('android-app://');
+
+            console.log('📱 PWA mode for vibration:', isPWA);
+
             // Simple vibration test
             const result = navigator.vibrate(200);
             console.log('🎯 Simple vibration result:', result);
@@ -10030,7 +10039,7 @@ function testSimpleVibration() {
             if (result !== false) {
                 showToast('✅ Simpele vibratie gelukt!', 'success');
             } else {
-                showToast('❌ Simpele vibratie mislukt', 'error');
+                showToast('❌ Simpele vibratie mislukt - mogelijk PWA vereist', 'error');
             }
         } catch (error) {
             console.error('❌ Simple vibration error:', error);
@@ -10045,34 +10054,61 @@ function forceAudioFeedback() {
     console.log('🔊 Forcing audio feedback...');
 
     try {
-        // Initialize audio context if needed
-        initAudioContext();
-        
+        // Force initialize audio context if not already done
         if (!audioContext) {
-            console.error('❌ No audio context available');
-            showToast('❌ Audio context niet beschikbaar', 'error');
-            return;
+            console.log('🎵 Initializing audio context on demand...');
+            initAudioContext();
         }
 
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
+        // Wait a bit for initialization if needed
+        setTimeout(() => {
+            if (!audioContext) {
+                console.error('❌ No audio context available after init');
+                showToast('❌ Audio context niet beschikbaar - klik eerst ergens in de app', 'error');
+                return;
+            }
 
-        // Configure for tactile-like feedback (more audible)
-        oscillator.frequency.setValueAtTime(300, audioContext.currentTime); // Higher frequency for better audibility
-        oscillator.type = 'sine';
+            // Check if audio context needs to be resumed
+            if (audioContext.state === 'suspended') {
+                console.log('🎵 Resuming suspended audio context...');
+                audioContext.resume().then(() => {
+                    playAudioFeedback();
+                }).catch(error => {
+                    console.error('❌ Failed to resume audio context:', error);
+                    showToast('❌ Audio context kon niet worden hervat', 'error');
+                });
+            } else {
+                playAudioFeedback();
+            }
+        }, 100);
 
-        // Louder envelope for better audibility
-        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0.4, audioContext.currentTime + 0.01); // Much louder
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2); // Longer
+        function playAudioFeedback() {
+            try {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
 
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
+                // Configure for tactile-like feedback (more audible)
+                oscillator.frequency.setValueAtTime(400, audioContext.currentTime); // Even higher frequency for better audibility
+                oscillator.type = 'sine';
 
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.2);
+                // Very loud envelope for guaranteed audibility
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.8, audioContext.currentTime + 0.01); // Very loud
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3); // Longer
 
-        showToast('🔊 Audio feedback afgespeeld - hoor je het?', 'info');
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+
+                console.log('✅ Audio feedback played successfully');
+                showToast('🔊 Audio feedback afgespeeld - hoor je de piep?', 'success');
+            } catch (error) {
+                console.error('❌ Audio playback failed:', error);
+                showToast('❌ Audio afspelen mislukt: ' + error.message, 'error');
+            }
+        }
     } catch (error) {
         console.error('❌ Force audio feedback failed:', error);
         showToast('❌ Audio feedback mislukt: ' + error.message, 'error');
@@ -10158,10 +10194,10 @@ function forceVisualFeedback() {
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(255, 193, 7, 0.6);
+        background: rgba(255, 193, 7, 0.8);
         z-index: 10000;
         pointer-events: none;
-        animation: flash 0.6s ease-out;
+        animation: flash 0.8s ease-out;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -10171,15 +10207,16 @@ function forceVisualFeedback() {
     visualIndicator.style.cssText = `
         background: rgba(255, 255, 255, 0.95);
         color: #F39C12;
-        padding: 25px 35px;
-        border-radius: 20px;
-        font-size: 20px;
+        padding: 30px 40px;
+        border-radius: 25px;
+        font-size: 24px;
         font-weight: bold;
         text-align: center;
-        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
-        animation: bounceIn 0.4s ease-out;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+        animation: bounceIn 0.5s ease-out;
+        border: 4px solid #F39C12;
     `;
-    visualIndicator.textContent = '💫 VISUELE FEEDBACK!';
+    visualIndicator.textContent = '💫 SCHERM TRILT!';
     visualOverlay.appendChild(visualIndicator);
     document.body.appendChild(visualOverlay);
 
@@ -10188,34 +10225,41 @@ function forceVisualFeedback() {
         if (visualOverlay.parentNode) {
             visualOverlay.remove();
         }
-    }, 1000);
+    }, 1200);
 
-    // Create a visual vibration effect on the body
+    // Create a more intense visual vibration effect on the body
     const body = document.body;
     const originalTransform = body.style.transform || '';
 
-    // More noticeable vibration animation
-    body.style.transition = 'transform 0.08s ease-in-out';
-    body.style.transform = originalTransform + ' translateX(5px) scale(1.03)';
+    // More intense vibration animation sequence
+    const vibrateSequence = [
+        { transform: 'translateX(8px) scale(1.05)', duration: 60 },
+        { transform: 'translateX(-8px) scale(1.03)', duration: 60 },
+        { transform: 'translateX(6px) scale(1.04)', duration: 60 },
+        { transform: 'translateX(-6px) scale(1.02)', duration: 60 },
+        { transform: 'translateX(4px) scale(1.03)', duration: 60 },
+        { transform: 'translateX(-4px) scale(1.01)', duration: 60 },
+        { transform: 'translateX(2px) scale(1.02)', duration: 60 },
+        { transform: originalTransform, duration: 60 }
+    ];
 
-    setTimeout(() => {
-        body.style.transform = originalTransform + ' translateX(-5px) scale(1.01)';
-    }, 80);
+    body.style.transition = 'transform 0.06s ease-in-out';
 
-    setTimeout(() => {
-        body.style.transform = originalTransform + ' translateX(3px) scale(1.02)';
-    }, 160);
+    let delay = 0;
+    vibrateSequence.forEach((step, index) => {
+        setTimeout(() => {
+            body.style.transform = originalTransform + ' ' + step.transform;
+        }, delay);
+        delay += step.duration;
+    });
 
-    setTimeout(() => {
-        body.style.transform = originalTransform + ' translateX(-3px) scale(1.01)';
-    }, 240);
-
+    // Reset after sequence
     setTimeout(() => {
         body.style.transform = originalTransform;
         body.style.transition = '';
-    }, 320);
+    }, delay + 100);
 
-    showToast('💫 Visuele feedback geforceerd', 'warning');
+    showToast('💫 Visuele feedback: scherm trilt!', 'warning');
 }
 
 function testAlternativeFeedback() {

@@ -334,6 +334,49 @@ h1 {
     transform: scale(0.95);
 }
 
+/* Beheer Tabs */
+.beheer-container {
+    padding: 1rem;
+}
+
+.beheer-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1rem;
+}
+
+.beheer-tab {
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    background: var(--dark-card);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    flex: 1;
+    text-align: center;
+}
+
+.beheer-tab.active {
+    background: var(--primary);
+    color: var(--dark);
+    border-color: var(--primary);
+    box-shadow: 0 2px 8px rgba(184, 230, 184, 0.3);
+}
+
+.beheer-tab:not(.active):hover {
+    background: var(--dark-elevated);
+    border-color: var(--primary-light);
+}
+
+.beheer-content {
+    /* Content will be populated by switchBeheerView */
+}
+
 /* View Management */
 .view {
     display: none;
@@ -3662,7 +3705,7 @@ label.invalid {
 
 <script>
 // APP VERSION
-const APP_VERSION = "2025-12-30-05";
+const APP_VERSION = "2025-12-30-06";
 
 // AUDIO CONTEXT for haptic feedback fallbacks
 let audioContext = null;
@@ -3784,11 +3827,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <button class="tab" data-view="history" onclick="switchView('history')"> Historie</button>
             <button class="tab" data-view="progress" onclick="switchView('progress')"> Progressie</button>
             <button class="tab" data-view="prs" onclick="switchView('prs')"> 🏆 PRs</button>
-            <button class="tab" data-view="goals" onclick="switchView('goals')"> 🎯 Doelen</button>
-            <button class="tab" data-view="analytics" onclick="switchView('analytics')"> 📊 Analytics</button>
-            <button class="tab" data-view="statistics" onclick="switchView('statistics')"> Statistieken</button>
-            <button class="tab" data-view="exercises" onclick="switchView('exercises')"> 💪 Oefeningen</button>
-            <button class="tab" data-view="schemas" onclick="switchView('schemas')"> 📋 Schema beheer</button>
+            <button class="tab" data-view="beheer" onclick="switchView('beheer')"> 🛠️ Beheer</button>
             <button class="tab" data-view="settings" onclick="switchView('settings')"> ⚙️ Instellingen</button>
         </div>
         <!-- Schema beheer View wordt verplaatst naar buiten de header, op gelijk niveau met andere views -->
@@ -4148,6 +4187,21 @@ document.addEventListener('DOMContentLoaded', function() {
         <div id="prsContainer"></div>
     </div>
 
+    <!-- Beheer View -->
+    <div id="beheerView" class="view">
+        <div class="beheer-container">
+            <div class="beheer-tabs">
+                <button class="beheer-tab active" data-beheer-view="goals" onclick="switchBeheerView('goals')">🎯 Doelen</button>
+                <button class="beheer-tab" data-beheer-view="statistics" onclick="switchBeheerView('statistics')">📊 Statistieken</button>
+                <button class="beheer-tab" data-beheer-view="exercises" onclick="switchBeheerView('exercises')">💪 Oefeningen</button>
+                <button class="beheer-tab" data-beheer-view="schemas" onclick="switchBeheerView('schemas')">📋 Schema beheer</button>
+            </div>
+            <div class="beheer-content">
+                <!-- Content will be switched here -->
+            </div>
+        </div>
+    </div>
+
     <!-- Goals View -->
     <div id="goalsView" class="view">
         <div class="goals-header">
@@ -4467,7 +4521,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         </div>
         <div class="modal-footer">
-            <button class="btn bt7-secondary" onclick="closeFinishWorkoutModal()">Annuleren</button>
+            <button class="btn btn-secondary" onclick="closeFinishWorkoutModal()">Annuleren</button>
             <button class="btn btn-primary" onclick="confirmFinishWorkout()">Ja, Voltooien</button>
         </div>
     </div>
@@ -5318,6 +5372,9 @@ function init() {
     if (settings.voiceRecognitionEnabled) {
         initSpeechRecognition();
     }
+    
+    // Set voice FAB visibility based on settings
+    updateVoiceFABVisibility(settings.voiceRecognitionEnabled);
 
     // Initialize iOS 17+ features
     console.log('🚀 Initializing iOS 17+ features...');
@@ -9155,7 +9212,8 @@ function switchView(viewName) {
         "statistics": "statisticsView",
         "exercises": "exercisesView",
         "settings": "settingsView",
-        "schemas": "schemasView"
+        "schemas": "schemasView",
+        "beheer": "beheerView"
     };
     
     const targetViewId = viewMap[viewName];
@@ -9180,12 +9238,61 @@ function switchView(viewName) {
     } else if (viewName === "schemas") {
         // Render schema beheer UI when switching to schemas
         try { renderCustomSchemasList(); } catch (e) { console.warn('renderCustomSchemasList failed', e); }
+    } else if (viewName === "beheer") {
+        // Initialize beheer view with goals as default
+        switchBeheerView('goals');
     } else if (viewName !== "workout") {
         // Hide FAB unless in exercises view or workout view (workout view handles FAB in selectSchema)
         document.getElementById("fabAddExercise").classList.remove("visible");
         document.getElementById("fabVoiceAdd").classList.remove("visible");
     }
     if (viewName === "settings") updateSettingsUI();
+}
+
+function switchBeheerView(beheerViewName) {
+    // Update beheer tabs
+    document.querySelectorAll('.beheer-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    const activeTab = document.querySelector(`.beheer-tab[data-beheer-view="${beheerViewName}"]`);
+    if (activeTab) {
+        activeTab.classList.add('active');
+    }
+    
+    // Clear current content
+    const beheerContent = document.querySelector('.beheer-content');
+    if (!beheerContent) return;
+    beheerContent.innerHTML = '';
+    
+    // Clone content from original view
+    const sourceViewId = beheerViewName + 'View';
+    const sourceView = document.getElementById(sourceViewId);
+    if (sourceView) {
+        const clonedContent = sourceView.cloneNode(true);
+        // Remove the id to avoid duplicates
+        clonedContent.removeAttribute('id');
+        // Remove the view class to avoid conflicts
+        clonedContent.classList.remove('view');
+        beheerContent.appendChild(clonedContent);
+        
+        // Call appropriate render function
+        switch (beheerViewName) {
+            case 'goals':
+                renderGoals();
+                break;
+            case 'statistics':
+                renderStatistics();
+                break;
+            case 'exercises':
+                renderExercisesList();
+                document.getElementById("fabAddExercise").classList.add("visible");
+                document.getElementById("fabVoiceAdd").classList.add("visible");
+                break;
+            case 'schemas':
+                try { renderCustomSchemasList(); } catch (e) { console.warn('renderCustomSchemasList failed', e); }
+                break;
+        }
+    }
 }
 
 // Ensure a view is visible after full load (defensive, avoids black screen)

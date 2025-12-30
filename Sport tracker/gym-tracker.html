@@ -5208,12 +5208,23 @@ function init() {
     initSpeechRecognition();
 
     // Initialize iOS 17+ features
+    console.log('🚀 Initializing iOS 17+ features...');
     setupActionButton();
     setupCameraControl();
 
-    // Check for iOS 17+ features
-    if (navigator.userAgent.includes('iPhone') && navigator.userAgent.includes('17')) {
-        console.log('iOS 17+ detected - enabling advanced features');
+    // Check for iOS 17+ features with improved detection
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isIOS17Plus = isIOS && /OS 1[7-9]|OS 2[0-9]/.test(navigator.userAgent);
+
+    console.log('📱 Device detection - iOS:', isIOS, 'iOS 17+:', isIOS17Plus);
+    console.log('🌐 Full User Agent:', navigator.userAgent);
+
+    if (isIOS17Plus) {
+        console.log('✅ iOS 17+ detected - enabling advanced features');
+    } else if (isIOS) {
+        console.log('📱 iOS detected but not 17+ - limited features available');
+    } else {
+        console.log('💻 Non-iOS device detected');
     }
 }
 
@@ -8128,31 +8139,56 @@ function renderVolumeChart(history) {
 // MOBILE ENHANCEMENTS
 // Enhanced haptic feedback for iPhone 17 and modern devices
 function hapticFeedback(pattern = [50]) {
-    // Enhanced haptic feedback for iOS 17+ devices
+    console.log('🔄 hapticFeedback called with pattern:', pattern);
+
+    // Check if vibration is supported
     if ('vibrate' in navigator) {
-        // Check for iOS 17+ advanced haptic patterns
-        if (navigator.userAgent.includes('iPhone') && navigator.userAgent.includes('17')) {
-            // Use more sophisticated patterns for iPhone 17
-            console.log('🎯 iOS 17+ haptic feedback:', pattern);
-            navigator.vibrate(pattern);
-        } else {
-            // Fallback for older devices
-            console.log('📳 Standard haptic feedback:', pattern);
-            navigator.vibrate(pattern);
+        console.log('✅ Vibration API available');
+
+        // Check for iOS devices (more flexible detection)
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isIOS17Plus = isIOS && /OS 1[7-9]|OS 2[0-9]/.test(navigator.userAgent);
+
+        console.log('📱 iOS detected:', isIOS, 'iOS 17+:', isIOS17Plus);
+
+        try {
+            if (isIOS17Plus) {
+                // Use more sophisticated patterns for iPhone 17+
+                console.log('🎯 iOS 17+ haptic feedback:', pattern);
+                navigator.vibrate(pattern);
+            } else if (isIOS) {
+                // Standard iOS haptic feedback
+                console.log('📱 iOS haptic feedback:', pattern);
+                navigator.vibrate(pattern);
+            } else {
+                // Android and other devices
+                console.log('🤖 Android/other haptic feedback:', pattern);
+                navigator.vibrate(pattern);
+            }
+        } catch (error) {
+            console.error('❌ Vibration error:', error);
         }
     } else {
-        console.log('⚠️ Haptic feedback not supported');
+        console.log('❌ Haptic feedback not supported - vibrate API not available');
     }
 }
 
 // Dynamic Island support for iPhone 14 Pro+ workout timer
 // Note: Dynamic Island is a native iOS feature, this is a simulation for demo purposes
 function updateDynamicIsland() {
-    if (currentWorkout) {
-        // Check if we're on iOS 17+ where Dynamic Island might be available
-        const isIOS17 = navigator.userAgent.includes('iPhone') && navigator.userAgent.includes('17');
+    console.log('🏝️ updateDynamicIsland called');
 
-        if (isIOS17) {
+    if (currentWorkout) {
+        console.log('✅ Current workout exists');
+
+        // More flexible iOS detection
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isIOS17Plus = isIOS && /OS 1[7-9]|OS 2[0-9]/.test(navigator.userAgent);
+
+        console.log('📱 iOS detected:', isIOS, 'iOS 17+:', isIOS17Plus);
+        console.log('🌐 User Agent:', navigator.userAgent);
+
+        if (isIOS17Plus) {
             console.log('🏝️ Dynamic Island update requested (iOS 17+ detected)');
 
             if (timerRunning) {
@@ -8180,15 +8216,22 @@ function updateDynamicIsland() {
         } else {
             console.log('ℹ️ Dynamic Island not available (requires iOS 17+)');
         }
+    } else {
+        console.log('❌ No current workout');
     }
 }
 
 // Action Button support for iPhone 15 Pro+
 // Note: Action Button is a native iOS feature, this is a simulation for demo purposes
 function setupActionButton() {
-    const isIOS17 = navigator.userAgent.includes('iPhone') && navigator.userAgent.includes('17');
+    console.log('🔘 setupActionButton called');
 
-    if (isIOS17) {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isIOS17Plus = isIOS && /OS 1[7-9]|OS 2[0-9]/.test(navigator.userAgent);
+
+    console.log('📱 iOS detected:', isIOS, 'iOS 17+:', isIOS17Plus);
+
+    if (isIOS17Plus) {
         console.log('🔘 Action Button setup requested (iOS 17+ detected)');
         console.log('🏋️‍♂️ Action: Start Quick Workout');
 
@@ -8202,9 +8245,14 @@ function setupActionButton() {
 // Camera Control support for iPhone 15 Pro Max
 // Note: Camera Control is a native iOS feature, this is a simulation for demo purposes
 function setupCameraControl() {
-    const isIOS17 = navigator.userAgent.includes('iPhone') && navigator.userAgent.includes('17');
+    console.log('📷 setupCameraControl called');
 
-    if (isIOS17) {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isIOS17Plus = isIOS && /OS 1[7-9]|OS 2[0-9]/.test(navigator.userAgent);
+
+    console.log('📱 iOS detected:', isIOS, 'iOS 17+:', isIOS17Plus);
+
+    if (isIOS17Plus) {
         console.log('📷 Camera Control setup requested (iOS 17+ detected)');
         console.log('💪 Actions: Complete Set, Next Exercise');
 

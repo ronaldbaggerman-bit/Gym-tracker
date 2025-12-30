@@ -2957,6 +2957,9 @@ body.swipe-active {
 </div></div>
 
 <script>
+// APP VERSION
+const APP_VERSION = "2025-12-17-13";
+
 // Voeg automatisch een test custom schema toe als er nog geen custom schemas zijn
 document.addEventListener('DOMContentLoaded', function() {
     try {
@@ -6996,7 +6999,7 @@ function renderAnalytics() {
         return;
     }
     
-    const analytics = calculateAnalytics(filteredHistory);
+    const analytics = calculateAnalytics(filteredHistory, cutoffDate);
     
     container.innerHTML = `
         <div class="analytics-insight">
@@ -7108,7 +7111,7 @@ function renderAnalytics() {
     renderVolumeChart(filteredHistory);
 }
 
-function calculateAnalytics(history) {
+function calculateAnalytics(history, cutoffDate) {
     const now = new Date();
     
     // Workout patterns
@@ -7919,6 +7922,12 @@ function updateSettingsUI() {
     const settings = getSettings();
     const isDarkMode = !document.body.classList.contains('light-mode');
     
+    // Update app version
+    const versionEl = document.getElementById('appVersionText');
+    if (versionEl) {
+        versionEl.textContent = APP_VERSION;
+    }
+    
     // Update body weight input
     const bodyWeightInput = document.getElementById('bodyWeightInput');
     if (bodyWeightInput) {
@@ -7955,6 +7964,106 @@ function updateDefaultSets(value) {
     const settings = getSettings();
     settings.defaultSets = sets;
     saveSettings(settings);
+}
+
+// DATA EXPORT/IMPORT FUNCTIONS
+function exportBackup() {
+    try {
+        const backup = {
+            version: APP_VERSION,
+            timestamp: new Date().toISOString(),
+            data: {
+                workout_history: getWorkoutHistory(),
+                workout_prs: getPRs(),
+                workout_goals: getGoals(),
+                workout_templates: getWorkoutTemplates(),
+                gym_custom_exercises: getCustomExercises(),
+                gym_custom_schemas: getCustomSchemas(),
+                gym_settings: getSettings()
+            }
+        };
+        
+        const dataStr = JSON.stringify(backup, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `gym-tracker-backup-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        showToast("Backup geëxporteerd!", "success");
+    } catch (error) {
+        console.error("Export error:", error);
+        showToast("Export mislukt: " + error.message, "error");
+    }
+}
+
+function importBackup() {
+    const input = document.getElementById('importFileInput');
+    if (input) {
+        input.click();
+    }
+}
+
+function handleImportFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const backup = JSON.parse(e.target.result);
+            
+            // Validate backup structure
+            if (!backup.data || typeof backup.data !== 'object') {
+                throw new Error("Ongeldige backup structuur");
+            }
+            
+            // Confirm import
+            if (!confirm("Weet je zeker dat je deze backup wilt importeren? Dit overschrijft al je huidige data!")) {
+                return;
+            }
+            
+            // Import data
+            if (backup.data.workout_history) {
+                localStorage.setItem("workout_history", JSON.stringify(backup.data.workout_history));
+            }
+            if (backup.data.workout_prs) {
+                localStorage.setItem("workout_prs", JSON.stringify(backup.data.workout_prs));
+            }
+            if (backup.data.workout_goals) {
+                localStorage.setItem("workout_goals", JSON.stringify(backup.data.workout_goals));
+            }
+            if (backup.data.workout_templates) {
+                localStorage.setItem("workout_templates", JSON.stringify(backup.data.workout_templates));
+            }
+            if (backup.data.gym_custom_exercises) {
+                localStorage.setItem("gym_custom_exercises", JSON.stringify(backup.data.gym_custom_exercises));
+            }
+            if (backup.data.gym_custom_schemas) {
+                localStorage.setItem("gym_custom_schemas", JSON.stringify(backup.data.gym_custom_schemas));
+            }
+            if (backup.data.gym_settings) {
+                localStorage.setItem("gym_settings", JSON.stringify(backup.data.gym_settings));
+            }
+            
+            showToast("Backup geïmporteerd! Herlaad de app om wijzigingen te zien.", "success");
+            
+            // Optional: reload after short delay
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+            
+        } catch (error) {
+            console.error("Import error:", error);
+            showToast("Import mislukt: " + error.message, "error");
+        }
+    };
+    reader.readAsText(file);
 }
 
 // Test function for rest timer overlay

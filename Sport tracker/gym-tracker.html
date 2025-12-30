@@ -33,6 +33,11 @@
         <b>Console Log</b>
         <button onclick="document.getElementById('console-log-overlay').style.display='none'" style="background:#222;color:#fff;border:none;padding:2px 10px;border-radius:6px;">Sluiten</button>
     </div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+        <button onclick="testHapticFeedback()" style="background:#4A90E2;color:#000;border:none;padding:4px 8px;border-radius:4px;font-size:11px;">Test Haptic</button>
+        <button onclick="testDynamicIsland()" style="background:#2ECC71;color:#000;border:none;padding:4px 8px;border-radius:4px;font-size:11px;">Test Island</button>
+        <button onclick="document.getElementById('console-log-content').innerHTML=''" style="background:#E74C3C;color:#fff;border:none;padding:4px 8px;border-radius:4px;font-size:11px;">Clear</button>
+    </div>
     <div id="console-log-content"></div>
 </div>
 <button id="showConsoleLogBtn" onclick="document.getElementById('console-log-overlay').style.display='block'" style="position:fixed;bottom:12px;right:12px;z-index:99999;background:#4A90E2;color:#000;font-weight:bold;border:none;padding:8px 14px;border-radius:20px;box-shadow:0 2px 8px #000;display:none;">Log</button>
@@ -3637,7 +3642,7 @@ label.invalid {
 
 <script>
 // APP VERSION
-const APP_VERSION = "2025-12-17-17";
+const APP_VERSION = "2025-12-17-18";
 
 // Voeg automatisch een test custom schema toe als er nog geen custom schemas zijn
 document.addEventListener('DOMContentLoaded', function() {
@@ -5214,13 +5219,25 @@ function init() {
 
     // Check for iOS 17+ features with improved detection
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isIOS17Plus = isIOS && /OS 1[7-9]|OS 2[0-9]/.test(navigator.userAgent);
+    const iOSVersion = navigator.userAgent.match(/OS (\d+)_/)?.[1];
+    const isIOS17Plus = isIOS && iOSVersion && parseInt(iOSVersion) >= 17;
+    const isDynamicIslandDevice = isIOS && /iPhone1[4-9]|iPhone2[0-9]/.test(navigator.userAgent); // iPhone 14 Pro+
+    const isPWA = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
 
-    console.log('📱 Device detection - iOS:', isIOS, 'iOS 17+:', isIOS17Plus);
+    console.log('📱 Device detection:');
+    console.log('  - iOS:', isIOS);
+    console.log('  - iOS Version:', iOSVersion);
+    console.log('  - iOS 17+:', isIOS17Plus);
+    console.log('  - Dynamic Island device:', isDynamicIslandDevice);
+    console.log('  - PWA mode:', isPWA);
+    console.log('  - Vibration API:', 'vibrate' in navigator);
     console.log('🌐 Full User Agent:', navigator.userAgent);
 
-    if (isIOS17Plus) {
-        console.log('✅ iOS 17+ detected - enabling advanced features');
+    if (isIOS17Plus && isDynamicIslandDevice) {
+        console.log('✅ iOS 17+ on Dynamic Island device - all features enabled');
+        showToast('🏝️ Dynamic Island actief', 'success');
+    } else if (isIOS17Plus) {
+        console.log('✅ iOS 17+ detected - advanced features enabled');
     } else if (isIOS) {
         console.log('📱 iOS detected but not 17+ - limited features available');
     } else {
@@ -8148,13 +8165,21 @@ function hapticFeedback(pattern = [50]) {
         // Check for iOS devices (more flexible detection)
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
         const isIOS17Plus = isIOS && /OS 1[7-9]|OS 2[0-9]/.test(navigator.userAgent);
-
-        console.log('📱 iOS detected:', isIOS, 'iOS 17+:', isIOS17Plus);
+        
+        // Check if running in PWA mode (required for iOS vibration)
+        const isPWA = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+        
+        console.log('📱 iOS detected:', isIOS, 'iOS 17+:', isIOS17Plus, 'PWA mode:', isPWA);
+        console.log('🌐 User Agent:', navigator.userAgent);
 
         try {
-            if (isIOS17Plus) {
-                // Use more sophisticated patterns for iPhone 17+
-                console.log('🎯 iOS 17+ haptic feedback:', pattern);
+            if (isIOS && !isPWA) {
+                console.log('⚠️ iOS detected but not in PWA mode - vibration may not work');
+                // Try anyway, some iOS versions allow vibration in browser
+                navigator.vibrate(pattern);
+            } else if (isIOS17Plus && isPWA) {
+                // Use more sophisticated patterns for iPhone 17+ in PWA mode
+                console.log('🎯 iOS 17+ PWA haptic feedback:', pattern);
                 navigator.vibrate(pattern);
             } else if (isIOS) {
                 // Standard iOS haptic feedback
@@ -8167,14 +8192,19 @@ function hapticFeedback(pattern = [50]) {
             }
         } catch (error) {
             console.error('❌ Vibration error:', error);
+            // Fallback: visual feedback
+            console.log('🔄 Using visual feedback fallback');
+            showToast('💫', 'light');
         }
     } else {
         console.log('❌ Haptic feedback not supported - vibrate API not available');
+        // Fallback: visual feedback
+        showToast('💫', 'light');
     }
 }
 
 // Dynamic Island support for iPhone 14 Pro+ workout timer
-// Note: Dynamic Island is a native iOS feature, this is a simulation for demo purposes
+// Note: Dynamic Island is a native iOS feature, this is a visual simulation for demo purposes
 function updateDynamicIsland() {
     console.log('🏝️ updateDynamicIsland called');
 
@@ -8184,17 +8214,51 @@ function updateDynamicIsland() {
         // More flexible iOS detection
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
         const isIOS17Plus = isIOS && /OS 1[7-9]|OS 2[0-9]/.test(navigator.userAgent);
+        const isDynamicIslandDevice = isIOS && /iPhone1[4-9]|iPhone2[0-9]/.test(navigator.userAgent); // iPhone 14 Pro+
 
-        console.log('📱 iOS detected:', isIOS, 'iOS 17+:', isIOS17Plus);
+        console.log('📱 iOS detected:', isIOS, 'iOS 17+:', isIOS17Plus, 'Dynamic Island device:', isDynamicIslandDevice);
         console.log('🌐 User Agent:', navigator.userAgent);
 
-        if (isIOS17Plus) {
-            console.log('🏝️ Dynamic Island update requested (iOS 17+ detected)');
+        if (isDynamicIslandDevice && isIOS17Plus) {
+            console.log('🏝️ Dynamic Island simulation enabled (iOS 17+ on iPhone 14 Pro+)');
 
+            // Create or update visual Dynamic Island overlay
+            let dynamicIsland = document.getElementById('dynamic-island-overlay');
+            if (!dynamicIsland) {
+                dynamicIsland = document.createElement('div');
+                dynamicIsland.id = 'dynamic-island-overlay';
+                dynamicIsland.style.cssText = `
+                    position: fixed;
+                    top: max(10px, env(safe-area-inset-top, 10px));
+                    left: 50%;
+                    transform: translateX(-50%);
+                    width: 120px;
+                    height: 35px;
+                    background: rgba(0, 0, 0, 0.8);
+                    border-radius: 20px;
+                    z-index: 10000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 12px;
+                    color: white;
+                    font-weight: 500;
+                    backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                    transition: all 0.3s ease;
+                `;
+                document.body.appendChild(dynamicIsland);
+            }
+
+            let content = '';
             if (timerRunning) {
                 // Update Dynamic Island with timer progress
                 const progress = Math.min(1, timerSeconds / (currentWorkout.targetDuration || 3600));
-                console.log(`⏱️ Timer: ${formatDuration(timerSeconds)} (${Math.round(progress * 100)}%)`);
+                const timeStr = formatDuration(timerSeconds);
+                content = `⏱️ ${timeStr}`;
+                console.log(`⏱️ Timer: ${timeStr} (${Math.round(progress * 100)}%)`);
             } else {
                 // Update Dynamic Island with workout progress
                 let totalSets = 0;
@@ -8208,17 +8272,48 @@ function updateDynamicIsland() {
                 });
 
                 const progress = totalSets > 0 ? completedSets / totalSets : 0;
+                content = `💪 ${completedSets}/${totalSets}`;
                 console.log(`💪 Workout: ${completedSets}/${totalSets} sets (${Math.round(progress * 100)}%)`);
             }
 
-            // In a real implementation, this would call native iOS APIs
-            // For now, we'll simulate the behavior with console logging
+            dynamicIsland.textContent = content;
+            dynamicIsland.style.display = 'flex';
+
+            // Auto-hide after 3 seconds
+            clearTimeout(dynamicIsland.hideTimeout);
+            dynamicIsland.hideTimeout = setTimeout(() => {
+                if (dynamicIsland) {
+                    dynamicIsland.style.opacity = '0';
+                    setTimeout(() => {
+                        if (dynamicIsland) dynamicIsland.style.display = 'none';
+                    }, 300);
+                }
+            }, 3000);
+
         } else {
-            console.log('ℹ️ Dynamic Island not available (requires iOS 17+)');
+            console.log('ℹ️ Dynamic Island simulation not available (requires iOS 17+ on iPhone 14 Pro+)');
         }
     } else {
         console.log('❌ No current workout');
+        // Hide Dynamic Island if it exists
+        const dynamicIsland = document.getElementById('dynamic-island-overlay');
+        if (dynamicIsland) {
+            dynamicIsland.style.display = 'none';
+        }
     }
+}
+
+// Test functions for debugging iOS 17+ features
+function testHapticFeedback() {
+    console.log('🧪 Testing haptic feedback...');
+    hapticFeedback([100, 50, 100, 50, 100]);
+    showToast('🔔 Haptic test uitgevoerd', 'info');
+}
+
+function testDynamicIsland() {
+    console.log('🧪 Testing Dynamic Island...');
+    updateDynamicIsland();
+    showToast('🏝️ Dynamic Island test uitgevoerd', 'info');
 }
 
 // Action Button support for iPhone 15 Pro+

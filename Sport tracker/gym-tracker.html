@@ -501,6 +501,117 @@ h1 {
     }
 }
 
+/* PRs View Styles */
+.prs-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.prs-controls {
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.prs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.pr-card {
+    background: var(--dark-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow);
+}
+
+.pr-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-color: var(--primary);
+}
+
+.pr-card:active {
+    transform: translateY(0);
+}
+
+.pr-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.pr-card-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+    flex: 1;
+}
+
+.pr-card-actions {
+    margin-left: 0.5rem;
+}
+
+.pr-card-stats {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.pr-card-stat {
+    text-align: center;
+    flex: 1;
+}
+
+.pr-card-stat-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #FFCC00;
+    margin-bottom: 0.25rem;
+}
+
+.pr-card-stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.pr-card-date {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    text-align: center;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border);
+}
+
+@media (max-width: 768px) {
+    .prs-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .pr-card {
+        padding: 1rem;
+    }
+    
+    .pr-card-title {
+        font-size: 1.1rem;
+    }
+    
+    .pr-card-stats {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
 /* Workout Selection Header */
 .workout-selection-header {
     text-align: center;
@@ -2643,6 +2754,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <button class="tab active" data-view="workout" onclick="switchView('workout')"> Workout</button>
             <button class="tab" data-view="history" onclick="switchView('history')"> Historie</button>
             <button class="tab" data-view="progress" onclick="switchView('progress')"> Progressie</button>
+            <button class="tab" data-view="prs" onclick="switchView('prs')"> 🏆 PRs</button>
             <button class="tab" data-view="statistics" onclick="switchView('statistics')"> Statistieken</button>
             <button class="tab" data-view="exercises" onclick="switchView('exercises')"> 💪 Oefeningen</button>
             <button class="tab" data-view="schemas" onclick="switchView('schemas')"> 📋 Schema beheer</button>
@@ -2988,6 +3100,23 @@ document.addEventListener('DOMContentLoaded', function() {
         <div id="progressContainer"></div>
     </div>
 
+    <!-- PRs View -->
+    <div id="prsView" class="view">
+        <div class="prs-header">
+            <h2>🏆 Persoonlijke Records</h2>
+            <p style="color: var(--text-muted); margin: 0.5rem 0 1rem 0;">Je beste prestaties per oefening</p>
+            <div class="prs-controls">
+                <select id="prsSortSelect" onchange="renderPRs()" style="padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border); background: var(--dark-card); color: var(--text);">
+                    <option value="date">Sorteren op datum</option>
+                    <option value="name">Sorteren op naam</option>
+                    <option value="weight">Sorteren op gewicht</option>
+                    <option value="onerm">Sorteren op 1RM</option>
+                </select>
+            </div>
+        </div>
+        <div id="prsContainer"></div>
+    </div>
+
     <!-- Statistics View -->
     <div id="statisticsView" class="view">
         <div class="statistics-header">
@@ -3264,7 +3393,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script>// WORKOUT DATA
 // App version for cache-busting (always bump by 1)
-const APP_VERSION = "2025-12-17-07";
+const APP_VERSION = "2025-12-17-09";
 // Enforce versioned URL so clients always fetch the latest build
 (async function enforceVersionedUrl() {
     try {
@@ -4176,15 +4305,11 @@ function renderTemplateSelection() {
             </div>
         `;
         return;
-    document.getElementById("schemaTab").classList.add("active");
-    document.getElementById("templateTab").classList.remove("active");
-}
-
-function showTemplatesView() {
-    document.getElementById("schemaSelection").style.display = "none";
-    document.getElementById("templateSelection").style.display = "block";
-    document.getElementById("schemaTab").classList.remove("active");
-    document.getElementById("templateTab").classList.add("active")x.sets.length, 0);
+    }
+    
+    container.innerHTML = templates.map(template => {
+        const totalExercises = template.exercises.length;
+        const totalSets = template.exercises.reduce((sum, ex) => sum + ex.sets.length, 0);
         const totalVolume = template.exercises.reduce((sum, ex) => 
             sum + ex.sets.reduce((s, set) => s + (set.weight * set.reps), 0), 0);
         
@@ -6261,6 +6386,111 @@ function calculateOneRepMax(weight, reps) {
     return Math.round(weight * (1 + reps / 30));
 }
 
+function renderPRs() {
+    const container = document.getElementById("prsContainer");
+    const prs = getPRs();
+    
+    if (!container) return;
+    
+    // Convert PRs object to array
+    const prArray = Object.values(prs).filter(pr => pr && pr.exerciseName);
+    
+    if (prArray.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">🏆</div>
+                <h3 style="margin-bottom: 0.5rem;">Nog geen PRs</h3>
+                <p>Voltooi workouts om je persoonlijke records te vestigen!</p>
+                <button onclick="switchView('workout')" style="margin-top: 1rem; padding: 0.75rem 1.5rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600;">
+                    Start Workout
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    // Sort PRs based on selected criteria
+    const sortBy = document.getElementById('prsSortSelect')?.value || 'date';
+    prArray.sort((a, b) => {
+        switch (sortBy) {
+            case 'name':
+                return a.exerciseName.localeCompare(b.exerciseName);
+            case 'weight':
+                return b.weight - a.weight;
+            case 'onerm':
+                return b.oneRM - a.oneRM;
+            case 'date':
+            default:
+                return new Date(b.date) - new Date(a.date);
+        }
+    });
+    
+    container.innerHTML = `
+        <div class="prs-grid">
+            ${prArray.map(pr => `
+                <div class="pr-card" onclick="showPRDetails('${pr.exerciseId}')">
+                    <div class="pr-card-header">
+                        <h3 class="pr-card-title">${pr.exerciseName}</h3>
+                        <div class="pr-card-actions">
+                            <button class="btn-icon" onclick="event.stopPropagation(); deletePR('${pr.exerciseId}')" title="Verwijder PR">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                    <div class="pr-card-stats">
+                        <div class="pr-card-stat">
+                            <span class="pr-card-stat-value">${pr.weight}kg</span>
+                            <span class="pr-card-stat-label">Gewicht</span>
+                        </div>
+                        <div class="pr-card-stat">
+                            <span class="pr-card-stat-value">${pr.reps}</span>
+                            <span class="pr-card-stat-label">Reps</span>
+                        </div>
+                        <div class="pr-card-stat">
+                            <span class="pr-card-stat-value">${pr.oneRM}kg</span>
+                            <span class="pr-card-stat-label">1RM</span>
+                        </div>
+                    </div>
+                    <div class="pr-card-date">
+                        ${new Date(pr.date).toLocaleDateString('nl-NL', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                        })}
+                    </div>
+                </div>
+            `).join("")}
+        </div>
+    `;
+}
+
+function showPRDetails(exerciseId) {
+    const prs = getPRs();
+    const pr = prs[exerciseId.toString()];
+    
+    if (!pr) {
+        showToast("PR niet gevonden", "error");
+        return;
+    }
+    
+    // For now, just show a toast with PR details
+    // In the future, this could open a detailed modal
+    showToast(`🏆 ${pr.exerciseName}: ${pr.weight}kg × ${pr.reps} (${pr.oneRM}kg 1RM)`, "info");
+}
+
+function deletePR(exerciseId) {
+    if (!confirm("Weet je zeker dat je deze PR wilt verwijderen?")) {
+        return;
+    }
+    
+    const prs = getPRs();
+    delete prs[exerciseId.toString()];
+    localStorage.setItem("workout_prs", JSON.stringify(prs));
+    
+    renderPRs();
+    showToast("PR verwijderd", "success");
+}
+
 // MOBILE ENHANCEMENTS
 // Haptic feedback for mobile devices
 function hapticFeedback(pattern = [50]) {
@@ -6657,6 +6887,7 @@ function switchView(viewName) {
         "workout": "workoutView",
         "history": "historyView",
         "progress": "progressView",
+        "prs": "prsView",
         "statistics": "statisticsView",
         "exercises": "exercisesView",
         "settings": "settingsView",
@@ -6675,6 +6906,7 @@ function switchView(viewName) {
     if (viewName === "history") renderHistory();
     if (viewName === "statistics") renderStatistics();
     if (viewName === "progress") renderProgress();
+    if (viewName === "prs") renderPRs();
     if (viewName === "exercises") {
         renderExercisesList();
         document.getElementById("fabAddExercise").classList.add("visible");

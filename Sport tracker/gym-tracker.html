@@ -40,10 +40,10 @@
         🧪 Gebruik de test knoppen voor specifieke feedback types
     </div>
     <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
-        <button onclick="testHapticFeedback()" style="background:#4A90E2;color:#000;border:none;padding:4px 8px;border-radius:4px;font-size:11px;">Test Haptic</button>
-        <button onclick="testDynamicIsland()" style="background:#2ECC71;color:#000;border:none;padding:4px 8px;border-radius:4px;font-size:11px;">Test Island</button>
-        <button onclick="installPWA()" style="background:#E67E22;color:#000;border:none;padding:4px 8px;border-radius:4px;font-size:11px;">Install PWA</button>
-        <button onclick="document.getElementById('console-log-content').innerHTML=''" style="background:#E74C3C;color:#fff;border:none;padding:4px 8px;border-radius:4px;font-size:11px;">Clear</button>
+        <button onclick="testHapticFeedback()" style="background:#4A90E2;color:#000;border:none;padding:6px 10px;border-radius:5px;font-size:12px;cursor:pointer;">Test Haptic</button>
+        <button onclick="testDynamicIsland()" style="background:#2ECC71;color:#000;border:none;padding:6px 10px;border-radius:5px;font-size:12px;cursor:pointer;">Test Island</button>
+        <button onclick="installPWA()" style="background:#E67E22;color:#000;border:none;padding:6px 10px;border-radius:5px;font-size:12px;cursor:pointer;">Install PWA</button>
+        <button onclick="document.getElementById('console-log-content').innerHTML=''" style="background:#E74C3C;color:#fff;border:none;padding:6px 10px;border-radius:5px;font-size:12px;cursor:pointer;">Clear</button>
     </div>
     <div id="console-log-content"></div>
 </div>
@@ -3662,7 +3662,7 @@ label.invalid {
 
 <script>
 // APP VERSION
-const APP_VERSION = "2025-12-17-24";
+const APP_VERSION = "2025-12-17-25";
 
 // AUDIO CONTEXT for haptic feedback fallbacks
 let audioContext = null;
@@ -9895,6 +9895,7 @@ function testHapticFeedback() {
         font-size: 12px;
         color: white;
         overflow-y: auto;
+        pointer-events: auto;
     `;
 
     const diagContent = document.createElement('div');
@@ -10029,25 +10030,32 @@ function testSimpleVibration() {
             // Check if we're in PWA mode (required for iOS vibration)
             const isPWA = window.navigator.standalone === true ||
                          window.matchMedia('(display-mode: standalone)').matches ||
-                         document.referrer.includes('android-app://');
+                         document.referrer.includes('android-app://') ||
+                         window.location.search.includes('pwa=true');
 
             console.log('📱 PWA mode for vibration:', isPWA);
+            console.log('📱 navigator.standalone:', window.navigator.standalone);
+            console.log('📱 display-mode:', window.matchMedia('(display-mode: standalone)').matches);
 
-            // Simple vibration test
+            // Simple vibration test - try anyway, some iOS versions allow it
             const result = navigator.vibrate(200);
             console.log('🎯 Simple vibration result:', result);
 
             if (result !== false) {
                 showToast('✅ Simpele vibratie gelukt!', 'success');
             } else {
-                showToast('❌ Simpele vibratie mislukt - mogelijk PWA vereist', 'error');
+                if (isPWA) {
+                    showToast('❌ Vibratie mislukt - mogelijk niet ondersteund op dit apparaat', 'error');
+                } else {
+                    showToast('❌ Vibratie mislukt - probeer PWA installatie voor iOS', 'warning');
+                }
             }
         } catch (error) {
             console.error('❌ Simple vibration error:', error);
             showToast('❌ Vibratie fout: ' + error.message, 'error');
         }
     } else {
-        showToast('❌ Vibration API niet beschikbaar', 'error');
+        showToast('❌ Vibration API niet beschikbaar op dit apparaat', 'error');
     }
 }
 
@@ -10055,64 +10063,56 @@ function forceAudioFeedback() {
     console.log('🔊 Forcing audio feedback...');
 
     try {
-        // Force initialize audio context if not already done
-        if (!audioContext) {
-            console.log('🎵 Initializing audio context on demand...');
-            initAudioContext();
+        // Create a new audio context for immediate playback
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Resume if suspended (required for autoplay policies)
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume().then(() => {
+                playImmediateAudio(audioCtx);
+            }).catch(error => {
+                console.error('❌ Failed to resume audio context:', error);
+                showToast('❌ Audio kon niet worden hervat', 'error');
+            });
+        } else {
+            playImmediateAudio(audioCtx);
         }
 
-        // Wait a bit for initialization if needed
-        setTimeout(() => {
-            if (!audioContext) {
-                console.error('❌ No audio context available after init');
-                showToast('❌ Audio context niet beschikbaar - klik eerst ergens in de app', 'error');
-                return;
-            }
-
-            // Check if audio context needs to be resumed
-            if (audioContext.state === 'suspended') {
-                console.log('🎵 Resuming suspended audio context...');
-                audioContext.resume().then(() => {
-                    playAudioFeedback();
-                }).catch(error => {
-                    console.error('❌ Failed to resume audio context:', error);
-                    showToast('❌ Audio context kon niet worden hervat', 'error');
-                });
-            } else {
-                playAudioFeedback();
-            }
-        }, 100);
-
-        function playAudioFeedback() {
+        function playImmediateAudio(ctx) {
             try {
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
+                const oscillator = ctx.createOscillator();
+                const gainNode = ctx.createGain();
 
-                // Configure for tactile-like feedback (more audible)
-                oscillator.frequency.setValueAtTime(400, audioContext.currentTime); // Even higher frequency for better audibility
-                oscillator.type = 'sine';
+                // High frequency beep for guaranteed audibility
+                oscillator.frequency.setValueAtTime(800, ctx.currentTime);
+                oscillator.type = 'square';
 
-                // Very loud envelope for guaranteed audibility
-                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-                gainNode.gain.linearRampToValueAtTime(0.8, audioContext.currentTime + 0.01); // Very loud
-                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3); // Longer
+                // Very loud and long beep
+                gainNode.gain.setValueAtTime(0, ctx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
 
                 oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
+                gainNode.connect(ctx.destination);
 
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.3);
+                oscillator.start(ctx.currentTime);
+                oscillator.stop(ctx.currentTime + 0.5);
 
-                console.log('✅ Audio feedback played successfully');
-                showToast('🔊 Audio feedback afgespeeld - hoor je de piep?', 'success');
+                console.log('✅ Audio beep played');
+                showToast('🔊 PIEP! Hoor je het harde geluid?', 'success');
+
+                // Clean up
+                setTimeout(() => {
+                    ctx.close();
+                }, 1000);
             } catch (error) {
                 console.error('❌ Audio playback failed:', error);
-                showToast('❌ Audio afspelen mislukt: ' + error.message, 'error');
+                showToast('❌ Audio fout: ' + error.message, 'error');
             }
         }
     } catch (error) {
-        console.error('❌ Force audio feedback failed:', error);
-        showToast('❌ Audio feedback mislukt: ' + error.message, 'error');
+        console.error('❌ Audio context creation failed:', error);
+        showToast('❌ Audio niet mogelijk op dit apparaat', 'error');
     }
 }
 

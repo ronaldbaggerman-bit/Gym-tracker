@@ -339,12 +339,36 @@ h1 {
     padding: 1rem;
 }
 
+.beheer-tabs-container {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
 .beheer-tabs {
     display: flex;
     gap: 0.5rem;
-    margin-bottom: 1.5rem;
-    border-bottom: 1px solid var(--border);
     padding-bottom: 1rem;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.beheer-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.beheer-tabs-indicator {
+    position: absolute;
+    bottom: 0;
+    left: 1rem;
+    height: 2px;
+    background: var(--primary);
+    border-radius: 1px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    width: calc(25% - 0.375rem);
 }
 
 .beheer-tab {
@@ -357,8 +381,10 @@ h1 {
     font-weight: 500;
     font-size: 0.875rem;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    flex: 1;
+    flex-shrink: 0;
+    white-space: nowrap;
     text-align: center;
+    min-width: fit-content;
 }
 
 .beheer-tab.active {
@@ -4190,11 +4216,14 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- Beheer View -->
     <div id="beheerView" class="view">
         <div class="beheer-container">
-            <div class="beheer-tabs">
-                <button class="beheer-tab active" data-beheer-view="goals" onclick="switchBeheerView('goals')">🎯 Doelen</button>
-                <button class="beheer-tab" data-beheer-view="statistics" onclick="switchBeheerView('statistics')">📊 Statistieken</button>
-                <button class="beheer-tab" data-beheer-view="exercises" onclick="switchBeheerView('exercises')">💪 Oefeningen</button>
-                <button class="beheer-tab" data-beheer-view="schemas" onclick="switchBeheerView('schemas')">📋 Schema beheer</button>
+            <div class="beheer-tabs-container">
+                <div class="beheer-tabs">
+                    <button class="beheer-tab active" data-beheer-view="goals" onclick="switchBeheerView('goals')">🎯 Doelen</button>
+                    <button class="beheer-tab" data-beheer-view="statistics" onclick="switchBeheerView('statistics')">📊 Statistieken</button>
+                    <button class="beheer-tab" data-beheer-view="exercises" onclick="switchBeheerView('exercises')">💪 Oefeningen</button>
+                    <button class="beheer-tab" data-beheer-view="schemas" onclick="switchBeheerView('schemas')">📋 Schema beheer</button>
+                </div>
+                <div class="beheer-tabs-indicator"></div>
             </div>
             <div class="beheer-content">
                 <!-- Content will be switched here -->
@@ -9241,6 +9270,7 @@ function switchView(viewName) {
     } else if (viewName === "beheer") {
         // Initialize beheer view with goals as default
         switchBeheerView('goals');
+        initBeheerView();
     } else if (viewName !== "workout") {
         // Hide FAB unless in exercises view or workout view (workout view handles FAB in selectSchema)
         document.getElementById("fabAddExercise").classList.remove("visible");
@@ -9257,6 +9287,10 @@ function switchBeheerView(beheerViewName) {
     const activeTab = document.querySelector(`.beheer-tab[data-beheer-view="${beheerViewName}"]`);
     if (activeTab) {
         activeTab.classList.add('active');
+        // Scroll to center the active tab
+        scrollBeheerTabIntoView(activeTab);
+        // Update indicator position
+        updateBeheerTabIndicator(beheerViewName);
     }
     
     // Clear current content
@@ -9293,6 +9327,118 @@ function switchBeheerView(beheerViewName) {
                 break;
         }
     }
+}
+
+// Scroll active tab into view smoothly
+function scrollBeheerTabIntoView(activeTab) {
+    const tabsContainer = document.querySelector('.beheer-tabs');
+    if (!tabsContainer || !activeTab) return;
+    
+    const containerRect = tabsContainer.getBoundingClientRect();
+    const tabRect = activeTab.getBoundingClientRect();
+    
+    const scrollLeft = tabsContainer.scrollLeft + tabRect.left - containerRect.left - (containerRect.width / 2) + (tabRect.width / 2);
+    
+    tabsContainer.scrollTo({
+        left: scrollLeft,
+        behavior: 'smooth'
+    });
+}
+
+// Update the indicator position based on active tab
+function updateBeheerTabIndicator(beheerViewName) {
+    const indicator = document.querySelector('.beheer-tabs-indicator');
+    const activeTab = document.querySelector(`.beheer-tab[data-beheer-view="${beheerViewName}"]`);
+    
+    if (!indicator || !activeTab) return;
+    
+    const tabs = document.querySelectorAll('.beheer-tab');
+    const activeIndex = Array.from(tabs).indexOf(activeTab);
+    
+    if (activeIndex !== -1) {
+        // Calculate position based on tab width and gap
+        const tabWidth = activeTab.offsetWidth;
+        const tabGap = 8; // 0.5rem = 8px
+        const leftPosition = activeIndex * (tabWidth + tabGap) + 16; // 1rem padding = 16px
+        
+        indicator.style.width = `${tabWidth}px`;
+        indicator.style.transform = `translateX(${leftPosition}px)`;
+    }
+}
+
+// Initialize swipe functionality for beheer tabs
+function initBeheerTabSwipe() {
+    const tabsContainer = document.querySelector('.beheer-tabs');
+    if (!tabsContainer) return;
+    
+    let startX = 0;
+    let currentX = 0;
+    let isDragging = false;
+    
+    tabsContainer.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        isDragging = true;
+        tabsContainer.style.scrollBehavior = 'auto';
+    });
+    
+    tabsContainer.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        currentX = e.touches[0].clientX;
+        const diff = startX - currentX;
+        
+        if (Math.abs(diff) > 10) { // Minimum swipe distance
+            e.preventDefault();
+        }
+    });
+    
+    tabsContainer.addEventListener('touchend', (e) => {
+        if (!isDragging) return;
+        isDragging = false;
+        
+        const diff = startX - currentX;
+        const threshold = 50; // Minimum swipe distance to trigger tab change
+        
+        if (Math.abs(diff) > threshold) {
+            const tabs = document.querySelectorAll('.beheer-tab');
+            const activeTab = document.querySelector('.beheer-tab.active');
+            const currentIndex = Array.from(tabs).indexOf(activeTab);
+            
+            let newIndex;
+            if (diff > 0 && currentIndex < tabs.length - 1) {
+                // Swipe left - next tab
+                newIndex = currentIndex + 1;
+            } else if (diff < 0 && currentIndex > 0) {
+                // Swipe right - previous tab
+                newIndex = currentIndex - 1;
+            }
+            
+            if (newIndex !== undefined) {
+                const newTab = tabs[newIndex];
+                const newView = newTab.getAttribute('data-beheer-view');
+                switchBeheerView(newView);
+            }
+        }
+        
+        tabsContainer.style.scrollBehavior = 'smooth';
+        startX = 0;
+        currentX = 0;
+    });
+}
+
+// Initialize beheer tab functionality when beheer view is shown
+    
+    // Update indicator on window resize
+    window.addEventListener('resize', () => {
+        const activeTab = document.querySelector('.beheer-tab.active');
+        if (activeTab) {
+            const activeView = activeTab.getAttribute('data-beheer-view');
+            updateBeheerTabIndicator(activeView);
+        }
+    });
+function initBeheerView() {
+    initBeheerTabSwipe();
+    // Set initial indicator position
+    updateBeheerTabIndicator('goals');
 }
 
 // Ensure a view is visible after full load (defensive, avoids black screen)

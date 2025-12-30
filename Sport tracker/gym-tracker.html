@@ -5748,7 +5748,7 @@ function toggleSet(exerciseId, setIndex) {
 
     if (set.completed && !wasCompleted) {
         console.log("Starting rest timer");
-        hapticFeedback([30, 50, 30]); // Short vibration pattern for set completion
+        // hapticFeedback([30, 50, 30]); // Short vibration pattern for set completion - REMOVED
         currentRestExerciseId = exerciseId;
         startRestTimer();
         checkAndShowPR(exercise, setIndex);
@@ -8417,33 +8417,7 @@ function audioFeedback(pattern) {
 
                 console.log(`✅ Audio feedback played (${isAndroid ? 'Android' : 'iOS'} mode)`);
 
-                // Add visual indicator for audio feedback
-                const indicator = document.createElement('div');
-                indicator.style.cssText = `
-                    position: fixed;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    background: rgba(255, 193, 7, 0.95);
-                    color: #000;
-                    padding: 15px 25px;
-                    border-radius: 15px;
-                    font-size: 16px;
-                    font-weight: bold;
-                    z-index: 10001;
-                    pointer-events: none;
-                    animation: fadeInOut 1.5s ease-in-out;
-                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-                    backdrop-filter: blur(10px);
-                `;
-                indicator.textContent = '🔊 Audio Feedback';
-                document.body.appendChild(indicator);
-
-                setTimeout(() => {
-                    if (indicator.parentNode) {
-                        indicator.remove();
-                    }
-                }, 1500);
+                // Visual indicator removed - was causing layout issues
 
                 // Clean up audio context
                 setTimeout(() => {
@@ -8943,8 +8917,8 @@ function completeSetWithHaptic(exerciseId, setIndex) {
     }
 
     set.completed = true;
-    hapticFeedback([30, 50, 30]); // Short vibration pattern
-    updateDynamicIsland(); // Update Dynamic Island with workout progress
+    // hapticFeedback([30, 50, 30]); // Short vibration pattern - REMOVED
+    // updateDynamicIsland(); // Update Dynamic Island with workout progress - REMOVED
     startRestTimer();
     checkAndShowPR(exercise, setIndex);
     focusOnTimer();

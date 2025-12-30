@@ -612,6 +612,261 @@ h1 {
     }
 }
 
+/* Goals View Styles */
+.goals-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.goals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.goal-card {
+    background: var(--dark-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.goal-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #34C759, #30D158);
+}
+
+.goal-card.completed::before {
+    background: linear-gradient(90deg, #FF9500, #FF9F0A);
+}
+
+.goal-card.overdue::before {
+    background: linear-gradient(90deg, #FF3B30, #FF453A);
+}
+
+.goal-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.goal-card-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+    flex: 1;
+}
+
+.goal-card-actions {
+    margin-left: 0.5rem;
+}
+
+.goal-card-type {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: var(--primary);
+    color: white;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+}
+
+.goal-card-progress {
+    margin-bottom: 1rem;
+}
+
+.goal-progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--dark-elevated);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.goal-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #34C759, #30D158);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.goal-card-stats {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.goal-card-stat {
+    text-align: center;
+    flex: 1;
+}
+
+.goal-card-stat-value {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.25rem;
+}
+
+.goal-card-stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.goal-card-deadline {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    text-align: center;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border);
+}
+
+@media (max-width: 768px) {
+    .goals-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .goal-card {
+        padding: 1rem;
+    }
+    
+    .goal-card-title {
+        font-size: 1.1rem;
+    }
+    
+    .goal-card-stats {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
+/* Analytics View Styles */
+.analytics-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.analytics-controls {
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.analytics-card {
+    background: var(--dark-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+}
+
+.analytics-card-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.analytics-card-icon {
+    font-size: 1.5rem;
+    margin-right: 0.75rem;
+}
+
+.analytics-card-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+}
+
+.analytics-card-content {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.analytics-metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.analytics-metric:last-child {
+    border-bottom: none;
+}
+
+.analytics-metric-label {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.analytics-metric-value {
+    font-weight: 700;
+    color: var(--primary);
+    font-size: 1.1rem;
+}
+
+.analytics-chart-container {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--dark-elevated);
+    border-radius: 12px;
+}
+
+.analytics-insight {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    padding: 1rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.analytics-insight-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.analytics-insight-text {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+    .analytics-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .analytics-card {
+        padding: 1rem;
+    }
+}
+
 /* Workout Selection Header */
 .workout-selection-header {
     text-align: center;
@@ -2755,6 +3010,8 @@ document.addEventListener('DOMContentLoaded', function() {
             <button class="tab" data-view="history" onclick="switchView('history')"> Historie</button>
             <button class="tab" data-view="progress" onclick="switchView('progress')"> Progressie</button>
             <button class="tab" data-view="prs" onclick="switchView('prs')"> 🏆 PRs</button>
+            <button class="tab" data-view="goals" onclick="switchView('goals')"> 🎯 Doelen</button>
+            <button class="tab" data-view="analytics" onclick="switchView('analytics')"> 📊 Analytics</button>
             <button class="tab" data-view="statistics" onclick="switchView('statistics')"> Statistieken</button>
             <button class="tab" data-view="exercises" onclick="switchView('exercises')"> 💪 Oefeningen</button>
             <button class="tab" data-view="schemas" onclick="switchView('schemas')"> 📋 Schema beheer</button>
@@ -3117,6 +3374,33 @@ document.addEventListener('DOMContentLoaded', function() {
         <div id="prsContainer"></div>
     </div>
 
+    <!-- Goals View -->
+    <div id="goalsView" class="view">
+        <div class="goals-header">
+            <h2>🎯 Workout Doelen</h2>
+            <p style="color: var(--text-muted); margin: 0.5rem 0 1rem 0;">Stel doelen en volg je vooruitgang</p>
+            <button onclick="showAddGoalModal()" style="padding: 0.75rem 1.5rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600;">➕ Nieuw Doel</button>
+        </div>
+        <div id="goalsContainer"></div>
+    </div>
+
+    <!-- Analytics View -->
+    <div id="analyticsView" class="view">
+        <div class="analytics-header">
+            <h2>📊 Workout Analytics</h2>
+            <p style="color: var(--text-muted); margin: 0.5rem 0 1rem 0;">Diepe inzichten in je workout patronen</p>
+            <div class="analytics-controls">
+                <select id="analyticsPeriodSelect" onchange="renderAnalytics()" style="padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border); background: var(--dark-card); color: var(--text);">
+                    <option value="30">Laatste 30 dagen</option>
+                    <option value="90">Laatste 90 dagen</option>
+                    <option value="180">Laatste 6 maanden</option>
+                    <option value="365">Laatste jaar</option>
+                </select>
+            </div>
+        </div>
+        <div id="analyticsContainer"></div>
+    </div>
+
     <!-- Statistics View -->
     <div id="statisticsView" class="view">
         <div class="statistics-header">
@@ -3393,7 +3677,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script>// WORKOUT DATA
 // App version for cache-busting (always bump by 1)
-const APP_VERSION = "2025-12-17-09";
+const APP_VERSION = "2025-12-17-11";
 // Enforce versioned URL so clients always fetch the latest build
 (async function enforceVersionedUrl() {
     try {
@@ -5362,8 +5646,8 @@ function updatePRs(workout) {
 }
 
 function calculateOneRM(weight, reps) {
-    if (reps === 1) return weight;
-    return weight * (1 + reps / 30);
+    if (reps === 1) return Math.round(weight * 10) / 10;
+    return Math.round((weight * (1 + reps / 30)) * 10) / 10;
 }
 
 function getPreviousBest(exerciseId) {
@@ -6447,7 +6731,7 @@ function renderPRs() {
                             <span class="pr-card-stat-label">Reps</span>
                         </div>
                         <div class="pr-card-stat">
-                            <span class="pr-card-stat-value">${pr.oneRM}kg</span>
+                            <span class="pr-card-stat-value">${pr.oneRM.toFixed(1)}kg</span>
                             <span class="pr-card-stat-label">1RM</span>
                         </div>
                     </div>
@@ -6497,7 +6781,7 @@ function showPRDetails(exerciseId) {
     
     // For now, just show a toast with PR details
     // In the future, this could open a detailed modal
-    showToast(`🏆 ${pr.exerciseName}: ${pr.weight}kg × ${pr.reps} (${pr.oneRM}kg 1RM)`, "info");
+    showToast(`🏆 ${pr.exerciseName}: ${pr.weight}kg × ${pr.reps} (${pr.oneRM.toFixed(1)}kg 1RM)`, "info");
 }
 
 function deletePR(exerciseId) {
@@ -6511,6 +6795,508 @@ function deletePR(exerciseId) {
     
     renderPRs();
     showToast("PR verwijderd", "success");
+}
+
+// GOALS MANAGEMENT
+function getGoals() {
+    const stored = localStorage.getItem("workout_goals");
+    return stored ? JSON.parse(stored) : [];
+}
+
+function saveGoals(goals) {
+    localStorage.setItem("workout_goals", JSON.stringify(goals));
+}
+
+function renderGoals() {
+    const container = document.getElementById("goalsContainer");
+    const goals = getGoals();
+    
+    if (!container) return;
+    
+    if (goals.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">🎯</div>
+                <h3 style="margin-bottom: 0.5rem;">Geen doelen ingesteld</h3>
+                <p>Stel doelen om je motivatie te behouden en progressie bij te houden!</p>
+                <button onclick="showAddGoalModal()" style="margin-top: 1rem; padding: 0.75rem 1.5rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600;">
+                    Stel je eerste doel
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    const now = new Date();
+    container.innerHTML = `
+        <div class="goals-grid">
+            ${goals.map(goal => {
+                const progress = calculateGoalProgress(goal);
+                const isCompleted = progress >= 100;
+                const isOverdue = new Date(goal.deadline) < now && !isCompleted;
+                const deadlineStr = formatGoalDeadline(goal.deadline);
+                
+                return `
+                    <div class="goal-card ${isCompleted ? 'completed' : ''} ${isOverdue ? 'overdue' : ''}">
+                        <div class="goal-card-header">
+                            <h3 class="goal-card-title">${goal.title}</h3>
+                            <div class="goal-card-actions">
+                                <button class="btn-icon" onclick="event.stopPropagation(); editGoal('${goal.id}')" title="Bewerk doel">
+                                    ✏️
+                                </button>
+                                <button class="btn-icon" onclick="event.stopPropagation(); deleteGoal('${goal.id}')" title="Verwijder doel">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                        <div class="goal-card-type">${goal.type}</div>
+                        <div class="goal-card-progress">
+                            <div class="goal-progress-bar">
+                                <div class="goal-progress-fill" style="width: ${Math.min(progress, 100)}%"></div>
+                            </div>
+                            <div style="text-align: center; font-size: 0.9rem; color: var(--text-muted);">
+                                ${progress.toFixed(1)}% voltooid
+                            </div>
+                        </div>
+                        <div class="goal-card-stats">
+                            <div class="goal-card-stat">
+                                <span class="goal-card-stat-value">${goal.target}</span>
+                                <span class="goal-card-stat-label">Doel</span>
+                            </div>
+                            <div class="goal-card-stat">
+                                <span class="goal-card-stat-value">${goal.current || 0}</span>
+                                <span class="goal-card-stat-label">Huidig</span>
+                            </div>
+                            <div class="goal-card-stat">
+                                <span class="goal-card-stat-value">${goal.unit}</span>
+                                <span class="goal-card-stat-label">Eenheid</span>
+                            </div>
+                        </div>
+                        <div class="goal-card-deadline">
+                            Deadline: ${deadlineStr}
+                        </div>
+                    </div>
+                `;
+            }).join("")}
+        </div>
+    `;
+}
+
+function calculateGoalProgress(goal) {
+    if (!goal.current || !goal.target) return 0;
+    return Math.min((goal.current / goal.target) * 100, 100);
+}
+
+function formatGoalDeadline(deadlineStr) {
+    const deadline = new Date(deadlineStr);
+    const now = new Date();
+    const diffTime = deadline - now;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) {
+        return `${Math.abs(diffDays)} dagen geleden`;
+    } else if (diffDays === 0) {
+        return 'Vandaag';
+    } else if (diffDays === 1) {
+        return 'Morgen';
+    } else if (diffDays < 7) {
+        return `Over ${diffDays} dagen`;
+    } else {
+        return deadline.toLocaleDateString('nl-NL', { 
+            day: 'numeric', 
+            month: 'long', 
+            year: deadline.getFullYear() !== now.getFullYear() ? 'numeric' : undefined 
+        });
+    }
+}
+
+function showAddGoalModal() {
+    // For now, show a simple prompt. In the future, this could be a full modal
+    const title = prompt("Geef je doel een naam:", "Bench Press 100kg");
+    if (!title || !title.trim()) return;
+    
+    const target = parseFloat(prompt("Wat is je doelwaarde?", "100"));
+    if (!target || target <= 0) return;
+    
+    const unit = prompt("Eenheid (kg, reps, workouts, etc.):", "kg");
+    if (!unit || !unit.trim()) return;
+    
+    const deadline = prompt("Deadline (YYYY-MM-DD):", new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+    if (!deadline) return;
+    
+    const goal = {
+        id: `goal_${Date.now()}`,
+        title: title.trim(),
+        type: "Persoonlijk", // Could be expanded to different types
+        target: target,
+        current: 0,
+        unit: unit.trim(),
+        deadline: deadline,
+        createdAt: new Date().toISOString()
+    };
+    
+    const goals = getGoals();
+    goals.push(goal);
+    saveGoals(goals);
+    
+    renderGoals();
+    showToast(`Doel "${goal.title}" toegevoegd!`, "success");
+}
+
+function editGoal(goalId) {
+    const goals = getGoals();
+    const goal = goals.find(g => g.id === goalId);
+    if (!goal) return;
+    
+    const newCurrent = parseFloat(prompt(`Update huidige waarde voor "${goal.title}":`, goal.current || 0));
+    if (newCurrent !== null && !isNaN(newCurrent)) {
+        goal.current = newCurrent;
+        saveGoals(goals);
+        renderGoals();
+        showToast("Doel bijgewerkt!", "success");
+    }
+}
+
+function deleteGoal(goalId) {
+    if (!confirm("Weet je zeker dat je dit doel wilt verwijderen?")) {
+        return;
+    }
+    
+    const goals = getGoals();
+    const filtered = goals.filter(g => g.id !== goalId);
+    saveGoals(filtered);
+    
+    renderGoals();
+    showToast("Doel verwijderd", "success");
+}
+
+function renderAnalytics() {
+    const container = document.getElementById("analyticsContainer");
+    const periodDays = parseInt(document.getElementById('analyticsPeriodSelect')?.value || '30');
+    const history = getWorkoutHistory();
+    
+    if (!container) return;
+    
+    // Filter history for the selected period
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - periodDays);
+    const filteredHistory = history.filter(w => new Date(w.startTime) >= cutoffDate);
+    
+    if (filteredHistory.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
+                <h3 style="margin-bottom: 0.5rem;">Niet genoeg data</h3>
+                <p>Voltooi meer workouts om analytics te zien!</p>
+                <button onclick="switchView('workout')" style="margin-top: 1rem; padding: 0.75rem 1.5rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600;">
+                    Start Workout
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    const analytics = calculateAnalytics(filteredHistory);
+    
+    container.innerHTML = `
+        <div class="analytics-insight">
+            <div class="analytics-insight-title">💡 ${analytics.insight.title}</div>
+            <div class="analytics-insight-text">${analytics.insight.description}</div>
+        </div>
+        
+        <div class="analytics-grid">
+            <div class="analytics-card">
+                <div class="analytics-card-header">
+                    <div class="analytics-card-icon">📅</div>
+                    <h3 class="analytics-card-title">Workout Patronen</h3>
+                </div>
+                <div class="analytics-card-content">
+                    <div class="analytics-metric">
+                        <span class="analytics-metric-label">Beste dag</span>
+                        <span class="analytics-metric-value">${analytics.bestDay}</span>
+                    </div>
+                    <div class="analytics-metric">
+                        <span class="analytics-metric-label">Gemiddelde duur</span>
+                        <span class="analytics-metric-value">${analytics.avgDuration} min</span>
+                    </div>
+                    <div class="analytics-metric">
+                        <span class="analytics-metric-label">Meest getrainde spier</span>
+                        <span class="analytics-metric-value">${analytics.topMuscleGroup}</span>
+                    </div>
+                    <div class="analytics-metric">
+                        <span class="analytics-metric-label">Workout consistentie</span>
+                        <span class="analytics-metric-value">${analytics.consistency}%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="analytics-card">
+                <div class="analytics-card-header">
+                    <div class="analytics-card-icon">📈</div>
+                    <h3 class="analytics-card-title">Progressie Trends</h3>
+                </div>
+                <div class="analytics-card-content">
+                    <div class="analytics-metric">
+                        <span class="analytics-metric-label">Volume trend</span>
+                        <span class="analytics-metric-value">${analytics.volumeTrend > 0 ? '+' : ''}${analytics.volumeTrend.toFixed(1)}%</span>
+                    </div>
+                    <div class="analytics-metric">
+                        <span class="analytics-metric-label">Nieuwe PRs</span>
+                        <span class="analytics-metric-value">${analytics.newPRs}</span>
+                    </div>
+                    <div class="analytics-metric">
+                        <span class="analytics-metric-label">Streak</span>
+                        <span class="analytics-metric-value">${analytics.currentStreak} dagen</span>
+                    </div>
+                    <div class="analytics-metric">
+                        <span class="analytics-metric-label">Workout kwaliteit</span>
+                        <span class="analytics-metric-value">${analytics.qualityScore}/10</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="analytics-card">
+                <div class="analytics-card-header">
+                    <div class="analytics-card-icon">🎯</div>
+                    <h3 class="analytics-card-title">Doelstellingen</h3>
+                </div>
+                <div class="analytics-card-content">
+                    <div class="analytics-metric">
+                        <span class="analytics-metric-label">Doelen behaald</span>
+                        <span class="analytics-metric-value">${analytics.goalsAchieved}</span>
+                    </div>
+                    <div class="analytics-metric">
+                        <span class="analytics-metric-label">Actieve doelen</span>
+                        <span class="analytics-metric-value">${analytics.activeGoals}</span>
+                    </div>
+                    <div class="analytics-metric">
+                        <span class="analytics-metric-label">Motivatie score</span>
+                        <span class="analytics-metric-value">${analytics.motivationScore}/10</span>
+                    </div>
+                    <div class="analytics-metric">
+                        <span class="analytics-metric-label">Voorspelde progressie</span>
+                        <span class="analytics-metric-value">${analytics.predictedProgress > 0 ? '+' : ''}${analytics.predictedProgress.toFixed(1)}%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="analytics-card">
+                <div class="analytics-card-header">
+                    <div class="analytics-card-icon">💪</div>
+                    <h3 class="analytics-card-title">Spiergroep Balans</h3>
+                </div>
+                <div class="analytics-card-content">
+                    ${analytics.muscleBalance.map(muscle => `
+                        <div class="analytics-metric">
+                            <span class="analytics-metric-label">${muscle.name}</span>
+                            <span class="analytics-metric-value">${muscle.percentage}%</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        </div>
+        
+        <div class="analytics-chart-container">
+            <h3 style="margin-bottom: 1rem; color: var(--text);">Volume Ontwikkeling</h3>
+            <div id="analyticsVolumeChart" style="width: 100%; height: 200px; background: var(--dark-card); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+                📊 Grafiek wordt geladen...
+            </div>
+        </div>
+    `;
+    
+    // Render volume chart
+    renderVolumeChart(filteredHistory);
+}
+
+function calculateAnalytics(history) {
+    const now = new Date();
+    
+    // Workout patterns
+    const dayCounts = {};
+    const muscleCounts = {};
+    let totalDuration = 0;
+    let totalVolume = 0;
+    let previousVolume = 0;
+    
+    history.forEach(workout => {
+        const day = new Date(workout.startTime).toLocaleDateString('nl-NL', { weekday: 'long' });
+        dayCounts[day] = (dayCounts[day] || 0) + 1;
+        
+        totalDuration += workout.duration || 0;
+        
+        workout.exercises.forEach(exercise => {
+            const muscleGroup = exercise.muscleGroup || 'Onbekend';
+            muscleCounts[muscleGroup] = (muscleCounts[muscleGroup] || 0) + 1;
+            
+            exercise.sets.forEach(set => {
+                if (set.completed && set.weight && set.reps) {
+                    totalVolume += set.weight * set.reps;
+                }
+            });
+        });
+    });
+    
+    // Calculate volume trend (compare first half vs second half)
+    const midPoint = Math.floor(history.length / 2);
+    const firstHalf = history.slice(0, midPoint);
+    const secondHalf = history.slice(midPoint);
+    
+    firstHalf.forEach(w => {
+        w.exercises.forEach(ex => {
+            ex.sets.forEach(set => {
+                if (set.completed && set.weight && set.reps) {
+                    previousVolume += set.weight * set.reps;
+                }
+            });
+        });
+    });
+    
+    const volumeTrend = previousVolume > 0 ? ((totalVolume / previousVolume - 1) * 100) : 0;
+    
+    // Goals data
+    const goals = getGoals();
+    const activeGoals = goals.filter(g => !g.completed).length;
+    const goalsAchieved = goals.filter(g => g.completed).length;
+    
+    // Calculate insights
+    const bestDay = Object.keys(dayCounts).reduce((a, b) => dayCounts[a] > dayCounts[b] ? a : b, 'Geen data');
+    const topMuscleGroup = Object.keys(muscleCounts).reduce((a, b) => muscleCounts[a] > muscleCounts[b] ? a : b, 'Geen data');
+    const avgDuration = history.length > 0 ? Math.round(totalDuration / history.length) : 0;
+    
+    // Calculate consistency (workouts per week in period)
+    const periodDays = parseInt(document.getElementById('analyticsPeriodSelect')?.value || '30');
+    const expectedWorkouts = Math.ceil(periodDays / 7) * 3; // Assume 3 workouts per week
+    const consistency = Math.min(Math.round((history.length / expectedWorkouts) * 100), 100);
+    
+    // Calculate muscle balance
+    const totalExercises = Object.values(muscleCounts).reduce((sum, count) => sum + count, 0);
+    const muscleBalance = Object.keys(muscleCounts)
+        .map(name => ({
+            name,
+            percentage: Math.round((muscleCounts[name] / totalExercises) * 100)
+        }))
+        .sort((a, b) => b.percentage - a.percentage)
+        .slice(0, 4); // Top 4 muscle groups
+    
+    // Calculate current streak
+    let currentStreak = 0;
+    const sortedHistory = [...history].sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+    const today = new Date().toDateString();
+    let checkDate = new Date();
+    
+    for (let i = 0; i < 30; i++) { // Check last 30 days
+        const checkDateStr = checkDate.toDateString();
+        const hasWorkout = sortedHistory.some(w => new Date(w.startTime).toDateString() === checkDateStr);
+        
+        if (hasWorkout) {
+            currentStreak++;
+        } else if (checkDateStr !== today) {
+            break; // Break on first missed day (not counting today)
+        }
+        
+        checkDate.setDate(checkDate.getDate() - 1);
+    }
+    
+    // Calculate quality score based on various factors
+    const avgSetsPerWorkout = history.reduce((sum, w) => sum + w.exercises.reduce((s, e) => s + e.sets.length, 0), 0) / history.length;
+    const prs = getPRs();
+    const newPRs = Object.values(prs).filter(pr => {
+        const prDate = new Date(pr.date);
+        return prDate >= cutoffDate;
+    }).length;
+    
+    const qualityScore = Math.min(Math.round(
+        (avgSetsPerWorkout * 2) + // Sets per workout (max 10 sets = 20 points)
+        (consistency / 10) + // Consistency (max 10 points)
+        (newPRs * 2) + // New PRs (max 10 points)
+        (currentStreak / 3) // Streak (max ~10 points)
+    ), 10);
+    
+    // Calculate motivation score
+    const motivationScore = Math.min(Math.round(
+        (goalsAchieved * 2) + // Achieved goals
+        (activeGoals) + // Active goals
+        (consistency / 10) + // Consistency
+        (qualityScore / 2) // Quality
+    ), 10);
+    
+    // Calculate predicted progress
+    const predictedProgress = volumeTrend > 0 ? volumeTrend * 0.8 : Math.abs(volumeTrend) * 0.5;
+    
+    // Generate insight
+    let insight = { title: "Houd vol!", description: "Blijf consistent trainen voor de beste resultaten." };
+    
+    if (consistency >= 80) {
+        insight = { title: "Uitstekende consistentie!", description: "Je traint regelmatig - dit leidt tot geweldige resultaten." };
+    } else if (newPRs > 0) {
+        insight = { title: "Nieuwe PRs behaald!", description: `Je hebt ${newPRs} nieuwe persoonlijke records gezet. Geweldig!` };
+    } else if (volumeTrend > 10) {
+        insight = { title: "Sterke progressie!", description: "Je volume neemt toe - je wordt sterker!" };
+    } else if (currentStreak >= 7) {
+        insight = { title: `Streak van ${currentStreak} dagen!`, description: "Je bent on fire - houd dit vast!" };
+    }
+    
+    return {
+        bestDay,
+        avgDuration,
+        topMuscleGroup,
+        consistency,
+        volumeTrend,
+        newPRs,
+        currentStreak,
+        qualityScore,
+        goalsAchieved,
+        activeGoals,
+        motivationScore,
+        predictedProgress,
+        muscleBalance,
+        insight
+    };
+}
+
+function renderVolumeChart(history) {
+    const container = document.getElementById('analyticsVolumeChart');
+    if (!container) return;
+    
+    // Simple volume over time visualization
+    const volumes = history.map(workout => {
+        let volume = 0;
+        workout.exercises.forEach(exercise => {
+            exercise.sets.forEach(set => {
+                if (set.completed && set.weight && set.reps) {
+                    volume += set.weight * set.reps;
+                }
+            });
+        });
+        return {
+            date: new Date(workout.startTime),
+            volume: volume
+        };
+    }).sort((a, b) => a.date - b.date);
+    
+    if (volumes.length === 0) {
+        container.innerHTML = '<div style="text-align: center; color: var(--text-muted);">Geen volume data beschikbaar</div>';
+        return;
+    }
+    
+    // Create simple bar chart
+    const maxVolume = Math.max(...volumes.map(v => v.volume));
+    const chartHeight = 150;
+    
+    container.innerHTML = `
+        <div style="display: flex; align-items: end; justify-content: space-between; height: ${chartHeight}px; padding: 0 1rem;">
+            ${volumes.slice(-10).map(v => { // Show last 10 workouts
+                const height = maxVolume > 0 ? (v.volume / maxVolume) * chartHeight : 0;
+                const dateStr = v.date.toLocaleDateString('nl-NL', { month: 'short', day: 'numeric' });
+                return `
+                    <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+                        <div style="width: 100%; max-width: 30px; height: ${height}px; background: var(--primary); border-radius: 4px 4px 0 0; margin-bottom: 0.5rem;" title="${v.volume}kg op ${dateStr}"></div>
+                        <div style="font-size: 0.7rem; color: var(--text-muted); transform: rotate(-45deg); transform-origin: center; white-space: nowrap;">${dateStr}</div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
 }
 
 // MOBILE ENHANCEMENTS
@@ -6879,7 +7665,7 @@ function renderOneRepMaxOverview(container, history, schemaId) {
             ${exercisesWithData.map(exercise => `
                 <div style="background: var(--dark-elevated); border: 1px solid var(--border); border-radius: 12px; padding: 1rem;">
                     <div style="font-weight: 700; color: var(--text); margin-bottom: 0.5rem;">${exercise.name}</div>
-                    <div style="font-size: 1.5rem; font-weight: 800; color: #34C759; margin-bottom: 0.25rem;">${exercise.best1RM} kg</div>
+                    <div style="font-size: 1.5rem; font-weight: 800; color: #34C759; margin-bottom: 0.25rem;">${exercise.best1RM.toFixed(1)} kg</div>
                     <div style="color: var(--text-muted); font-size: 0.8rem;">
                         ${exercise.date ? `Laatste update: ${exercise.date.toLocaleDateString('nl-NL')}` : ''}
                     </div>
@@ -6910,6 +7696,8 @@ function switchView(viewName) {
         "history": "historyView",
         "progress": "progressView",
         "prs": "prsView",
+        "goals": "goalsView",
+        "analytics": "analyticsView",
         "statistics": "statisticsView",
         "exercises": "exercisesView",
         "settings": "settingsView",
@@ -6929,6 +7717,8 @@ function switchView(viewName) {
     if (viewName === "statistics") renderStatistics();
     if (viewName === "progress") renderProgress();
     if (viewName === "prs") renderPRs();
+    if (viewName === "goals") renderGoals();
+    if (viewName === "analytics") renderAnalytics();
     if (viewName === "exercises") {
         renderExercisesList();
         document.getElementById("fabAddExercise").classList.add("visible");

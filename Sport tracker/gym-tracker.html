@@ -23,7 +23,7 @@
     <meta name="apple-action-button-title" content="Start Workout">
     <!-- Live Activities hint -->
     <meta name="apple-live-activities" content="workout-timer">
-    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiR3ltIFRyYWNrZXIiLCJzaG9ydF9uYW1lIjoiR3ltIiwic3RhcnRfdXJsIjoiLiIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiMwMDAwMDAiLCJ0aGVtZV9jb2xvciI6IiMzNEM3NTkifQ==">
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiR3ltIFRyYWNrZXIgUHJvIiwic2hvcnRfbmFtZSI6Ikd5bSBUcmFja2VyIiwic3RhcnRfdXJsIjoiLyIsInNjb3BlIjoiLyIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwib3JpZW50YXRpb24iOiJwb3J0cmFpdCIsImJhY2tncm91bmRfY29sb3IiOiIjMDAwMDAwIiwidGhlbWVfY29sb3IiOiIjNEE5MEUyIiwibGFuZyI6Im5sIn0=">
     <title> Gym Tracker Pro</title>
 </head>
 <body>
@@ -3643,7 +3643,7 @@ label.invalid {
 
 <script>
 // APP VERSION
-const APP_VERSION = "2025-12-17-19";
+const APP_VERSION = "2025-12-17-20";
 
 // Voeg automatisch een test custom schema toe als er nog geen custom schemas zijn
 document.addEventListener('DOMContentLoaded', function() {
@@ -5223,7 +5223,11 @@ function init() {
     const iOSVersion = navigator.userAgent.match(/OS (\d+)_/)?.[1];
     const isIOS17Plus = isIOS && iOSVersion && parseInt(iOSVersion) >= 17;
     const isDynamicIslandDevice = isIOS && /iPhone1[4-9]|iPhone2[0-9]/.test(navigator.userAgent); // iPhone 14 Pro+
-    const isPWA = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+    const isPWA = window.navigator.standalone === true ||
+                 window.matchMedia('(display-mode: standalone)').matches ||
+                 document.referrer.includes('android-app://') ||
+                 window.location.search.includes('pwa=true') ||
+                 (window.location.protocol === 'file:' && window.cordova);
 
     console.log('📱 Device detection:');
     console.log('  - iOS:', isIOS);
@@ -8401,8 +8405,24 @@ function installPWA() {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
     if (isIOS) {
-        // iOS PWA install instructions
-        showToast('📱 Tik op "Delen" → "Zet op beginscherm"', 'info');
+        // iOS PWA install instructions - more detailed
+        const instructions = `
+📱 iOS Installatie Instructies:
+
+1. Tik op de "Delen" knop (rechtsboven) 
+2. Scroll naar beneden en tik "Zet op beginscherm"
+3. Tik "Toevoegen" in de popup
+4. De app verschijnt nu op je homescreen
+
+🔄 Herlaad deze pagina na installatie om vibratie te testen!
+        `.trim();
+
+        // Show detailed instructions
+        if (confirm('Wil je gedetailleerde iOS installatie instructies zien?')) {
+            alert(instructions);
+        } else {
+            showToast('📱 Tik Delen → Zet op beginscherm', 'info');
+        }
     } else {
         // Try to trigger install prompt for other browsers
         if ('beforeinstallprompt' in window) {
@@ -8410,6 +8430,7 @@ function installPWA() {
                 e.prompt();
             });
         }
+        showToast('🔄 PWA installatie poging...', 'info');
     }
 
     dismissPWAPrompt();
@@ -9478,17 +9499,33 @@ function enhanceFormValidation() {
     });
 }
 
-function validateField(field) {
-    const isValid = field.checkValidity();
-    
-    field.classList.toggle('invalid', !isValid);
-    field.classList.toggle('valid', isValid && field.value.length > 0);
-    
-    // Update associated label
-    const label = document.querySelector(`label[for="${field.id}"]`);
-    if (label) {
-        label.classList.toggle('invalid', !isValid);
+// Test functions for debugging iOS 17+ features
+function testHapticFeedback() {
+    console.log('🧪 Testing haptic feedback...');
+
+    // Check current PWA status
+    const isPWA = window.navigator.standalone === true ||
+                 window.matchMedia('(display-mode: standalone)').matches ||
+                 document.referrer.includes('android-app://') ||
+                 window.location.search.includes('pwa=true');
+
+    console.log('🔍 PWA Status:', isPWA);
+    console.log('🔍 navigator.standalone:', window.navigator.standalone);
+    console.log('🔍 display-mode:', window.matchMedia('(display-mode: standalone)').matches);
+
+    hapticFeedback([100, 50, 100, 50, 100]);
+
+    if (!isPWA) {
+        setTimeout(() => {
+            showToast('⚠️ Geen vibratie? Installeer als PWA!', 'warning');
+        }, 1000);
     }
+}
+
+function testDynamicIsland() {
+    console.log('🧪 Testing Dynamic Island...');
+    updateDynamicIsland();
+    showToast('🏝️ Dynamic Island test uitgevoerd', 'info');
 }
 
 /**

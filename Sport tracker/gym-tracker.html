@@ -32,12 +32,17 @@
 }
 
 :root {
+    /* Base Colors */
     --primary: #34C759;
     --secondary: #FF9500;
     --tertiary: #5AC8FA;
     --danger: #FF3B30;
     --warning: #FFCC00;
     --purple: #AF52DE;
+    --success: #34C759;
+    --gold: linear-gradient(135deg, #FFD700, #FFA500);
+    
+    /* Dark Theme */
     --dark: #000000;
     --dark-lighter: #1C1C1E;
     --dark-card: #2C2C2E;
@@ -45,9 +50,26 @@
     --text: #FFFFFF;
     --text-muted: #8E8E93;
     --border: #38383A;
-    --success: #34C759;
-    --gold: linear-gradient(135deg, #FFD700, #FFA500);
     --shadow: 0 10px 40px rgba(0,0,0,0.3);
+    
+    /* Light Theme */
+    --light-bg: #F2F2F7;
+    --light-card: #FFFFFF;
+    --light-elevated: #E5E5EA;
+    --light-text: #1C1C1E;
+    --light-text-muted: #8E8E93;
+    --light-border: #C6C6C8;
+    --light-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    
+    /* Theme Transitions */
+    --transition-fast: all 0.15s ease-out;
+    --transition-normal: all 0.25s ease-out;
+    --transition-slow: all 0.4s ease-out;
+    
+    /* Animations */
+    --bounce-in: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
     --schema-accent: var(--primary);
     --schema-accent-2: var(--secondary);
 }
@@ -3161,6 +3183,393 @@ body.swipe-active {
 .set-check {
     font-size: 1.2rem;
     font-weight: bold;
+}
+
+/* ===== ENHANCED UI/UX IMPROVEMENTS ===== */
+
+/* Global Transitions */
+* {
+    transition: var(--transition-fast);
+}
+
+button, .btn, .tab, .card, .stat-card, .pr-card, .history-item {
+    transition: var(--transition-normal);
+}
+
+/* Enhanced Button Interactions */
+.btn {
+    position: relative;
+    overflow: hidden;
+    transform: translateZ(0); /* Hardware acceleration */
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s ease, height 0.3s ease;
+}
+
+.btn:active::before {
+    width: 300px;
+    height: 300px;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.btn:active {
+    transform: translateY(0);
+    transition: var(--transition-fast);
+}
+
+/* Card Hover Effects */
+.card, .stat-card, .pr-card, .history-item {
+    transform: translateZ(0);
+}
+
+.card:hover, .stat-card:hover, .pr-card:hover, .history-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Tab Animations */
+.tab {
+    position: relative;
+    overflow: hidden;
+}
+
+.tab::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: var(--primary);
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.tab.active::after {
+    width: 100%;
+}
+
+.tab:hover::after {
+    width: 60%;
+}
+
+/* Loading Animation */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.loading {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Success Animation */
+@keyframes checkmark {
+    0% { transform: scale(0) rotate(45deg); opacity: 0; }
+    50% { transform: scale(1.2) rotate(45deg); opacity: 1; }
+    100% { transform: scale(1) rotate(45deg); opacity: 1; }
+}
+
+.success-check {
+    animation: checkmark 0.6s ease-out;
+}
+
+/* FAB Button Enhancements */
+.fab {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--primary);
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(52, 199, 89, 0.3);
+    transition: var(--transition-normal);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fab:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 30px rgba(52, 199, 89, 0.4);
+}
+
+.fab:active {
+    transform: scale(0.95);
+}
+
+/* Multiple FABs Layout */
+.fab-voice {
+    right: 88px;
+    background: var(--secondary);
+    box-shadow: 0 4px 20px rgba(255, 149, 0, 0.3);
+}
+
+.fab-voice:hover {
+    box-shadow: 0 6px 30px rgba(255, 149, 0, 0.4);
+}
+
+/* Toast Enhancements */
+.toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--dark-card);
+    color: var(--text);
+    padding: 12px 20px;
+    border-radius: 25px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateX(-50%) translateY(100px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Modal Enhancements */
+.modal {
+    animation: fadeInScale 0.3s ease-out;
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.modal-content {
+    animation: slideIn 0.4s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Progress Bar Animation */
+.progress-bar {
+    height: 8px;
+    background: var(--dark-elevated);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--tertiary));
+    border-radius: 4px;
+    transition: width 0.8s ease-out;
+    position: relative;
+}
+
+.progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* Enhanced Input Focus */
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(52, 199, 89, 0.2);
+    transition: var(--transition-fast);
+}
+
+/* Staggered Animation for Lists */
+.stagger-item {
+    animation: fadeInUp 0.6s ease-out both;
+}
+
+.stagger-item:nth-child(1) { animation-delay: 0.1s; }
+.stagger-item:nth-child(2) { animation-delay: 0.2s; }
+.stagger-item:nth-child(3) { animation-delay: 0.3s; }
+.stagger-item:nth-child(4) { animation-delay: 0.4s; }
+.stagger-item:nth-child(5) { animation-delay: 0.5s; }
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Enhanced Empty States */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    animation: fadeIn 0.8s ease-out;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.6;
+    animation: bounceIn 0.8s ease-out;
+}
+
+@keyframes bounceIn {
+    0% { transform: scale(0.3); opacity: 0; }
+    50% { transform: scale(1.05); }
+    70% { transform: scale(0.9); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+    .fab {
+        bottom: 20px;
+        right: 20px;
+    }
+    
+    .fab-voice {
+        right: 76px;
+    }
+    
+    .card:hover, .stat-card:hover, .pr-card:hover, .history-item:hover {
+        transform: none; /* Disable hover effects on touch devices */
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Enhanced Button States */
+.btn-pressed {
+    transform: scale(0.95) !important;
+    transition: var(--transition-fast) !important;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* Form Validation */
+input.invalid, select.invalid, textarea.invalid {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 2px rgba(255, 59, 48, 0.2);
+}
+
+input.valid, select.valid, textarea.valid {
+    border-color: var(--success);
+    box-shadow: 0 0 0 2px rgba(52, 199, 89, 0.2);
+}
+
+label.invalid {
+    color: var(--danger);
+}
+
+/* Enhanced Toast Styles */
+.toast {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 200px;
+    justify-content: center;
+}
+
+.toast-icon {
+    font-size: 1.2rem;
+}
+
+.toast-success {
+    border-left: 4px solid var(--success);
+}
+
+.toast-error {
+    border-left: 4px solid var(--danger);
+}
+
+.toast-warning {
+    border-left: 4px solid var(--warning);
+}
+
+.toast-info {
+    border-left: 4px solid var(--tertiary);
+}
+
+@keyframes slideOut {
+    to {
+        transform: translateX(-50%) translateY(100px);
+        opacity: 0;
+    }
+}
+
+/* Progressive Enhancement Classes */
+.enhanced-ui .card {
+    backdrop-filter: blur(10px);
+}
+
+.backdrop-filter-supported .modal {
+    backdrop-filter: blur(20px);
+}
+
+.touch-device .btn:hover {
+    transform: none; /* Disable hover effects on touch devices */
 }
 
 </style>
@@ -8162,14 +8571,20 @@ function closeModal(modalId) {
 
 // TOAST
 function showToast(message, type = "success") {
-    const toast = document.getElementById("toast");
-    toast.textContent = message;
-    toast.className = `toast ${type}`;
-    toast.classList.add("show");
+    // Use enhanced toast for better UX
+    showEnhancedToast(message, type);
     
-    setTimeout(() => {
-        toast.classList.remove("show");
-    }, 3000);
+    // Also update legacy toast for compatibility
+    const legacyToast = document.getElementById("toast");
+    if (legacyToast) {
+        legacyToast.textContent = message;
+        legacyToast.className = `toast ${type}`;
+        legacyToast.classList.add("show");
+        
+        setTimeout(() => {
+            legacyToast.classList.remove("show");
+        }, 3000);
+    }
 }
 
 // UTILITY
@@ -8445,6 +8860,203 @@ function testRestTimerOverlay() {
 
 // Initialize on load
 document.addEventListener("DOMContentLoaded", init);
+
+// ===== ENHANCED UI/UX FUNCTIONS =====
+
+/**
+ * Apply staggered animations to list items for smooth loading
+ */
+function applyStaggeredAnimation(selector, delay = 100) {
+    const elements = document.querySelectorAll(selector);
+    elements.forEach((el, index) => {
+        el.style.animationDelay = `${index * delay}ms`;
+        el.classList.add('stagger-item');
+    });
+}
+
+/**
+ * Enhanced button feedback with haptic-like visual response
+ */
+function enhanceButtonFeedback(button) {
+    if (!button) return;
+    
+    button.addEventListener('click', function(e) {
+        // Add pressed state
+        this.classList.add('btn-pressed');
+        
+        // Remove after animation
+        setTimeout(() => {
+            this.classList.remove('btn-pressed');
+        }, 150);
+        
+        // Trigger haptic feedback if available
+        if (navigator.vibrate) {
+            navigator.vibrate(50);
+        }
+    });
+}
+
+/**
+ * Smooth scroll to element with offset
+ */
+function smoothScrollTo(element, offset = 0) {
+    if (!element) return;
+    
+    const elementPosition = element.getBoundingClientRect().top;
+    const offsetPosition = elementPosition + window.pageYOffset - offset;
+    
+    window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+    });
+}
+
+/**
+ * Enhanced toast notifications with animations
+ */
+function showEnhancedToast(message, type = 'info', duration = 3000) {
+    // Remove existing toasts
+    const existingToasts = document.querySelectorAll('.toast');
+    existingToasts.forEach(toast => toast.remove());
+    
+    // Create new toast
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+        <span class="toast-icon">${getToastIcon(type)}</span>
+        <span class="toast-message">${message}</span>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Auto remove
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease-out';
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
+}
+
+function getToastIcon(type) {
+    const icons = {
+        'success': '✅',
+        'error': '❌',
+        'warning': '⚠️',
+        'info': 'ℹ️'
+    };
+    return icons[type] || icons.info;
+}
+
+/**
+ * Loading state management
+ */
+function setLoadingState(element, loading = true) {
+    if (!element) return;
+    
+    if (loading) {
+        element.classList.add('loading');
+        element.disabled = true;
+        element.dataset.originalText = element.textContent;
+        element.textContent = '⏳';
+    } else {
+        element.classList.remove('loading');
+        element.disabled = false;
+        if (element.dataset.originalText) {
+            element.textContent = element.dataset.originalText;
+        }
+    }
+}
+
+/**
+ * Progressive enhancement for modern browsers
+ */
+function applyProgressiveEnhancement() {
+    // Check for modern features
+    const supportsCSSGrid = CSS.supports('display', 'grid');
+    const supportsFlexbox = CSS.supports('display', 'flex');
+    const supportsBackdropFilter = CSS.supports('backdrop-filter', 'blur(10px)');
+    
+    document.documentElement.classList.add('enhanced-ui');
+    
+    if (supportsBackdropFilter) {
+        document.documentElement.classList.add('backdrop-filter-supported');
+    }
+    
+    // Add touch device detection
+    if ('ontouchstart' in window) {
+        document.documentElement.classList.add('touch-device');
+    }
+}
+
+/**
+ * Performance optimization: Debounce function calls
+ */
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+/**
+ * Enhanced form validation with visual feedback
+ */
+function enhanceFormValidation() {
+    const inputs = document.querySelectorAll('input, select, textarea');
+    
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            validateField(this);
+        });
+        
+        input.addEventListener('input', debounce(function() {
+            if (this.classList.contains('invalid')) {
+                validateField(this);
+            }
+        }, 300));
+    });
+}
+
+function validateField(field) {
+    const isValid = field.checkValidity();
+    
+    field.classList.toggle('invalid', !isValid);
+    field.classList.toggle('valid', isValid && field.value.length > 0);
+    
+    // Update associated label
+    const label = document.querySelector(`label[for="${field.id}"]`);
+    if (label) {
+        label.classList.toggle('invalid', !isValid);
+    }
+}
+
+/**
+ * Initialize all UI enhancements
+ */
+function initUIEnhancements() {
+    applyProgressiveEnhancement();
+    enhanceFormValidation();
+    
+    // Enhance all buttons
+    document.querySelectorAll('.btn, button').forEach(btn => {
+        enhanceButtonFeedback(btn);
+    });
+    
+    // Apply staggered animations to key lists
+    applyStaggeredAnimation('.stat-card');
+    applyStaggeredAnimation('.pr-card');
+    applyStaggeredAnimation('.history-item');
+    applyStaggeredAnimation('.exercise-item');
+}
+
+// Call enhancements after DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(initUIEnhancements, 100); // Small delay to ensure all elements are rendered
+});
 </script>
 </body>
 </html>

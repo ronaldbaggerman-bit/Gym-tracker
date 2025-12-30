@@ -193,6 +193,12 @@ body::before {
     50% { opacity: 0.7; }
 }
 
+@keyframes flash {
+    0% { opacity: 0; }
+    50% { opacity: 0.3; }
+    100% { opacity: 0; }
+}
+
 .container {
     max-width: 100%;
     margin: 0 auto;
@@ -3643,7 +3649,7 @@ label.invalid {
 
 <script>
 // APP VERSION
-const APP_VERSION = "2025-12-17-20";
+const APP_VERSION = "2025-12-17-21";
 
 // Voeg automatisch een test custom schema toe als er nog geen custom schemas zijn
 document.addEventListener('DOMContentLoaded', function() {
@@ -8185,40 +8191,82 @@ function hapticFeedback(pattern = [50]) {
         console.log('🌐 User Agent:', navigator.userAgent);
 
         try {
+            let vibrationWorked = false;
+
             if (isIOS && !isPWA) {
-                console.log('⚠️ iOS detected but not in PWA mode - vibration disabled');
-                // iOS Safari blocks vibration outside PWA mode
-                // Use enhanced visual feedback instead
-                enhancedVisualFeedback(pattern);
-                return;
+                console.log('⚠️ iOS detected but not in PWA mode - trying vibration anyway');
+                // Try vibration even outside PWA, some iOS versions allow it
+                vibrationWorked = tryVibration(pattern);
+            } else {
+                // Try vibration in PWA mode or on other platforms
+                vibrationWorked = tryVibration(pattern);
             }
 
-            if (isIOS17Plus && isPWA) {
-                // Use more sophisticated patterns for iPhone 17+ in PWA mode
-                console.log('🎯 iOS 17+ PWA haptic feedback:', pattern);
-                navigator.vibrate(pattern);
-            } else if (isIOS && isPWA) {
-                // Standard iOS haptic feedback in PWA
-                console.log('📱 iOS PWA haptic feedback:', pattern);
-                navigator.vibrate(pattern);
-            } else {
-                // Android and other devices
-                console.log('🤖 Android/other haptic feedback:', pattern);
-                navigator.vibrate(pattern);
+            if (!vibrationWorked) {
+                console.log('🔄 Vibration failed, using audio feedback');
+                audioFeedback(pattern);
             }
         } catch (error) {
             console.error('❌ Vibration error:', error);
-            // Fallback: enhanced visual feedback
-            enhancedVisualFeedback(pattern);
+            audioFeedback(pattern);
         }
     } else {
-        console.log('❌ Haptic feedback not supported - vibrate API not available');
-        // Fallback: enhanced visual feedback
+        console.log('❌ Vibration API not available, using audio feedback');
+        audioFeedback(pattern);
+    }
+}
+
+// Try vibration and return success status
+function tryVibration(pattern) {
+    try {
+        const result = navigator.vibrate(pattern);
+        console.log('🎯 Vibration attempted, result:', result);
+        return result !== false; // Some browsers return boolean
+    } catch (error) {
+        console.error('❌ Vibration failed:', error);
+        return false;
+    }
+}
+
+// Audio-based haptic feedback for when vibration doesn't work
+function audioFeedback(pattern) {
+    console.log('🔊 Using audio feedback for haptic simulation');
+
+    try {
+        // Create audio context for tactile feedback
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        // Configure for tactile-like feedback (low frequency)
+        oscillator.frequency.setValueAtTime(150, audioContext.currentTime); // 150Hz for tactile feel
+        oscillator.type = 'sine';
+
+        // Quick envelope for click-like feedback
+        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.05);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.05);
+
+        // Clean up
+        setTimeout(() => {
+            audioContext.close();
+        }, 100);
+
+        console.log('✅ Audio feedback played');
+    } catch (error) {
+        console.error('❌ Audio feedback failed:', error);
+        // Final fallback: enhanced visual feedback
         enhancedVisualFeedback(pattern);
     }
 }
 
-// Enhanced visual feedback when haptic is not available
+// Enhanced visual feedback when other methods don't work
 function enhancedVisualFeedback(pattern) {
     console.log('💫 Using enhanced visual feedback');
 
@@ -8226,25 +8274,50 @@ function enhancedVisualFeedback(pattern) {
     const body = document.body;
     const originalTransform = body.style.transform || '';
 
-    // Quick vibration-like animation
+    // More noticeable vibration animation
     body.style.transition = 'transform 0.1s ease-in-out';
-    body.style.transform = originalTransform + ' translateX(2px)';
+    body.style.transform = originalTransform + ' translateX(3px) scale(1.02)';
 
     setTimeout(() => {
-        body.style.transform = originalTransform + ' translateX(-2px)';
+        body.style.transform = originalTransform + ' translateX(-3px) scale(1.01)';
     }, 50);
 
     setTimeout(() => {
-        body.style.transform = originalTransform + ' translateX(1px)';
+        body.style.transform = originalTransform + ' translateX(2px) scale(1.015)';
     }, 100);
+
+    setTimeout(() => {
+        body.style.transform = originalTransform + ' translateX(-2px) scale(1.01)';
+    }, 150);
 
     setTimeout(() => {
         body.style.transform = originalTransform;
         body.style.transition = '';
-    }, 150);
+    }, 200);
 
-    // Also show a toast notification
+    // Also show a prominent toast notification
     showToast('💫', 'light');
+
+    // Add a subtle flash effect to the screen
+    const flash = document.createElement('div');
+    flash.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.1);
+        pointer-events: none;
+        z-index: 9999;
+        animation: flash 0.2s ease-out;
+    `;
+    document.body.appendChild(flash);
+
+    setTimeout(() => {
+        document.body.removeChild(flash);
+    }, 200);
+
+    console.log('✅ Enhanced visual feedback applied');
 }
 
 // Dynamic Island support for iPhone 14 Pro+ workout timer
@@ -9512,14 +9585,13 @@ function testHapticFeedback() {
     console.log('🔍 PWA Status:', isPWA);
     console.log('🔍 navigator.standalone:', window.navigator.standalone);
     console.log('🔍 display-mode:', window.matchMedia('(display-mode: standalone)').matches);
+    console.log('🔍 Vibration API available:', 'vibrate' in navigator);
 
     hapticFeedback([100, 50, 100, 50, 100]);
 
-    if (!isPWA) {
-        setTimeout(() => {
-            showToast('⚠️ Geen vibratie? Installeer als PWA!', 'warning');
-        }, 1000);
-    }
+    setTimeout(() => {
+        showToast('🔔 Haptic test voltooid - check console voor details', 'info');
+    }, 500);
 }
 
 function testDynamicIsland() {

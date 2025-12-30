@@ -8803,6 +8803,42 @@ function setAppVersionLabel() {
     }
 }
 
+async function forceReload() {
+    try {
+        console.log("🔄 Force reload initiated...");
+        
+        // Unregister service workers
+        if ('serviceWorker' in navigator) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (let registration of registrations) {
+                await registration.unregister();
+                console.log("🗑️ Service worker unregistered");
+            }
+        }
+        
+        // Clear caches
+        if ('caches' in window) {
+            const cacheNames = await caches.keys();
+            await Promise.all(cacheNames.map(name => caches.delete(name)));
+            console.log("🗑️ Caches cleared");
+        }
+        
+        // Clear localStorage version to force re-initialization
+        localStorage.removeItem("app_version");
+        
+        // Reload with cache bust
+        const url = new URL(location.href);
+        url.searchParams.set("v", APP_VERSION);
+        url.searchParams.set("t", Date.now().toString());
+        location.replace(url.toString());
+        
+    } catch (e) {
+        console.error("⚠️ Force reload error:", e);
+        // Fallback to simple reload
+        location.reload();
+    }
+}
+
 function toggleLogging() {
     const settings = getSettings();
     const newLoggingEnabled = !settings.loggingEnabled;

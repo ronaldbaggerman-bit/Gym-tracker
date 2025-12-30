@@ -5831,8 +5831,9 @@ function pauseTimer() {
     document.getElementById("timerText").textContent = "Hervatten";
 
     // Clear Dynamic Island when paused
-    if ('dynamicIsland' in navigator) {
-        navigator.dynamicIsland.clear();
+    const isIOS17 = navigator.userAgent.includes('iPhone') && navigator.userAgent.includes('17');
+    if (isIOS17) {
+        console.log('🏝️ Dynamic Island cleared (timer paused)');
     }
 }
 
@@ -8127,97 +8128,90 @@ function renderVolumeChart(history) {
 // MOBILE ENHANCEMENTS
 // Enhanced haptic feedback for iPhone 17 and modern devices
 function hapticFeedback(pattern = [50]) {
+    // Enhanced haptic feedback for iOS 17+ devices
     if ('vibrate' in navigator) {
         // Check for iOS 17+ advanced haptic patterns
         if (navigator.userAgent.includes('iPhone') && navigator.userAgent.includes('17')) {
             // Use more sophisticated patterns for iPhone 17
+            console.log('🎯 iOS 17+ haptic feedback:', pattern);
             navigator.vibrate(pattern);
         } else {
             // Fallback for older devices
+            console.log('📳 Standard haptic feedback:', pattern);
             navigator.vibrate(pattern);
         }
+    } else {
+        console.log('⚠️ Haptic feedback not supported');
     }
 }
 
 // Dynamic Island support for iPhone 14 Pro+ workout timer
+// Note: Dynamic Island is a native iOS feature, this is a simulation for demo purposes
 function updateDynamicIsland() {
-    if ('dynamicIsland' in navigator && currentWorkout) {
-        if (timerRunning) {
-            // Update Dynamic Island with timer progress
-            const progress = Math.min(1, timerSeconds / (currentWorkout.targetDuration || 3600));
+    if (currentWorkout) {
+        // Check if we're on iOS 17+ where Dynamic Island might be available
+        const isIOS17 = navigator.userAgent.includes('iPhone') && navigator.userAgent.includes('17');
 
-            navigator.dynamicIsland.update({
-                title: 'Workout Timer',
-                subtitle: formatDuration(timerSeconds),
-                progress: progress,
-                icon: '⏱️',
-                actions: [
-                    {
-                        title: 'Pauze',
-                        action: 'pauseWorkout'
-                    },
-                    {
-                        title: 'Stop',
-                        action: 'stopWorkout'
-                    }
-                ]
-            });
-        } else {
-            // Update Dynamic Island with workout progress
-            let totalSets = 0;
-            let completedSets = 0;
+        if (isIOS17) {
+            console.log('🏝️ Dynamic Island update requested (iOS 17+ detected)');
 
-            currentWorkout.exercises.forEach(ex => {
-                ex.sets.forEach(set => {
-                    totalSets++;
-                    if (set.completed) completedSets++;
+            if (timerRunning) {
+                // Update Dynamic Island with timer progress
+                const progress = Math.min(1, timerSeconds / (currentWorkout.targetDuration || 3600));
+                console.log(`⏱️ Timer: ${formatDuration(timerSeconds)} (${Math.round(progress * 100)}%)`);
+            } else {
+                // Update Dynamic Island with workout progress
+                let totalSets = 0;
+                let completedSets = 0;
+
+                currentWorkout.exercises.forEach(ex => {
+                    ex.sets.forEach(set => {
+                        totalSets++;
+                        if (set.completed) completedSets++;
+                    });
                 });
-            });
 
-            const progress = totalSets > 0 ? completedSets / totalSets : 0;
+                const progress = totalSets > 0 ? completedSets / totalSets : 0;
+                console.log(`💪 Workout: ${completedSets}/${totalSets} sets (${Math.round(progress * 100)}%)`);
+            }
 
-            navigator.dynamicIsland.update({
-                title: 'Workout Progress',
-                subtitle: `${completedSets}/${totalSets} sets`,
-                progress: progress,
-                icon: '🏋️‍♂️',
-                actions: [
-                    {
-                        title: 'Start Timer',
-                        action: 'startTimer'
-                    },
-                    {
-                        title: 'Finish',
-                        action: 'finishWorkout'
-                    }
-                ]
-            });
+            // In a real implementation, this would call native iOS APIs
+            // For now, we'll simulate the behavior with console logging
+        } else {
+            console.log('ℹ️ Dynamic Island not available (requires iOS 17+)');
         }
     }
 }
 
 // Action Button support for iPhone 15 Pro+
+// Note: Action Button is a native iOS feature, this is a simulation for demo purposes
 function setupActionButton() {
-    if ('actionButton' in navigator) {
-        navigator.actionButton.set({
-            type: 'workout',
-            title: 'Start Workout',
-            icon: '🏋️‍♂️',
-            action: 'startQuickWorkout'
-        });
+    const isIOS17 = navigator.userAgent.includes('iPhone') && navigator.userAgent.includes('17');
+
+    if (isIOS17) {
+        console.log('🔘 Action Button setup requested (iOS 17+ detected)');
+        console.log('🏋️‍♂️ Action: Start Quick Workout');
+
+        // In a real implementation, this would configure the Action Button
+        // For now, we'll just log the setup
+    } else {
+        console.log('ℹ️ Action Button not available (requires iOS 17+)');
     }
 }
 
 // Camera Control support for iPhone 15 Pro Max
+// Note: Camera Control is a native iOS feature, this is a simulation for demo purposes
 function setupCameraControl() {
-    if ('cameraControl' in navigator) {
-        navigator.cameraControl.set({
-            mode: 'workout',
-            actions: [
-                { title: 'Complete Set', action: 'completeCurrentSet' },
-                { title: 'Next Exercise', action: 'nextExercise' }
-            ]
-        });
+    const isIOS17 = navigator.userAgent.includes('iPhone') && navigator.userAgent.includes('17');
+
+    if (isIOS17) {
+        console.log('📷 Camera Control setup requested (iOS 17+ detected)');
+        console.log('💪 Actions: Complete Set, Next Exercise');
+
+        // In a real implementation, this would configure Camera Control
+        // For now, we'll just log the setup
+    } else {
+        console.log('ℹ️ Camera Control not available (requires iOS 17+)');
     }
 }
 

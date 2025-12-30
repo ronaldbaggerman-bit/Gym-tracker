@@ -36,6 +36,7 @@
     <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
         <button onclick="testHapticFeedback()" style="background:#4A90E2;color:#000;border:none;padding:4px 8px;border-radius:4px;font-size:11px;">Test Haptic</button>
         <button onclick="testDynamicIsland()" style="background:#2ECC71;color:#000;border:none;padding:4px 8px;border-radius:4px;font-size:11px;">Test Island</button>
+        <button onclick="installPWA()" style="background:#E67E22;color:#000;border:none;padding:4px 8px;border-radius:4px;font-size:11px;">Install PWA</button>
         <button onclick="document.getElementById('console-log-content').innerHTML=''" style="background:#E74C3C;color:#fff;border:none;padding:4px 8px;border-radius:4px;font-size:11px;">Clear</button>
     </div>
     <div id="console-log-content"></div>
@@ -3642,7 +3643,7 @@ label.invalid {
 
 <script>
 // APP VERSION
-const APP_VERSION = "2025-12-17-18";
+const APP_VERSION = "2025-12-17-19";
 
 // Voeg automatisch een test custom schema toe als er nog geen custom schemas zijn
 document.addEventListener('DOMContentLoaded', function() {
@@ -5243,6 +5244,9 @@ function init() {
     } else {
         console.log('💻 Non-iOS device detected');
     }
+
+    // Check for PWA installation prompt
+    checkPWAInstall();
 }
 
 function renderSchemaSelection() {
@@ -8164,26 +8168,34 @@ function hapticFeedback(pattern = [50]) {
 
         // Check for iOS devices (more flexible detection)
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        const isIOS17Plus = isIOS && /OS 1[7-9]|OS 2[0-9]/.test(navigator.userAgent);
-        
+        const iOSVersion = navigator.userAgent.match(/OS (\d+)_/)?.[1];
+        const isIOS17Plus = isIOS && iOSVersion && parseInt(iOSVersion) >= 17;
+
         // Check if running in PWA mode (required for iOS vibration)
-        const isPWA = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
-        
-        console.log('📱 iOS detected:', isIOS, 'iOS 17+:', isIOS17Plus, 'PWA mode:', isPWA);
+        const isPWA = window.navigator.standalone === true ||
+                     window.matchMedia('(display-mode: standalone)').matches ||
+                     document.referrer.includes('android-app://') ||
+                     window.location.search.includes('pwa=true');
+
+        console.log('📱 iOS detected:', isIOS, 'iOS Version:', iOSVersion, 'iOS 17+:', isIOS17Plus, 'PWA mode:', isPWA);
         console.log('🌐 User Agent:', navigator.userAgent);
 
         try {
             if (isIOS && !isPWA) {
-                console.log('⚠️ iOS detected but not in PWA mode - vibration may not work');
-                // Try anyway, some iOS versions allow vibration in browser
-                navigator.vibrate(pattern);
-            } else if (isIOS17Plus && isPWA) {
+                console.log('⚠️ iOS detected but not in PWA mode - vibration disabled');
+                // iOS Safari blocks vibration outside PWA mode
+                // Use enhanced visual feedback instead
+                enhancedVisualFeedback(pattern);
+                return;
+            }
+
+            if (isIOS17Plus && isPWA) {
                 // Use more sophisticated patterns for iPhone 17+ in PWA mode
                 console.log('🎯 iOS 17+ PWA haptic feedback:', pattern);
                 navigator.vibrate(pattern);
-            } else if (isIOS) {
-                // Standard iOS haptic feedback
-                console.log('📱 iOS haptic feedback:', pattern);
+            } else if (isIOS && isPWA) {
+                // Standard iOS haptic feedback in PWA
+                console.log('📱 iOS PWA haptic feedback:', pattern);
                 navigator.vibrate(pattern);
             } else {
                 // Android and other devices
@@ -8192,15 +8204,43 @@ function hapticFeedback(pattern = [50]) {
             }
         } catch (error) {
             console.error('❌ Vibration error:', error);
-            // Fallback: visual feedback
-            console.log('🔄 Using visual feedback fallback');
-            showToast('💫', 'light');
+            // Fallback: enhanced visual feedback
+            enhancedVisualFeedback(pattern);
         }
     } else {
         console.log('❌ Haptic feedback not supported - vibrate API not available');
-        // Fallback: visual feedback
-        showToast('💫', 'light');
+        // Fallback: enhanced visual feedback
+        enhancedVisualFeedback(pattern);
     }
+}
+
+// Enhanced visual feedback when haptic is not available
+function enhancedVisualFeedback(pattern) {
+    console.log('💫 Using enhanced visual feedback');
+
+    // Create a visual vibration effect on the body
+    const body = document.body;
+    const originalTransform = body.style.transform || '';
+
+    // Quick vibration-like animation
+    body.style.transition = 'transform 0.1s ease-in-out';
+    body.style.transform = originalTransform + ' translateX(2px)';
+
+    setTimeout(() => {
+        body.style.transform = originalTransform + ' translateX(-2px)';
+    }, 50);
+
+    setTimeout(() => {
+        body.style.transform = originalTransform + ' translateX(1px)';
+    }, 100);
+
+    setTimeout(() => {
+        body.style.transform = originalTransform;
+        body.style.transition = '';
+    }, 150);
+
+    // Also show a toast notification
+    showToast('💫', 'light');
 }
 
 // Dynamic Island support for iPhone 14 Pro+ workout timer
@@ -8303,17 +8343,84 @@ function updateDynamicIsland() {
     }
 }
 
-// Test functions for debugging iOS 17+ features
-function testHapticFeedback() {
-    console.log('🧪 Testing haptic feedback...');
-    hapticFeedback([100, 50, 100, 50, 100]);
-    showToast('🔔 Haptic test uitgevoerd', 'info');
+// Check if app should prompt for PWA installation
+function checkPWAInstall() {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isPWA = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+
+    if (isIOS && !isPWA && !localStorage.getItem('pwa-prompt-dismissed')) {
+        // Show PWA install prompt for iOS
+        setTimeout(() => {
+            showPWAInstallPrompt();
+        }, 3000); // Show after 3 seconds
+    }
 }
 
-function testDynamicIsland() {
-    console.log('🧪 Testing Dynamic Island...');
-    updateDynamicIsland();
-    showToast('🏝️ Dynamic Island test uitgevoerd', 'info');
+// Show PWA install prompt for iOS
+function showPWAInstallPrompt() {
+    const prompt = document.createElement('div');
+    prompt.id = 'pwa-install-prompt';
+    prompt.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 16px;
+        border-radius: 12px;
+        z-index: 10000;
+        font-size: 14px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    `;
+
+    prompt.innerHTML = `
+        <div style="display: flex; align-items: center; margin-bottom: 12px;">
+            <span style="font-size: 20px; margin-right: 8px;">📱</span>
+            <strong>Installeer Gym Tracker</strong>
+        </div>
+        <p style="margin: 0 0 16px 0; line-height: 1.4;">
+            Installeer deze app voor volledige functies zoals vibratie feedback en offline gebruik.
+        </p>
+        <div style="display: flex; gap: 8px;">
+            <button onclick="installPWA()" style="flex: 1; background: #4A90E2; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 500;">
+                Installeren
+            </button>
+            <button onclick="dismissPWAPrompt()" style="background: #666; color: white; border: none; padding: 10px; border-radius: 8px;">
+                Later
+            </button>
+        </div>
+    `;
+
+    document.body.appendChild(prompt);
+}
+
+function installPWA() {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+    if (isIOS) {
+        // iOS PWA install instructions
+        showToast('📱 Tik op "Delen" → "Zet op beginscherm"', 'info');
+    } else {
+        // Try to trigger install prompt for other browsers
+        if ('beforeinstallprompt' in window) {
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.prompt();
+            });
+        }
+    }
+
+    dismissPWAPrompt();
+}
+
+function dismissPWAPrompt() {
+    const prompt = document.getElementById('pwa-install-prompt');
+    if (prompt) {
+        prompt.remove();
+        localStorage.setItem('pwa-prompt-dismissed', 'true');
+    }
 }
 
 // Action Button support for iPhone 15 Pro+

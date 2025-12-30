@@ -1775,6 +1775,18 @@ h1 {
     padding: 1.75rem;
 }
 
+.modal-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.modal-title h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
 /* History Item */
 .history-item {
     background: var(--dark-card);
@@ -2947,6 +2959,210 @@ body.swipe-active {
 
 }
 
+/* History List Styles */
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem 0;
+}
+
+.history-item {
+    background: var(--dark-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.history-item:hover {
+    background: var(--dark-elevated);
+    border-color: var(--primary);
+    transform: translateY(-1px);
+}
+
+.history-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.history-item-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.schema-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.history-item-actions {
+    opacity: 0.7;
+}
+
+.history-item:hover .history-item-actions {
+    opacity: 1;
+}
+
+.history-item-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.history-date {
+    font-weight: 500;
+}
+
+.history-duration {
+    background: var(--dark-elevated);
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+}
+
+.history-item-stats {
+    display: flex;
+    gap: 1rem;
+}
+
+.history-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.history-stat-value {
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.history-stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Workout Details Modal */
+.workout-details-modal {
+    max-width: 500px;
+    width: 90vw;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.workout-summary {
+    margin-bottom: 1.5rem;
+}
+
+.workout-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: var(--dark-elevated);
+    border-radius: 8px;
+}
+
+.meta-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.meta-label {
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.meta-value {
+    font-weight: 600;
+}
+
+.workout-exercises {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.exercise-details {
+    background: var(--dark-elevated);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.exercise-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.exercise-header h3 {
+    margin: 0;
+    color: var(--primary);
+}
+
+.exercise-stats {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.exercise-sets {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.set-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    background: var(--dark-card);
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+.set-item.completed {
+    border-left: 3px solid var(--success);
+}
+
+.set-item.incomplete {
+    border-left: 3px solid var(--danger);
+    opacity: 0.6;
+}
+
+.set-number {
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.set-details {
+    flex: 1;
+    text-align: center;
+    font-weight: 600;
+}
+
+.set-check {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
 </style>
 
 <!-- Boot error overlay for diagnosing iOS white screens -->
@@ -4056,7 +4272,7 @@ function getSchemaAccentPair(color) {
 }
 
 function getSchemaColor(schemaId) {
-    const schema = WORKOUT_DATA.schemas.find(s => s.id === schemaId);
+    const schema = getAllSchemas().find(s => s.id === schemaId);
     return (schema && schema.color) ? schema.color : "#34C759";
 }
 
@@ -4073,7 +4289,7 @@ function hexToRgba(hex, alpha = 0.35) {
 function getAllMuscleGroups() {
     const muscleGroups = new Map();
     
-    WORKOUT_DATA.schemas.forEach(schema => {
+    getAllSchemas().forEach(schema => {
         schema.muscleGroups.forEach(group => {
             if (!muscleGroups.has(group.id)) {
                 muscleGroups.set(group.id, group.name);
@@ -4133,7 +4349,7 @@ function populateExistingExercises() {
     const allExercises = [];
     
     // Add standard exercises from schemas
-    WORKOUT_DATA.schemas.forEach(schema => {
+    getAllSchemas().forEach(schema => {
         schema.muscleGroups.forEach(group => {
             group.exercises.forEach(exercise => {
                 allExercises.push({
@@ -4151,7 +4367,7 @@ function populateExistingExercises() {
     Object.values(customExercises).forEach(exercise => {
         // Find the muscle group info
         let muscleGroup = null;
-        for (const schema of WORKOUT_DATA.schemas) {
+        for (const schema of getAllSchemas()) {
             const group = schema.muscleGroups.find(g => g.id === exercise.muscleGroupId);
             if (group) {
                 muscleGroup = group;
@@ -4217,7 +4433,7 @@ function addExistingExerciseToWorkout(exerciseId) {
     let exercise = null;
     
     // Check standard exercises
-    for (const schema of WORKOUT_DATA.schemas) {
+    for (const schema of getAllSchemas()) {
         for (const group of schema.muscleGroups) {
             exercise = group.exercises.find(e => e.id === exerciseId);
             if (exercise) {
@@ -4239,7 +4455,7 @@ function addExistingExerciseToWorkout(exerciseId) {
         if (customExercise) {
             // Find muscle group info
             let muscleGroup = null;
-            for (const schema of WORKOUT_DATA.schemas) {
+            for (const schema of getAllSchemas()) {
                 const group = schema.muscleGroups.find(g => g.id === customExercise.muscleGroupId);
                 if (group) {
                     muscleGroup = group;
@@ -4322,7 +4538,7 @@ function saveInlineExercise() {
     
     // Zoek spiergroep naam uit alle schemas
     let muscleGroup = null;
-    for (const schema of WORKOUT_DATA.schemas) {
+    for (const schema of getAllSchemas()) {
         const group = schema.muscleGroups.find(g => g.id === muscleGroupId);
         if (group) {
             muscleGroup = group;
@@ -4433,7 +4649,7 @@ function saveCustomExercise() {
     
     // Zoek spiergroep naam uit alle schemas
     let muscleGroup = null;
-    for (const schema of WORKOUT_DATA.schemas) {
+    for (const schema of getAllSchemas()) {
         const group = schema.muscleGroups.find(g => g.id === muscleGroupId);
         if (group) {
             muscleGroup = group;
@@ -4538,7 +4754,7 @@ function forceReload() {
 
 function renderSchemaSelection() {
     const container = document.getElementById("schemaSelection");
-    container.innerHTML = WORKOUT_DATA.schemas.map(schema => {
+    container.innerHTML = getAllSchemas().map(schema => {
         const muscleGroups = schema.muscleGroups || [];
         const totalExercises = muscleGroups.reduce((sum, g) => sum + (g.exercises ? g.exercises.length : 0), 0);
         const classType = schema.id === "schema1" ? "push" : schema.id === "schema2" ? "legs" : "custom";
@@ -5430,20 +5646,22 @@ function migrateHackSquatToHackSquadToday() {
     } catch (e) { /* ignore */ }
 }
 
-function deleteWorkout(index) {
+function deleteWorkoutByTime(startTime, schemaName) {
     if (!confirm('Weet je zeker dat je deze workout wilt verwijderen?')) {
         return;
     }
     
     const history = getWorkoutHistory();
-    if (index < 0 || index >= history.length) return;
+    const index = history.findIndex(w => w.startTime === startTime && w.schemaName === schemaName);
+    
+    if (index === -1) return;
     
     history.splice(index, 1);
     localStorage.setItem("workout_history", JSON.stringify(history));
     
     showToast("Workout verwijderd", "success");
-    renderHistory();
-    renderPRs();
+    renderHistory(); // Re-render the history view
+    renderPRs(); // Re-render PRs as they might be affected
 }
 
 // PR TRACKING
@@ -5913,17 +6131,143 @@ function renderHistoryList() {
     const container = document.getElementById('historyContainer');
     
     if (history.length === 0) {
-        if (!document.getElementById('calendarContainer').innerHTML.includes('calendar-workout')) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-state-icon"></div>
-                    <h3>Geen Workouts</h3>
-                    <p>Start je eerste workout om geschiedenis te zien!</p>
-                </div>
-            `;
-        }
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon"></div>
+                <h3>Geen Workouts</h3>
+                <p>Start je eerste workout om geschiedenis te zien!</p>
+            </div>
+        `;
         return;
     }
+    
+    // Sort history by date (newest first)
+    const sortedHistory = [...history].sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+    
+    container.innerHTML = `
+        <div class="history-list">
+            ${sortedHistory.map((workout, index) => {
+                const completedSets = workout.exercises.reduce((sum, ex) => sum + ex.sets.filter(s => s.completed).length, 0);
+                const totalSets = workout.exercises.reduce((sum, ex) => sum + ex.sets.length, 0);
+                const totalVolume = workout.exercises.reduce((sum, ex) => sum + ex.sets.reduce((s, set) => set.completed ? s + (set.weight * set.reps) : s, 0), 0);
+                const workoutDate = new Date(workout.startTime);
+                const schemaColor = getSchemaColor(workout.schemaId);
+                
+                return `
+                    <div class="history-item" onclick="showWorkoutDetails('${workout.startTime}', '${workout.schemaName}')">
+                        <div class="history-item-header">
+                            <div class="history-item-title">
+                                <div class="schema-indicator" style="background: ${schemaColor};"></div>
+                                <strong>${workout.schemaName}</strong>
+                            </div>
+                            <div class="history-item-actions">
+                                <button class="btn-icon delete-btn" onclick="event.stopPropagation(); deleteWorkoutByTime('${workout.startTime}', '${workout.schemaName}')" title="Verwijderen">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14M10 11v6m4-6v6"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="history-item-meta">
+                            <span class="history-date">${workoutDate.toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+                            <span class="history-duration">${formatDuration(workout.duration)}</span>
+                        </div>
+                        <div class="history-item-stats">
+                            <div class="history-stat">
+                                <span class="history-stat-value">${completedSets}/${totalSets}</span>
+                                <span class="history-stat-label">sets</span>
+                            </div>
+                            <div class="history-stat">
+                                <span class="history-stat-value">${totalVolume.toFixed(0)}kg</span>
+                                <span class="history-stat-label">volume</span>
+                            </div>
+                            <div class="history-stat">
+                                <span class="history-stat-value">${workout.exercises.length}</span>
+                                <span class="history-stat-label">oefeningen</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join("")}
+        </div>
+    `;
+}
+
+function showWorkoutDetails(startTime, schemaName) {
+    const history = getWorkoutHistory();
+    const workout = history.find(w => w.startTime === startTime && w.schemaName === schemaName);
+    
+    if (!workout) return;
+    
+    const workoutDate = new Date(workout.startTime);
+    const schemaColor = getSchemaColor(workout.schemaId);
+    
+    // Create modal
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.onclick = () => modal.remove();
+    
+    modal.innerHTML = `
+        <div class="modal-content workout-details-modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <div class="schema-indicator" style="background: ${schemaColor};"></div>
+                    <h2>${workout.schemaName}</h2>
+                </div>
+                <button class="modal-close" onclick="this.closest('.modal').remove()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="workout-summary">
+                    <div class="workout-meta">
+                        <div class="meta-item">
+                            <span class="meta-label">Datum:</span>
+                            <span class="meta-value">${workoutDate.toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Duur:</span>
+                            <span class="meta-value">${formatDuration(workout.duration)}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Tijd:</span>
+                            <span class="meta-value">${workoutDate.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="workout-exercises">
+                    ${workout.exercises.map(ex => {
+                        const completedSets = ex.sets.filter(s => s.completed).length;
+                        const totalSets = ex.sets.length;
+                        const exerciseVolume = ex.sets.reduce((sum, set) => set.completed ? sum + (set.weight * set.reps) : sum, 0);
+                        
+                        return `
+                            <div class="exercise-details">
+                                <div class="exercise-header">
+                                    <h3>${ex.name}</h3>
+                                    <div class="exercise-stats">
+                                        <span>${completedSets}/${totalSets} sets</span>
+                                        <span>${exerciseVolume.toFixed(0)}kg</span>
+                                    </div>
+                                </div>
+                                <div class="exercise-sets">
+                                    ${ex.sets.map((set, sidx) => `
+                                        <div class="set-item ${set.completed ? 'completed' : 'incomplete'}">
+                                            <span class="set-number">Set ${sidx + 1}</span>
+                                            <span class="set-details">${set.reps} × ${set.weight}kg</span>
+                                            ${set.completed ? '<span class="set-check">✓</span>' : '<span class="set-check">○</span>'}
+                                        </div>
+                                    `).join("")}
+                                </div>
+                            </div>
+                        `;
+                    }).join("")}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    modal.classList.add('active');
 }
 
 // PRS RENDERING
@@ -8005,6 +8349,8 @@ function importBackup() {
     const input = document.getElementById('importFileInput');
     if (input) {
         input.click();
+    } else {
+        showToast("Import functie niet beschikbaar", "error");
     }
 }
 

@@ -8753,12 +8753,14 @@ function handleTouchStart(e) {
     touchCurrentX = touchStartX;
     touchCurrentY = touchStartY;
     
-    // Find if we're touching a set row
+    // Find if we're touching a set row, but NOT if we're directly touching a checkbox
     const target = e.target.closest('.set-row');
-    if (target) {
+    const isCheckbox = e.target.closest('.checkbox');
+    
+    if (target && !isCheckbox) {
         swipingElement = target;
+        // Don't add swipe-active yet - wait for actual movement in handleTouchMove
         swipingElement.style.transition = 'none';
-        swipingElement.classList.add('swipe-active');
     }
 }
 
@@ -8775,6 +8777,12 @@ function handleTouchMove(e) {
     // Only allow horizontal swipes (more horizontal than vertical movement)
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 15) { // Increased threshold
         e.preventDefault();
+        
+        // Add swipe-active class only when we detect actual swipe movement
+        if (!swipingElement.classList.contains('swipe-active')) {
+            swipingElement.classList.add('swipe-active');
+            document.body.classList.add('swipe-active');
+        }
         
         // Limit swipe distance to prevent over-swiping
         const limitedDeltaX = Math.max(-120, Math.min(120, deltaX));

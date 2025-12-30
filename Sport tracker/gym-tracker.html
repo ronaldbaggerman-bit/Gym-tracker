@@ -3662,7 +3662,7 @@ label.invalid {
 
 <script>
 // APP VERSION
-const APP_VERSION = "2025-12-17-22";
+const APP_VERSION = "2025-12-17-24";
 
 // AUDIO CONTEXT for haptic feedback fallbacks
 let audioContext = null;
@@ -9906,6 +9906,7 @@ function testHapticFeedback() {
         width: 100%;
         max-height: 80vh;
         overflow-y: auto;
+        pointer-events: auto;
     `;
 
     diagContent.innerHTML = `
@@ -9938,15 +9939,15 @@ function testHapticFeedback() {
         </div>
         <div style="margin-bottom: 15px;">
             <strong>Audio feedback:</strong><br>
-            Als vibratie niet werkt, gebruikt de app audio feedback. Klik eerst ergens in de app om audio te activeren (vereist door browser beleid).<br>
-            <small style="color:#ccc;">💡 Audio klinkt als een korte piep toon</small>
+            Als vibratie niet werkt, gebruikt de app audio feedback. Force Audio speelt altijd een luide piep af.<br>
+            <small style="color:#ccc;">💡 Test de knoppen in deze volgorde: Force Visual → Force Audio → Test Simpele Vibratie</small>
         </div>
         <div style="margin-bottom: 15px;">
             <strong>Test opties:</strong><br>
-            <button onclick="testSimpleVibration()" style="background:#9B59B6;color:white;border:none;padding:5px 10px;border-radius:3px;margin-right:5px;font-size:11px;">Test Simpele Vibratie</button>
-            <button onclick="forceAudioFeedback()" style="background:#F39C12;color:black;border:none;padding:5px 10px;border-radius:3px;margin-right:5px;font-size:11px;">Force Audio</button>
-            <button onclick="forceVisualFeedback()" style="background:#E74C3C;color:white;border:none;padding:5px 10px;border-radius:3px;margin-right:5px;font-size:11px;">Force Visual</button>
-            <button onclick="testAlternativeFeedback()" style="background:#27AE60;color:white;border:none;padding:5px 10px;border-radius:3px;font-size:11px;">Alt Feedback</button>
+            <button onclick="testSimpleVibration()" style="background:#9B59B6;color:white;border:none;padding:8px 12px;border-radius:5px;margin-right:8px;margin-bottom:5px;font-size:12px;min-width:120px;cursor:pointer;">Test Simpele Vibratie</button>
+            <button onclick="forceAudioFeedback()" style="background:#F39C12;color:black;border:none;padding:8px 12px;border-radius:5px;margin-right:8px;margin-bottom:5px;font-size:12px;min-width:120px;cursor:pointer;">Force Audio</button>
+            <button onclick="forceVisualFeedback()" style="background:#E74C3C;color:white;border:none;padding:8px 12px;border-radius:5px;margin-right:8px;margin-bottom:5px;font-size:12px;min-width:120px;cursor:pointer;">Force Visual</button>
+            <button onclick="testAlternativeFeedback()" style="background:#27AE60;color:white;border:none;padding:8px 12px;border-radius:5px;margin-bottom:5px;font-size:12px;min-width:120px;cursor:pointer;">Alt Feedback</button>
         </div>
         ${!diagnostics.isPWA && diagnostics.isIOS ? '<button onclick="installPWA(); this.parentNode.parentNode.remove()" style="background:#E67E22;color:white;border:none;padding:10px 20px;border-radius:5px;margin-top:10px;">📱 Installeer PWA</button>' : ''}
         <button onclick="this.parentNode.parentNode.remove()" style="background:#4A90E2;color:white;border:none;padding:10px 20px;border-radius:5px;margin-top:10px;">Close</button>

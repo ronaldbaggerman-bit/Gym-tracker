@@ -33,6 +33,12 @@
         <b>Console Log</b>
         <button onclick="document.getElementById('console-log-overlay').style.display='none'" style="background:#222;color:#fff;border:none;padding:2px 10px;border-radius:6px;">Sluiten</button>
     </div>
+    <div style="font-size:11px;color:#ccc;margin-bottom:8px;">
+        💡 Tip: Houd 0.5s ingedrukt op de pagina voor snelle console toegang<br>
+        🔍 Test Haptic toont gedetailleerde diagnostiek voor vibratie problemen<br>
+        📱 PWA installatie is vereist voor vibratie op iOS apparaten<br>
+        🧪 Gebruik de test knoppen voor specifieke feedback types
+    </div>
     <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
         <button onclick="testHapticFeedback()" style="background:#4A90E2;color:#000;border:none;padding:4px 8px;border-radius:4px;font-size:11px;">Test Haptic</button>
         <button onclick="testDynamicIsland()" style="background:#2ECC71;color:#000;border:none;padding:4px 8px;border-radius:4px;font-size:11px;">Test Island</button>
@@ -41,7 +47,7 @@
     </div>
     <div id="console-log-content"></div>
 </div>
-<button id="showConsoleLogBtn" onclick="document.getElementById('console-log-overlay').style.display='block'" style="position:fixed;bottom:12px;right:12px;z-index:99999;background:#4A90E2;color:#000;font-weight:bold;border:none;padding:8px 14px;border-radius:20px;box-shadow:0 2px 8px #000;display:none;">Log</button>
+<button id="showConsoleLogBtn" onclick="document.getElementById('console-log-overlay').style.display='block'" style="position:fixed;bottom:12px;right:12px;z-index:99999;background:#4A90E2;color:#000;font-weight:bold;border:none;padding:8px 14px;border-radius:20px;box-shadow:0 2px 8px #000;display:block;">Log</button>
 <style>
 * {
     margin: 0;
@@ -1797,6 +1803,13 @@ h1 {
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+    20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
 }
 
 .modal-content {
@@ -3649,7 +3662,30 @@ label.invalid {
 
 <script>
 // APP VERSION
-const APP_VERSION = "2025-12-17-21";
+const APP_VERSION = "2025-12-17-22";
+
+// AUDIO CONTEXT for haptic feedback fallbacks
+let audioContext = null;
+
+function initAudioContext() {
+    if (!audioContext) {
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            console.log('🔊 Audio context initialized');
+        } catch (error) {
+            console.error('❌ Failed to initialize audio context:', error);
+        }
+    }
+    
+    // Resume context if suspended (required by browser autoplay policies)
+    if (audioContext && audioContext.state === 'suspended') {
+        audioContext.resume().then(() => {
+            console.log('🔊 Audio context resumed');
+        }).catch(error => {
+            console.error('❌ Failed to resume audio context:', error);
+        });
+    }
+}
 
 // Voeg automatisch een test custom schema toe als er nog geen custom schemas zijn
 document.addEventListener('DOMContentLoaded', function() {
@@ -3675,6 +3711,48 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (e) {
         console.error('[init] Fout bij toevoegen test custom schema:', e);
     }
+
+    // Check PWA status and show hint for iOS users
+    setTimeout(() => {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isPWA = window.navigator.standalone === true ||
+                     window.matchMedia('(display-mode: standalone)').matches ||
+                     document.referrer.includes('android-app://') ||
+                     window.location.search.includes('pwa=true');
+
+        if (isIOS && !isPWA && 'vibrate' in navigator) {
+            showToast('📱 Installeer als PWA voor vibratie ondersteuning', 'warning', 5000);
+            console.log('[PWA] iOS device detected without PWA - vibration may not work');
+        }
+    }, 2000);
+
+    // Touch event voor lang-tap om console te openen (voor mobiele debugging)
+    let touchStartTime = 0;
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    document.body.addEventListener('touchstart', function(e) {
+        touchStartTime = Date.now();
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+    });
+
+    document.body.addEventListener('touchend', function(e) {
+        const touchEndTime = Date.now();
+        const touchEndX = e.changedTouches[0].clientX;
+        const touchEndY = e.changedTouches[0].clientY;
+
+        // Controleer of het een lang-tap is (500ms) en weinig beweging (< 10px)
+        const duration = touchEndTime - touchStartTime;
+        const distance = Math.sqrt(Math.pow(touchEndX - touchStartX, 2) + Math.pow(touchEndY - touchStartY, 2));
+
+        if (duration > 500 && distance < 10) {
+            // Toon console overlay
+            document.getElementById('console-log-overlay').style.display = 'block';
+            console.log('[touch] Console geopend via lang-tap');
+            e.preventDefault();
+        }
+    });
 });
 // Console log overlay logic - moved after getSettings definition
 // Basic boot error capture to reveal white-screen causes
@@ -8172,6 +8250,34 @@ function renderVolumeChart(history) {
 function hapticFeedback(pattern = [50]) {
     console.log('🔄 hapticFeedback called with pattern:', pattern);
 
+    // Always show some visual feedback
+    const hapticIndicator = document.createElement('div');
+    hapticIndicator.style.cssText = `
+        position: fixed;
+        bottom: 120px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(74, 144, 226, 0.95);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 25px;
+        font-size: 14px;
+        font-weight: bold;
+        z-index: 10001;
+        pointer-events: none;
+        animation: fadeInOut 2s ease-in-out;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+    `;
+    hapticIndicator.textContent = '🔄 Haptic Feedback';
+    document.body.appendChild(hapticIndicator);
+
+    setTimeout(() => {
+        if (hapticIndicator.parentNode) {
+            hapticIndicator.remove();
+        }
+    }, 2000);
+
     // Check if vibration is supported
     if ('vibrate' in navigator) {
         console.log('✅ Vibration API available');
@@ -8233,32 +8339,62 @@ function audioFeedback(pattern) {
     console.log('🔊 Using audio feedback for haptic simulation');
 
     try {
-        // Create audio context for tactile feedback
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        // Initialize audio context if needed
+        initAudioContext();
+        
+        if (!audioContext) {
+            console.error('❌ No audio context available');
+            enhancedVisualFeedback(pattern);
+            return;
+        }
+
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
 
-        // Configure for tactile-like feedback (low frequency)
-        oscillator.frequency.setValueAtTime(150, audioContext.currentTime); // 150Hz for tactile feel
+        // Configure for tactile-like feedback (low frequency, more audible)
+        oscillator.frequency.setValueAtTime(200, audioContext.currentTime); // Slightly higher for better audibility
         oscillator.type = 'sine';
 
-        // Quick envelope for click-like feedback
+        // Longer, more audible envelope
         gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.01);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.05);
+        gainNode.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + 0.01); // Louder
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.15); // Longer decay
 
         oscillator.connect(gainNode);
         gainNode.connect(audioContext.destination);
 
         oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.05);
-
-        // Clean up
-        setTimeout(() => {
-            audioContext.close();
-        }, 100);
+        oscillator.stop(audioContext.currentTime + 0.15);
 
         console.log('✅ Audio feedback played');
+
+        // Add visual indicator for audio feedback
+        const indicator = document.createElement('div');
+        indicator.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 193, 7, 0.95);
+            color: #000;
+            padding: 15px 25px;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            z-index: 10001;
+            pointer-events: none;
+            animation: fadeInOut 1.5s ease-in-out;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        `;
+        indicator.textContent = '🔊 Audio Feedback';
+        document.body.appendChild(indicator);
+
+        setTimeout(() => {
+            if (indicator.parentNode) {
+                indicator.remove();
+            }
+        }, 1500);
     } catch (error) {
         console.error('❌ Audio feedback failed:', error);
         // Final fallback: enhanced visual feedback
@@ -8269,6 +8405,46 @@ function audioFeedback(pattern) {
 // Enhanced visual feedback when other methods don't work
 function enhancedVisualFeedback(pattern) {
     console.log('💫 Using enhanced visual feedback');
+
+    // Create a prominent full-screen visual feedback overlay
+    const visualOverlay = document.createElement('div');
+    visualOverlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 193, 7, 0.4);
+        z-index: 10000;
+        pointer-events: none;
+        animation: flash 0.4s ease-out;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    `;
+
+    const visualIndicator = document.createElement('div');
+    visualIndicator.style.cssText = `
+        background: rgba(255, 255, 255, 0.95);
+        color: #F39C12;
+        padding: 20px 30px;
+        border-radius: 15px;
+        font-size: 18px;
+        font-weight: bold;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        animation: bounceIn 0.3s ease-out;
+    `;
+    visualIndicator.textContent = '💫 Visual Feedback';
+    visualOverlay.appendChild(visualIndicator);
+    document.body.appendChild(visualOverlay);
+
+    // Remove overlay after animation
+    setTimeout(() => {
+        if (visualOverlay.parentNode) {
+            visualOverlay.remove();
+        }
+    }, 800);
 
     // Create a visual vibration effect on the body
     const body = document.body;
@@ -8296,26 +8472,7 @@ function enhancedVisualFeedback(pattern) {
     }, 200);
 
     // Also show a prominent toast notification
-    showToast('💫', 'light');
-
-    // Add a subtle flash effect to the screen
-    const flash = document.createElement('div');
-    flash.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(255, 255, 255, 0.1);
-        pointer-events: none;
-        z-index: 9999;
-        animation: flash 0.2s ease-out;
-    `;
-    document.body.appendChild(flash);
-
-    setTimeout(() => {
-        document.body.removeChild(flash);
-    }, 200);
+    showToast('💫 Enhanced Visual Feedback', 'warning');
 
     console.log('✅ Enhanced visual feedback applied');
 }
@@ -8409,6 +8566,63 @@ function updateDynamicIsland() {
 
         } else {
             console.log('ℹ️ Dynamic Island simulation not available (requires iOS 17+ on iPhone 14 Pro+)');
+
+            // Fallback: Show a notification-style Dynamic Island simulation
+            let fallbackIsland = document.getElementById('dynamic-island-fallback');
+            if (!fallbackIsland) {
+                fallbackIsland = document.createElement('div');
+                fallbackIsland.id = 'dynamic-island-fallback';
+                fallbackIsland.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: rgba(0, 0, 0, 0.8);
+                    color: white;
+                    padding: 8px 16px;
+                    border-radius: 20px;
+                    font-size: 12px;
+                    font-weight: 500;
+                    z-index: 10000;
+                    backdrop-filter: blur(10px);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                    animation: fadeInOut 2s ease-in-out;
+                `;
+                document.body.appendChild(fallbackIsland);
+            }
+
+            let content = '';
+            if (timerRunning) {
+                const timeStr = formatDuration(timerSeconds);
+                content = `⏱️ ${timeStr}`;
+            } else {
+                let totalSets = 0;
+                let completedSets = 0;
+
+                currentWorkout.exercises.forEach(ex => {
+                    ex.sets.forEach(set => {
+                        totalSets++;
+                        if (set.completed) completedSets++;
+                    });
+                });
+
+                content = `💪 ${completedSets}/${totalSets}`;
+            }
+
+            fallbackIsland.textContent = content;
+            fallbackIsland.style.display = 'block';
+
+            // Auto-hide after 3 seconds
+            clearTimeout(fallbackIsland.hideTimeout);
+            fallbackIsland.hideTimeout = setTimeout(() => {
+                if (fallbackIsland) {
+                    fallbackIsland.style.opacity = '0';
+                    setTimeout(() => {
+                        if (fallbackIsland) fallbackIsland.style.display = 'none';
+                    }, 500);
+                }
+            }, 3000);
         }
     } else {
         console.log('❌ No current workout');
@@ -8999,6 +9213,23 @@ window.addEventListener('load', function() {
         console.warn('Error ensuring active view on load', e);
         try { switchView('workout'); } catch (err) {}
     }
+    
+    // Initialize audio context on first user interaction to comply with autoplay policies
+    let audioInitialized = false;
+    function initAudioOnInteraction() {
+        if (!audioInitialized) {
+            initAudioContext();
+            audioInitialized = true;
+            // Remove listeners after first initialization
+            document.removeEventListener('touchstart', initAudioOnInteraction);
+            document.removeEventListener('click', initAudioOnInteraction);
+            document.removeEventListener('keydown', initAudioOnInteraction);
+        }
+    }
+    
+    document.addEventListener('touchstart', initAudioOnInteraction, { once: false });
+    document.addEventListener('click', initAudioOnInteraction, { once: false });
+    document.addEventListener('keydown', initAudioOnInteraction, { once: false });
 });
 
 // BACKUP & IMPORT
@@ -9576,6 +9807,45 @@ function enhanceFormValidation() {
 function testHapticFeedback() {
     console.log('🧪 Testing haptic feedback...');
 
+    // Create a prominent visual overlay for immediate feedback
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(74, 144, 226, 0.3);
+        z-index: 10000;
+        pointer-events: none;
+        animation: flash 0.3s ease-out;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    `;
+
+    const indicator = document.createElement('div');
+    indicator.style.cssText = `
+        background: rgba(255, 255, 255, 0.9);
+        color: #4A90E2;
+        padding: 20px 30px;
+        border-radius: 15px;
+        font-size: 16px;
+        font-weight: bold;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    `;
+    indicator.textContent = '🔔 Testing Haptic Feedback...';
+    overlay.appendChild(indicator);
+    document.body.appendChild(overlay);
+
+    // Remove overlay after animation
+    setTimeout(() => {
+        if (overlay.parentNode) {
+            overlay.remove();
+        }
+    }, 600);
+
     // Check current PWA status
     const isPWA = window.navigator.standalone === true ||
                  window.matchMedia('(display-mode: standalone)').matches ||
@@ -9587,17 +9857,444 @@ function testHapticFeedback() {
     console.log('🔍 display-mode:', window.matchMedia('(display-mode: standalone)').matches);
     console.log('🔍 Vibration API available:', 'vibrate' in navigator);
 
+    // Detailed diagnostic information
+    const diagnostics = {
+        userAgent: navigator.userAgent,
+        isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent),
+        iOSVersion: navigator.userAgent.match(/OS (\d+)_/)?.[1],
+        isIOS17Plus: /iPad|iPhone|iPod/.test(navigator.userAgent) && /OS 1[7-9]|OS 2[0-9]/.test(navigator.userAgent),
+        isDynamicIslandDevice: /iPad|iPhone|iPod/.test(navigator.userAgent) && /iPhone1[4-9]|iPhone2[0-9]/.test(navigator.userAgent),
+        vibrationAPI: 'vibrate' in navigator,
+        standalone: window.navigator.standalone === true,
+        displayMode: window.matchMedia('(display-mode: standalone)').matches,
+        referrer: document.referrer.includes('android-app://'),
+        pwaParam: window.location.search.includes('pwa=true'),
+        isPWA: isPWA
+    };
+
+    console.log('🔍 Detailed Diagnostics:', diagnostics);
+
+    // Create diagnostic overlay
+    const diagOverlay = document.createElement('div');
+    diagOverlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.9);
+        z-index: 10002;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        font-family: monospace;
+        font-size: 12px;
+        color: white;
+        overflow-y: auto;
+    `;
+
+    const diagContent = document.createElement('div');
+    diagContent.style.cssText = `
+        background: rgba(255, 255, 255, 0.1);
+        padding: 20px;
+        border-radius: 10px;
+        max-width: 400px;
+        width: 100%;
+        max-height: 80vh;
+        overflow-y: auto;
+    `;
+
+    diagContent.innerHTML = `
+        <h3 style="color: #4A90E2; margin-top: 0;">🔍 Haptic Diagnostics</h3>
+        <div style="margin-bottom: 15px;">
+            <strong>Device:</strong> ${diagnostics.isIOS ? 'iOS' : 'Other'}<br>
+            <strong>iOS Version:</strong> ${diagnostics.iOSVersion || 'N/A'}<br>
+            <strong>iOS 17+:</strong> ${diagnostics.isIOS17Plus ? '✅' : '❌'}<br>
+            <strong>Dynamic Island:</strong> ${diagnostics.isDynamicIslandDevice ? '✅' : '❌'}<br>
+        </div>
+        <div style="margin-bottom: 15px;">
+            <strong>Vibration API:</strong> ${diagnostics.vibrationAPI ? '✅' : '❌'}<br>
+            <strong>PWA Mode:</strong> ${diagnostics.isPWA ? '✅' : '❌'}<br>
+            <strong>Standalone:</strong> ${diagnostics.standalone ? '✅' : '❌'}<br>
+            <strong>Display Mode:</strong> ${diagnostics.displayMode ? '✅' : '❌'}<br>
+        </div>
+        <div style="margin-bottom: 15px;">
+            <strong>Fix voor vibratie:</strong><br>
+            ${!diagnostics.isPWA && diagnostics.isIOS ? '📱 Installeer als PWA voor vibratie ondersteuning' :
+              !diagnostics.vibrationAPI ? '❌ Dit apparaat ondersteunt geen vibratie' :
+              diagnostics.isPWA && diagnostics.isIOS ? '⚠️ iOS PWA - vibratie kan beperkt zijn. Probeer Safari direct.' :
+              '✅ Vibratie zou moeten werken'}
+        </div>
+        <div style="margin-bottom: 15px;">
+            <strong>Fix voor Dynamic Island:</strong><br>
+            ${!diagnostics.isIOS ? '📱 Vereist iOS apparaat (iPhone/iPad)' :
+              !diagnostics.isIOS17Plus ? '📱 Vereist iOS 17+ (update je iOS)' :
+              !diagnostics.isDynamicIslandDevice ? '📱 Vereist iPhone 14 Pro/15 Pro+ (met Dynamic Island)' :
+              '✅ Dynamic Island visualisatie actief'}
+        </div>
+        <div style="margin-bottom: 15px;">
+            <strong>Audio feedback:</strong><br>
+            Als vibratie niet werkt, gebruikt de app audio feedback. Klik eerst ergens in de app om audio te activeren (vereist door browser beleid).<br>
+            <small style="color:#ccc;">💡 Audio klinkt als een korte piep toon</small>
+        </div>
+        <div style="margin-bottom: 15px;">
+            <strong>Test opties:</strong><br>
+            <button onclick="testSimpleVibration()" style="background:#9B59B6;color:white;border:none;padding:5px 10px;border-radius:3px;margin-right:5px;font-size:11px;">Test Simpele Vibratie</button>
+            <button onclick="forceAudioFeedback()" style="background:#F39C12;color:black;border:none;padding:5px 10px;border-radius:3px;margin-right:5px;font-size:11px;">Force Audio</button>
+            <button onclick="forceVisualFeedback()" style="background:#E74C3C;color:white;border:none;padding:5px 10px;border-radius:3px;margin-right:5px;font-size:11px;">Force Visual</button>
+            <button onclick="testAlternativeFeedback()" style="background:#27AE60;color:white;border:none;padding:5px 10px;border-radius:3px;font-size:11px;">Alt Feedback</button>
+        </div>
+        ${!diagnostics.isPWA && diagnostics.isIOS ? '<button onclick="installPWA(); this.parentNode.parentNode.remove()" style="background:#E67E22;color:white;border:none;padding:10px 20px;border-radius:5px;margin-top:10px;">📱 Installeer PWA</button>' : ''}
+        <button onclick="this.parentNode.parentNode.remove()" style="background:#4A90E2;color:white;border:none;padding:10px 20px;border-radius:5px;margin-top:10px;">Close</button>
+    `;
+
+    diagOverlay.appendChild(diagContent);
+    document.body.appendChild(diagOverlay);
+
     hapticFeedback([100, 50, 100, 50, 100]);
 
     setTimeout(() => {
-        showToast('🔔 Haptic test voltooid - check console voor details', 'info');
+        showToast('🔔 Haptic test voltooid - check diagnostics', 'info');
     }, 500);
 }
 
 function testDynamicIsland() {
     console.log('🧪 Testing Dynamic Island...');
+
+    // Create a prominent visual overlay for immediate feedback
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(46, 204, 113, 0.3);
+        z-index: 10000;
+        pointer-events: none;
+        animation: flash 0.3s ease-out;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    `;
+
+    const indicator = document.createElement('div');
+    indicator.style.cssText = `
+        background: rgba(255, 255, 255, 0.9);
+        color: #2ECC71;
+        padding: 20px 30px;
+        border-radius: 15px;
+        font-size: 16px;
+        font-weight: bold;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    `;
+    indicator.textContent = '🏝️ Testing Dynamic Island...';
+    overlay.appendChild(indicator);
+    document.body.appendChild(overlay);
+
+    // Remove overlay after animation
+    setTimeout(() => {
+        if (overlay.parentNode) {
+            overlay.remove();
+        }
+    }, 600);
+
     updateDynamicIsland();
-    showToast('🏝️ Dynamic Island test uitgevoerd', 'info');
+
+    // Show immediate feedback
+    setTimeout(() => {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isIOS17Plus = isIOS && /OS 1[7-9]|OS 2[0-9]/.test(navigator.userAgent);
+        const isDynamicIslandDevice = isIOS && /iPhone1[4-9]|iPhone2[0-9]/.test(navigator.userAgent);
+
+        if (isDynamicIslandDevice && isIOS17Plus) {
+            showToast('🏝️ Dynamic Island test: Native simulatie actief', 'success');
+        } else {
+            showToast('🏝️ Dynamic Island test: Fallback notificatie actief', 'info');
+        }
+    }, 100);
+}
+
+function testSimpleVibration() {
+    console.log('🧪 Testing simple vibration...');
+
+    if ('vibrate' in navigator) {
+        try {
+            // Simple vibration test
+            const result = navigator.vibrate(200);
+            console.log('🎯 Simple vibration result:', result);
+
+            if (result !== false) {
+                showToast('✅ Simpele vibratie gelukt!', 'success');
+            } else {
+                showToast('❌ Simpele vibratie mislukt', 'error');
+            }
+        } catch (error) {
+            console.error('❌ Simple vibration error:', error);
+            showToast('❌ Vibratie fout: ' + error.message, 'error');
+        }
+    } else {
+        showToast('❌ Vibration API niet beschikbaar', 'error');
+    }
+}
+
+function forceAudioFeedback() {
+    console.log('🔊 Forcing audio feedback...');
+
+    try {
+        // Initialize audio context if needed
+        initAudioContext();
+        
+        if (!audioContext) {
+            console.error('❌ No audio context available');
+            showToast('❌ Audio context niet beschikbaar', 'error');
+            return;
+        }
+
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        // Configure for tactile-like feedback (more audible)
+        oscillator.frequency.setValueAtTime(300, audioContext.currentTime); // Higher frequency for better audibility
+        oscillator.type = 'sine';
+
+        // Louder envelope for better audibility
+        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.4, audioContext.currentTime + 0.01); // Much louder
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2); // Longer
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.2);
+
+        showToast('🔊 Audio feedback afgespeeld - hoor je het?', 'info');
+    } catch (error) {
+        console.error('❌ Force audio feedback failed:', error);
+        showToast('❌ Audio feedback mislukt: ' + error.message, 'error');
+    }
+}
+
+function forceVisualFeedback() {
+    console.log('💫 Forcing visual feedback...');
+
+    // Create a prominent full-screen visual feedback overlay
+    const visualOverlay = document.createElement('div');
+    visualOverlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 193, 7, 0.6);
+        z-index: 10000;
+        pointer-events: none;
+        animation: flash 0.6s ease-out;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    `;
+
+    const visualIndicator = document.createElement('div');
+    visualIndicator.style.cssText = `
+        background: rgba(255, 255, 255, 0.95);
+        color: #F39C12;
+        padding: 25px 35px;
+        border-radius: 20px;
+        font-size: 20px;
+        font-weight: bold;
+        text-align: center;
+        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
+        animation: bounceIn 0.4s ease-out;
+    `;
+    visualIndicator.textContent = '💫 VISUELE FEEDBACK!';
+    visualOverlay.appendChild(visualIndicator);
+    document.body.appendChild(visualOverlay);
+
+    // Remove overlay after animation
+    setTimeout(() => {
+        if (visualOverlay.parentNode) {
+            visualOverlay.remove();
+        }
+    }, 1000);
+
+    // Create a visual vibration effect on the body
+    const body = document.body;
+    const originalTransform = body.style.transform || '';
+
+    // More noticeable vibration animation
+    body.style.transition = 'transform 0.08s ease-in-out';
+    body.style.transform = originalTransform + ' translateX(5px) scale(1.03)';
+
+    setTimeout(() => {
+        body.style.transform = originalTransform + ' translateX(-5px) scale(1.01)';
+    }, 80);
+
+    setTimeout(() => {
+        body.style.transform = originalTransform + ' translateX(3px) scale(1.02)';
+    }, 160);
+
+    setTimeout(() => {
+        body.style.transform = originalTransform + ' translateX(-3px) scale(1.01)';
+    }, 240);
+
+    setTimeout(() => {
+        body.style.transform = originalTransform;
+        body.style.transition = '';
+    }, 320);
+
+function forceVisualFeedback() {
+    console.log('💫 Forcing visual feedback...');
+
+    // Create a prominent full-screen visual feedback overlay
+    const visualOverlay = document.createElement('div');
+    visualOverlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 193, 7, 0.6);
+        z-index: 10000;
+        pointer-events: none;
+        animation: flash 0.6s ease-out;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    `;
+
+    const visualIndicator = document.createElement('div');
+    visualIndicator.style.cssText = `
+        background: rgba(255, 255, 255, 0.95);
+        color: #F39C12;
+        padding: 25px 35px;
+        border-radius: 20px;
+        font-size: 20px;
+        font-weight: bold;
+        text-align: center;
+        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
+        animation: bounceIn 0.4s ease-out;
+    `;
+    visualIndicator.textContent = '💫 VISUELE FEEDBACK!';
+    visualOverlay.appendChild(visualIndicator);
+    document.body.appendChild(visualOverlay);
+
+    // Remove overlay after animation
+    setTimeout(() => {
+        if (visualOverlay.parentNode) {
+            visualOverlay.remove();
+        }
+    }, 1000);
+
+    // Create a visual vibration effect on the body
+    const body = document.body;
+    const originalTransform = body.style.transform || '';
+
+    // More noticeable vibration animation
+    body.style.transition = 'transform 0.08s ease-in-out';
+    body.style.transform = originalTransform + ' translateX(5px) scale(1.03)';
+
+    setTimeout(() => {
+        body.style.transform = originalTransform + ' translateX(-5px) scale(1.01)';
+    }, 80);
+
+    setTimeout(() => {
+        body.style.transform = originalTransform + ' translateX(3px) scale(1.02)';
+    }, 160);
+
+    setTimeout(() => {
+        body.style.transform = originalTransform + ' translateX(-3px) scale(1.01)';
+    }, 240);
+
+    setTimeout(() => {
+        body.style.transform = originalTransform;
+        body.style.transition = '';
+    }, 320);
+
+    showToast('💫 Visuele feedback geforceerd', 'warning');
+}
+
+function testAlternativeFeedback() {
+    console.log('🔄 Testing alternative feedback methods...');
+
+    // Test Notification API for sound
+    if ('Notification' in window) {
+        console.log('🔔 Notification API available');
+
+        if (Notification.permission === 'granted') {
+            // Try to play a system sound via notification
+            try {
+                const notification = new Notification('Test', {
+                    body: 'Testing alternative feedback',
+                    icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTI0IDEySDh2NmgyVjEyek0xNiA5YzEuMSAwIDIgLjkgMiAydjJjMCAxLjEtLjkgMi0yIDJzLTEtLjktMi0ydi0yYzAtMS4xLjktMiAyLTJzMi45LTIgMiAyIDIgMnYyYzAgMS4xLS45IDItMiAyUzE0IDEwLjEgMTQgOXoiIGZpbGw9IiM0QTkwRTIiLz4KPC9zdmc+',
+                    silent: false
+                });
+
+                setTimeout(() => {
+                    notification.close();
+                }, 1000);
+
+                showToast('🔔 Notification geluid getest', 'info');
+            } catch (error) {
+                console.error('❌ Notification error:', error);
+                showToast('❌ Notification fout', 'error');
+            }
+        } else if (Notification.permission !== 'denied') {
+            Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                    showToast('🔔 Notification toestemming verleend', 'success');
+                } else {
+                    showToast('❌ Notification geweigerd', 'error');
+                }
+            });
+        } else {
+            showToast('❌ Notification geblokkeerd', 'error');
+        }
+    } else {
+        console.log('❌ Notification API not available');
+        showToast('❌ Notification API niet beschikbaar', 'error');
+    }
+
+    // Test Web Audio API with different approach
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Create a more noticeable sound
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        const filterNode = audioContext.createBiquadFilter();
+
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime); // Higher frequency for more noticeable sound
+        oscillator.type = 'square'; // Square wave for more tactile feel
+
+        filterNode.type = 'lowpass';
+        filterNode.frequency.setValueAtTime(1000, audioContext.currentTime);
+
+        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
+
+        oscillator.connect(filterNode);
+        filterNode.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.2);
+
+        setTimeout(() => {
+            audioContext.close();
+        }, 500);
+
+        console.log('✅ Alternative audio feedback played');
+        showToast('🔊 Alternatieve audio feedback', 'info');
+    } catch (error) {
+        console.error('❌ Alternative audio error:', error);
+        showToast('❌ Audio fout: ' + error.message.substring(0, 50), 'error');
+    }
 }
 
 /**

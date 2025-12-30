@@ -6452,16 +6452,38 @@ function renderPRs() {
                         </div>
                     </div>
                     <div class="pr-card-date">
-                        ${new Date(pr.date).toLocaleDateString('nl-NL', { 
-                            year: 'numeric', 
-                            month: 'long', 
-                            day: 'numeric' 
-                        })}
+                        ${formatPRDate(pr.date)}
                     </div>
                 </div>
             `).join("")}
         </div>
     `;
+}
+
+function formatPRDate(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = now - date;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    // If less than 7 days ago, show relative time
+    if (diffDays === 0) {
+        return 'Vandaag';
+    } else if (diffDays === 1) {
+        return 'Gisteren';
+    } else if (diffDays < 7) {
+        return `${diffDays} dagen geleden`;
+    }
+    
+    // Otherwise show formatted date
+    const day = date.getDate();
+    const monthNames = ['jan.', 'feb.', 'mrt.', 'apr.', 'mei', 'jun.', 'jul.', 'aug.', 'sep.', 'okt.', 'nov.', 'dec.'];
+    const month = monthNames[date.getMonth()];
+    const year = date.getFullYear();
+    
+    // Show year only if not current year
+    const currentYear = now.getFullYear();
+    return year === currentYear ? `${day} ${month}` : `${day} ${month} ${year}`;
 }
 
 function showPRDetails(exerciseId) {

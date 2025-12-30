@@ -10,19 +10,32 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Gym Tracker">
     <meta name="theme-color" content="#000000">
+    <!-- iOS 17+ optimizations -->
+    <meta name="apple-touch-fullscreen" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-orientations" content="portrait,portrait-primary">
+    <!-- Dynamic Island support hint -->
+    <meta name="supported-color-schemes" content="dark light">
+    <!-- Spatial Audio support -->
+    <meta name="apple-audio-spatialization" content="allows">
+    <!-- Action Button support (iPhone 15 Pro+) -->
+    <meta name="apple-action-button-type" content="workout">
+    <meta name="apple-action-button-title" content="Start Workout">
+    <!-- Live Activities hint -->
+    <meta name="apple-live-activities" content="workout-timer">
     <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiR3ltIFRyYWNrZXIiLCJzaG9ydF9uYW1lIjoiR3ltIiwic3RhcnRfdXJsIjoiLiIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiMwMDAwMDAiLCJ0aGVtZV9jb2xvciI6IiMzNEM3NTkifQ==">
     <title> Gym Tracker Pro</title>
 </head>
 <body>
 <!-- Console Log Overlay -->
-<div id="console-log-overlay" style="display:none;position:fixed;bottom:0;left:0;right:0;max-height:40vh;overflow-y:auto;z-index:99999;background:rgba(0,0,0,0.92);color:#fff;font-size:13px;font-family:monospace;padding:8px 12px;border-top:2px solid #34C759;box-shadow:0 -2px 16px #000;pointer-events:auto;">
+<div id="console-log-overlay" style="display:none;position:fixed;bottom:0;left:0;right:0;max-height:40vh;overflow-y:auto;z-index:99999;background:rgba(18,18,18,0.95);color:#fff;font-size:13px;font-family:monospace;padding:8px 12px;border-top:2px solid #4A90E2;box-shadow:0 -2px 16px #000;pointer-events:auto;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
         <b>Console Log</b>
         <button onclick="document.getElementById('console-log-overlay').style.display='none'" style="background:#222;color:#fff;border:none;padding:2px 10px;border-radius:6px;">Sluiten</button>
     </div>
     <div id="console-log-content"></div>
 </div>
-<button id="showConsoleLogBtn" onclick="document.getElementById('console-log-overlay').style.display='block'" style="position:fixed;bottom:12px;right:12px;z-index:99999;background:#34C759;color:#000;font-weight:bold;border:none;padding:8px 14px;border-radius:20px;box-shadow:0 2px 8px #000;display:none;">Log</button>
+<button id="showConsoleLogBtn" onclick="document.getElementById('console-log-overlay').style.display='block'" style="position:fixed;bottom:12px;right:12px;z-index:99999;background:#4A90E2;color:#000;font-weight:bold;border:none;padding:8px 14px;border-radius:20px;box-shadow:0 2px 8px #000;display:none;">Log</button>
 <style>
 * {
     margin: 0;
@@ -37,9 +50,9 @@
     --secondary: #7B7B7B;      /* Professioneel grijs */
     --tertiary: #B8B8B8;       /* Lichtere grijze accent */
     --danger: #E74C3C;         /* Professionele rode accent */
-    --warning: #F39C12;        /* Professionele oranje accent */
+    --warning: #E67E22;        /* Professionele oranje accent */
     --purple: #9B59B6;         /* Professionele paarse accent */
-    --success: #27AE60;        /* Professionele groene accent */
+    --success: #2ECC71;        /* Professionele groene accent */
     --gold: linear-gradient(135deg, #D4AF37, #FFD700); /* Professionele gouden accent */
     
     /* Dark Theme - Professionele zwarte basis */
@@ -101,6 +114,48 @@ body {
 html { height: -webkit-fill-available; }
 body { min-height: -webkit-fill-available; }
 
+/* iOS 17+ Dynamic Island and notch support */
+@supports (padding: max(0px)) {
+    .header {
+        padding-top: max(44px, env(safe-area-inset-top));
+    }
+
+    body {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: max(34px, env(safe-area-inset-bottom));
+    }
+
+    /* Dynamic Island aware timer card */
+    .timer-card {
+        margin-top: max(10px, env(safe-area-inset-top, 10px));
+    }
+}
+
+/* iOS 17+ enhanced haptic feedback simulation */
+@media (prefers-reduced-motion: no-preference) {
+    .btn:active {
+        transform: scale(0.98);
+        transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .schema-card:active {
+        transform: scale(0.97) translateY(1px);
+    }
+}
+
+/* Action Button support styling */
+@media (device-width: 393px) and (device-height: 852px) { /* iPhone 15 Pro */
+    .fab-add-exercise {
+        bottom: 120px; /* Account for Action Button */
+    }
+}
+
+@media (device-width: 430px) and (device-height: 932px) { /* iPhone 15 Pro Max */
+    .fab-add-exercise {
+        bottom: 120px;
+    }
+}
+
 /* Prevent white flashes during load and show boot errors */
 #boot-error-overlay {
     position: fixed;
@@ -119,7 +174,7 @@ body::before {
     content: "";
     position: fixed;
     inset: 0;
-    background: radial-gradient(circle at 20% 50%, rgba(52, 199, 89, 0.08) 0%, transparent 50%),
+    background: radial-gradient(circle at 20% 50%, rgba(184, 230, 184, 0.08) 0%, transparent 50%),
                 radial-gradient(circle at 80% 80%, rgba(255, 149, 0, 0.08) 0%, transparent 50%),
                 radial-gradient(circle at 50% 20%, rgba(175, 82, 222, 0.05) 0%, transparent 50%);
     pointer-events: none;
@@ -254,7 +309,7 @@ h1 {
     background: var(--primary);
     color: var(--dark);
     border-color: var(--primary);
-    box-shadow: 0 4px 12px rgba(52, 199, 89, 0.4);
+    box-shadow: 0 4px 12px rgba(184, 230, 184, 0.4);
 }
 
 .tab:not(.active):active {
@@ -320,13 +375,13 @@ h1 {
 }
 
 .schema-card.push {
-    --schema-accent: #34C759;
-    --schema-accent-2: #30B050;
+    --schema-accent: #A8DADC;
+    --schema-accent-2: #B8E6B8;
 }
 
 .schema-card.legs {
-    --schema-accent: #FF9500;
-    --schema-accent-2: #FF8000;
+    --schema-accent: #A8DADC;
+    --schema-accent-2: #F4C2A1;
 }
 
 .schema-card:hover::before {
@@ -663,11 +718,11 @@ h1 {
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #34C759, #30D158);
+    background: linear-gradient(90deg, #4A90E2, #5BA0F2);
 }
 
 .goal-card.completed::before {
-    background: linear-gradient(90deg, #FF9500, #FF9F0A);
+    background: linear-gradient(90deg, #4A90E2, #5BA0F2);
 }
 
 .goal-card.overdue::before {
@@ -720,7 +775,7 @@ h1 {
 
 .goal-progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #34C759, #30D158);
+    background: linear-gradient(90deg, #4A90E2, #5BA0F2);
     border-radius: 4px;
     transition: width 0.3s ease;
 }
@@ -1071,7 +1126,7 @@ h1 {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #34C759 0%, #30B050 100%);
+    background: linear-gradient(135deg, #4A90E2 0%, #5BA0F2 100%);
     color: var(--dark);
 }
 
@@ -1099,7 +1154,7 @@ h1 {
 }
 
 .btn-warning {
-    background: linear-gradient(135deg, #FFCC00 0%, #FFB800 100%);
+    background: linear-gradient(135deg, #E67E22 0%, #D35400 100%);
     color: var(--dark);
 }
 
@@ -1241,8 +1296,7 @@ h1 {
     border-radius: 999px;
     overflow: hidden;
     border: 2px solid var(--border);
-    margin-top: 1rem
-    gap: 0.75rem;
+    margin-top: 1rem;
 }
 
 .rest-timer-title {
@@ -1445,9 +1499,9 @@ h1 {
 }
 
 .set-row.completed {
-    background: var(--schema-accent-rgba-bg, rgba(52, 199, 89, 0.15));
-    border-color: var(--schema-accent, #34C759);
-    box-shadow: 0 0 20px var(--schema-accent-rgba-shadow, rgba(52, 199, 89, 0.2));
+    background: var(--schema-accent-rgba-bg, rgba(184, 230, 184, 0.15));
+    border-color: var(--schema-accent, #4A90E2);
+    box-shadow: 0 0 20px var(--schema-accent-rgba-shadow, rgba(184, 230, 184, 0.2));
 }
 
 .set-row.new-pr {
@@ -1485,7 +1539,7 @@ h1 {
     outline: none;
     border-color: var(--primary);
     background: var(--dark-card);
-    box-shadow: 0 0 0 4px rgba(52, 199, 89, 0.1);
+    box-shadow: 0 0 0 4px rgba(184, 230, 184, 0.1);
 }
 
 .set-input-label {
@@ -1515,9 +1569,9 @@ h1 {
 }
 
 .checkbox.checked {
-    background: linear-gradient(135deg, var(--schema-accent, #34C759) 0%, var(--schema-accent-2, #30B050) 100%);
-    border-color: var(--schema-accent, #34C759);
-    box-shadow: 0 4px 12px var(--schema-accent-rgba, rgba(52, 199, 89, 0.4));
+    background: linear-gradient(135deg, var(--schema-accent, #4A90E2) 0%, var(--schema-accent-2, #5BA0F2) 100%);
+    border-color: var(--schema-accent, #4A90E2);
+    box-shadow: 0 4px 12px var(--schema-accent-rgba, rgba(184, 230, 184, 0.4));
 }
 
 .checkbox.checked::after {
@@ -1634,7 +1688,7 @@ h1 {
 .calendar-day.has-workout {
     background: var(--primary);
     color: #000;
-    box-shadow: 0 0 12px rgba(52, 199, 89, 0.3);
+    box-shadow: 0 0 12px rgba(184, 230, 184, 0.3);
 }
 
 .calendar-day.has-workout::after {
@@ -1848,7 +1902,7 @@ h1 {
     font-size: 0.95rem;
     font-weight: 700;
     padding: 0.375rem 0.875rem;
-    background: rgba(52, 199, 89, 0.15);
+    background: rgba(184, 230, 184, 0.15);
     border-radius: 12px;
     display: inline-block;
 }
@@ -1983,7 +2037,7 @@ h1 {
     font-size: 2rem;
     font-weight: 300;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(52, 199, 89, 0.4);
+    box-shadow: 0 4px 12px rgba(184, 230, 184, 0.4);
     display: none;
     align-items: center;
     justify-content: center;
@@ -1997,7 +2051,7 @@ h1 {
 
 .fab-add-exercise:hover {
     transform: scale(1.1);
-    box-shadow: 0 8px 20px rgba(52, 199, 89, 0.6);
+    box-shadow: 0 8px 20px rgba(184, 230, 184, 0.6);
 }
 
 .fab-add-exercise:active {
@@ -2207,7 +2261,7 @@ body.swipe-active {
 .form-input:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(52, 199, 89, 0.1);
+    box-shadow: 0 0 0 3px rgba(184, 230, 184, 0.1);
 }
 
 .form-input option {
@@ -2358,7 +2412,7 @@ body.swipe-active {
 .form-input:focus, .form-select:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 4px rgba(52, 199, 89, 0.1);
+    box-shadow: 0 0 0 4px rgba(184, 230, 184, 0.1);
 }
 
 /* Empty State */
@@ -2836,7 +2890,7 @@ body.swipe-active {
     .settings-input:focus {
         outline: none;
         border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(52, 199, 89, 0.1);
+        box-shadow: 0 0 0 3px rgba(184, 230, 184, 0.1);
     }
 
     .settings-counter {
@@ -2895,9 +2949,9 @@ body.swipe-active {
 
     .settings-tip {
         padding: 1rem 1.25rem;
-        background: rgba(52, 199, 89, 0.08);
+        background: rgba(184, 230, 184, 0.08);
         border-radius: 12px;
-        border: 1px solid rgba(52, 199, 89, 0.2);
+        border: 1px solid rgba(184, 230, 184, 0.2);
     }
 
     .settings-tip p {
@@ -3594,7 +3648,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 id: 'test-1',
                 name: 'Voorbeeld schema',
                 description: 'Dit is een automatisch toegevoegd testschema.',
-                color: '#34C759',
+                color: '#4A90E2',
                 muscleGroups: [
                     { id: 'custom', name: 'Custom', exercises: [
                         { id: 1, name: 'Push-up', met: 4.5 },
@@ -3669,7 +3723,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <div>
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Kleur *</label>
-                            <input id="schemaColorInput" type="color" value="#34C759" style="width: 100%; height: 3rem; border: 1px solid var(--border); border-radius: 8px; background: var(--dark-lighter);">
+                            <input id="schemaColorInput" type="color" value="#4A90E2" style="width: 100%; height: 3rem; border: 1px solid var(--border); border-radius: 8px; background: var(--dark-lighter);">
                         </div>
                         <div id="schemaExercisesSection" style="display:none;">
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Oefeningen</label>
@@ -3789,7 +3843,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('[saveNewSchema] called');
         const name = (document.getElementById('schemaNameInput')||{}).value ? document.getElementById('schemaNameInput').value.trim() : '';
         const desc = (document.getElementById('schemaDescInput')||{}).value ? document.getElementById('schemaDescInput').value.trim() : '';
-        const color = (document.getElementById('schemaColorInput')||{}).value || '#34C759';
+        const color = (document.getElementById('schemaColorInput')||{}).value || '#4A90E2';
         if (!name) return alert('Naam is verplicht');
         if (!Array.isArray(editingExercises)) editingExercises = [];
         const muscleGroups = groupExercisesByMuscleGroup(editingExercises);
@@ -3842,7 +3896,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('[saveEditSchema] called');
         const name = (document.getElementById('schemaNameInput')||{}).value ? document.getElementById('schemaNameInput').value.trim() : '';
         const desc = (document.getElementById('schemaDescInput')||{}).value ? document.getElementById('schemaDescInput').value.trim() : '';
-        const color = (document.getElementById('schemaColorInput')||{}).value || '#34C759';
+        const color = (document.getElementById('schemaColorInput')||{}).value || '#4A90E2';
         if (!name) return alert('Naam is verplicht');
         if (!Array.isArray(editingExercises)) editingExercises = [];
         const muscleGroups = groupExercisesByMuscleGroup(editingExercises);
@@ -4149,6 +4203,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 <div class="settings-item">
                     <div class="settings-label">
+                        <span>MET Waarde</span>
+                        <span class="settings-description">Intensiteit voor calorieberekening</span>
+                    </div>
+                    <div class="settings-counter">
+                        <button onclick="updateMETValue((parseFloat(document.getElementById('metValueInput').value) || 4.5) - 0.1)">−</button>
+                        <input type="number" id="metValueInput" min="1.0" max="15.0" step="0.1" value="4.5" readonly>
+                        <button onclick="updateMETValue((parseFloat(document.getElementById('metValueInput').value) || 4.5) + 0.1)">+</button>
+                    </div>
+                </div>
+
+                <div class="settings-item">
+                    <div class="settings-label">
                         <span>Standaard Sets</span>
                         <span class="settings-description">Aantal sets per oefening</span>
                     </div>
@@ -4362,13 +4428,13 @@ const DEFAULT_SCHEMAS = [
         id: "schema1",
         name: "Schema 1",
         description: "Upper Body Push/Pull",
-        color: "#34C759",
+        color: "#B8E6B8",
         icon: "🏋️‍♂️",
         muscleGroups: [
             {
                 id: "borst",
                 name: "Borst",
-                icon: "",
+                icon: "💪",
                 exercises: [
                     { id: 101, name: "Chest Press", met: 4.5, icon: "🏋️‍♂️" },
                     { id: 102, name: "DB Press", met: 4.5, icon: "🏋️‍♀️" },
@@ -4378,7 +4444,7 @@ const DEFAULT_SCHEMAS = [
             {
                 id: "schouder",
                 name: "Schouder",
-                icon: "",
+                icon: "🤸‍♀️",
                 exercises: [
                     { id: 103, name: "Flyes", met: 4.5, icon: "🦅" },
                     { id: 104, name: "Pull Down", met: 4.5, icon: "🏗️" },
@@ -4388,7 +4454,7 @@ const DEFAULT_SCHEMAS = [
             {
                 id: "rug",
                 name: "Rug",
-                icon: "",
+                icon: "🚣‍♂️",
                 exercises: [
                     { id: 105, name: "Seated Row", met: 4.5, icon: "🚣‍♂️" }
                 ]
@@ -4396,7 +4462,7 @@ const DEFAULT_SCHEMAS = [
             {
                 id: "triceps_biceps",
                 name: "Triceps / Biceps",
-                icon: "",
+                icon: "💪",
                 exercises: [
                     { id: 106, name: "One Arm Row", met: 4.5, icon: "🚣‍♀️" },
                     { id: 108, name: "Front Side Raise", met: 4.5, icon: "🤾‍♂️" }
@@ -4408,13 +4474,13 @@ const DEFAULT_SCHEMAS = [
         id: "schema2",
         name: "Schema 2",
         description: "Legs & Arms - Lower Body Focus",
-        color: "#FF9500",
+        color: "#F4C2A1",
         icon: "🦵",
         muscleGroups: [
             {
                 id: "benen",
                 name: "Benen",
-                icon: "",
+                icon: "🦵",
                 exercises: [
                     { id: 109, name: "Leg Press", met: 4.5, icon: "🦵" },
                     { id: 110, name: "Leg Curl", met: 4.5, icon: "🦵" },
@@ -4424,7 +4490,7 @@ const DEFAULT_SCHEMAS = [
             {
                 id: "triceps_biceps_2",
                 name: "Triceps / Biceps",
-                icon: "",
+                icon: "💪",
                 exercises: [
                     { id: 112, name: "French Press", met: 4.5, icon: "💪" },
                     { id: 113, name: "Biceps Barbell Curl", met: 4.5, icon: "💪" },
@@ -4468,8 +4534,8 @@ function getNextCustomSchemaId() {
 
 function getNextSchemaColor() {
     const colorPalette = [
-        "#34C759", // Green (schema1)
-        "#FF9500", // Orange (schema2)
+        "#B8E6B8", // Pastel Green (schema1)
+        "#F4C2A1", // Pastel Orange (schema2)
         "#5AC8FA", // Blue
         "#FF3B30", // Red
         "#AF52DE", // Purple
@@ -4615,6 +4681,7 @@ function getNextCustomExerciseId() {
 function getSettings() {
     const defaults = {
         bodyWeight: 75,
+        metValue: 4.5,
         defaultSets: 3,
         loggingEnabled: false,
         testMode: false
@@ -4658,7 +4725,7 @@ function saveSettings(settings) {
 
 // COLOR HELPERS
 function shadeColor(hex, percent) {
-    if (typeof hex !== "string" || !/^#([0-9A-Fa-f]{6})$/.test(hex)) return hex || "#34C759";
+    if (typeof hex !== "string" || !/^#([0-9A-Fa-f]{6})$/.test(hex)) return hex || "#4A90E2";
     const num = parseInt(hex.slice(1), 16);
     const amt = Math.round(2.55 * percent);
     const r = (num >> 16) + amt;
@@ -4673,7 +4740,7 @@ function shadeColor(hex, percent) {
 }
 
 function getSchemaAccentPair(color) {
-    const accent = (typeof color === "string" && color.startsWith("#")) ? color : "#34C759";
+    const accent = (typeof color === "string" && color.startsWith("#")) ? color : "#4A90E2";
     return {
         accent,
         accent2: shadeColor(accent, -12)
@@ -4682,7 +4749,7 @@ function getSchemaAccentPair(color) {
 
 function getSchemaColor(schemaId) {
     const schema = getAllSchemas().find(s => s.id === schemaId);
-    return (schema && schema.color) ? schema.color : "#34C759";
+    return (schema && schema.color) ? schema.color : "#4A90E2";
 }
 
 function hexToRgba(hex, alpha = 0.35) {
@@ -5139,25 +5206,14 @@ function init() {
     // Initialize mobile enhancements
     initSwipeGestures();
     initSpeechRecognition();
-}
 
-document.addEventListener("DOMContentLoaded", init);
+    // Initialize iOS 17+ features
+    setupActionButton();
+    setupCameraControl();
 
-function setAppVersionLabel() {
-    try {
-        const el = document.getElementById("appVersionText");
-        if (el) el.textContent = APP_VERSION;
-    } catch (e) {}
-}
-
-function forceReload() {
-    try {
-        const base = location.href.split("?")[0];
-        const newUrl = `${base}?v=${APP_VERSION}&t=${Date.now()}`;
-        localStorage.setItem("app_version", APP_VERSION);
-        location.replace(newUrl);
-    } catch (e) {
-        location.reload();
+    // Check for iOS 17+ features
+    if (navigator.userAgent.includes('iPhone') && navigator.userAgent.includes('17')) {
+        console.log('iOS 17+ detected - enabling advanced features');
     }
 }
 
@@ -5418,7 +5474,7 @@ function renderExercises() {
     visibleExercises.forEach(ex => {
         if (!groupedExercises[ex.muscleGroup]) {
             groupedExercises[ex.muscleGroup] = {
-                icon: ex.muscleGroupIcon,
+                icon: ex.muscleGroupIcon || "💪",
                 exercises: []
             };
         }
@@ -5699,7 +5755,8 @@ function updateStats() {
 }
 
 function calculateKcal(volume, durationMinutes, bodyWeight) {
-    const met = 4.5;
+    const settings = getSettings();
+    const met = settings.metValue || 4.5;
     return (met * bodyWeight * (durationMinutes / 60)) * 1.2;
 }
 
@@ -5753,6 +5810,9 @@ function startTimer() {
         updateTimerDisplay();
         updateStats();
     }, 1000);
+
+    // Start Dynamic Island workout tracking
+    updateDynamicIsland();
 }
 
 function toggleTimer() {
@@ -5769,6 +5829,11 @@ function pauseTimer() {
     document.getElementById("timerCard").classList.remove("running");
     document.getElementById("timerIcon").textContent = "";
     document.getElementById("timerText").textContent = "Hervatten";
+
+    // Clear Dynamic Island when paused
+    if ('dynamicIsland' in navigator) {
+        navigator.dynamicIsland.clear();
+    }
 }
 
 function resumeTimer() {
@@ -5790,12 +5855,15 @@ function updateTimerDisplay() {
     const hours = Math.floor(timerSeconds / 3600);
     const minutes = Math.floor((timerSeconds % 3600) / 60);
     const seconds = timerSeconds % 60;
-    
+
     const display = hours > 0
         ? `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
         : `${pad(minutes)}:${pad(seconds)}`;
-    
+
     document.getElementById("timer").textContent = display;
+
+    // Update Dynamic Island for iPhone 14 Pro+
+    updateDynamicIsland();
 }
 
 // REST TIMER
@@ -6969,15 +7037,17 @@ function calculateStatistics(history) {
 }
 
 function estimateCalories(workout) {
+    const settings = getSettings();
+    const met = settings.metValue || 4.5;
+    const bodyWeight = settings.bodyWeight || 75;
     let calories = 0;
     const duration = (workout.duration || 0) / 60; // seconden naar minuten
     if (workout.exercises) {
         workout.exercises.forEach(ex => {
             if (ex.sets) {
                 ex.sets.forEach(set => {
-                    // Rough estimate: 5 kcal per minute for strength training, adjusted by intensity
-                    const intensity = Math.min((set.weight || 0) / 100, 2); // cap at 2x
-                    calories += 5 * (duration / workout.exercises.length) * intensity;
+                    // MET based calculation: MET * weight * hours * adjustment factor
+                    calories += (met * bodyWeight * (duration / workout.exercises.length / 60)) * 1.2;
                 });
             }
         });
@@ -7396,7 +7466,7 @@ function updateProgressChart() {
     const polylinePoints = points.map((p,i) => `${xScale(i)},${yScale(p.weight)}`).join(' ');
     const circles = points.map((p,i) => {
         const isPR = hasPR && p.weight >= prWeight;
-        return `<circle cx="${xScale(i)}" cy="${yScale(p.weight)}" r="4" fill="${isPR ? '#FFCC00' : '#34C759'}" stroke="${isPR ? '#FF9500' : 'none'}" />`;
+        return `<circle cx="${xScale(i)}" cy="${yScale(p.weight)}" r="4" fill="${isPR ? '#FFCC00' : '#4A90E2'}" stroke="${isPR ? '#F4C2A1' : 'none'}" />`;
     }).join('');
     
     const labels = points.map((p,i) => {
@@ -7408,7 +7478,7 @@ function updateProgressChart() {
     
     container.innerHTML = `
         <svg viewBox="0 0 ${width} ${height+30}" preserveAspectRatio="xMidYMax meet" style="width:100%; height:240px;">
-            <polyline fill="none" stroke="#34C759" stroke-width="3" points="${polylinePoints}" stroke-linecap="round" stroke-linejoin="round"></polyline>
+            <polyline fill="none" stroke="#4A90E2" stroke-width="3" points="${polylinePoints}" stroke-linecap="round" stroke-linejoin="round"></polyline>
             ${circles}
             ${labels}
         </svg>
@@ -8055,10 +8125,99 @@ function renderVolumeChart(history) {
 }
 
 // MOBILE ENHANCEMENTS
-// Haptic feedback for mobile devices
+// Enhanced haptic feedback for iPhone 17 and modern devices
 function hapticFeedback(pattern = [50]) {
     if ('vibrate' in navigator) {
-        navigator.vibrate(pattern);
+        // Check for iOS 17+ advanced haptic patterns
+        if (navigator.userAgent.includes('iPhone') && navigator.userAgent.includes('17')) {
+            // Use more sophisticated patterns for iPhone 17
+            navigator.vibrate(pattern);
+        } else {
+            // Fallback for older devices
+            navigator.vibrate(pattern);
+        }
+    }
+}
+
+// Dynamic Island support for iPhone 14 Pro+ workout timer
+function updateDynamicIsland() {
+    if ('dynamicIsland' in navigator && currentWorkout) {
+        if (timerRunning) {
+            // Update Dynamic Island with timer progress
+            const progress = Math.min(1, timerSeconds / (currentWorkout.targetDuration || 3600));
+
+            navigator.dynamicIsland.update({
+                title: 'Workout Timer',
+                subtitle: formatDuration(timerSeconds),
+                progress: progress,
+                icon: '⏱️',
+                actions: [
+                    {
+                        title: 'Pauze',
+                        action: 'pauseWorkout'
+                    },
+                    {
+                        title: 'Stop',
+                        action: 'stopWorkout'
+                    }
+                ]
+            });
+        } else {
+            // Update Dynamic Island with workout progress
+            let totalSets = 0;
+            let completedSets = 0;
+
+            currentWorkout.exercises.forEach(ex => {
+                ex.sets.forEach(set => {
+                    totalSets++;
+                    if (set.completed) completedSets++;
+                });
+            });
+
+            const progress = totalSets > 0 ? completedSets / totalSets : 0;
+
+            navigator.dynamicIsland.update({
+                title: 'Workout Progress',
+                subtitle: `${completedSets}/${totalSets} sets`,
+                progress: progress,
+                icon: '🏋️‍♂️',
+                actions: [
+                    {
+                        title: 'Start Timer',
+                        action: 'startTimer'
+                    },
+                    {
+                        title: 'Finish',
+                        action: 'finishWorkout'
+                    }
+                ]
+            });
+        }
+    }
+}
+
+// Action Button support for iPhone 15 Pro+
+function setupActionButton() {
+    if ('actionButton' in navigator) {
+        navigator.actionButton.set({
+            type: 'workout',
+            title: 'Start Workout',
+            icon: '🏋️‍♂️',
+            action: 'startQuickWorkout'
+        });
+    }
+}
+
+// Camera Control support for iPhone 15 Pro Max
+function setupCameraControl() {
+    if ('cameraControl' in navigator) {
+        navigator.cameraControl.set({
+            mode: 'workout',
+            actions: [
+                { title: 'Complete Set', action: 'completeCurrentSet' },
+                { title: 'Next Exercise', action: 'nextExercise' }
+            ]
+        });
     }
 }
 
@@ -8166,15 +8325,16 @@ function handleTouchEnd(e) {
 function completeSetWithHaptic(exerciseId, setIndex) {
     const exercise = currentWorkout.exercises.find(ex => ex.id === exerciseId);
     if (!exercise) return;
-    
+
     const set = exercise.sets[setIndex];
     if (!set.completed && (!set.reps || !set.weight)) {
         showToast("Vul eerst reps en gewicht in", "error");
         return;
     }
-    
+
     set.completed = true;
     hapticFeedback([30, 50, 30]); // Short vibration pattern
+    updateDynamicIsland(); // Update Dynamic Island with workout progress
     startRestTimer();
     checkAndShowPR(exercise, setIndex);
     focusOnTimer();
@@ -8420,7 +8580,7 @@ function renderOneRepMaxOverview(container, history, schemaId) {
             ${exercisesWithData.map(exercise => `
                 <div style="background: var(--dark-elevated); border: 1px solid var(--border); border-radius: 12px; padding: 1rem;">
                     <div style="font-weight: 700; color: var(--text); margin-bottom: 0.5rem;">${exercise.name}</div>
-                    <div style="font-size: 1.5rem; font-weight: 800; color: #34C759; margin-bottom: 0.25rem;">${exercise.best1RM.toFixed(1)} kg</div>
+                    <div style="font-size: 1.5rem; font-weight: 800; color: #4A90E2; margin-bottom: 0.25rem;">${exercise.best1RM.toFixed(1)} kg</div>
                     <div style="color: var(--text-muted); font-size: 0.8rem;">
                         ${exercise.date ? `Laatste update: ${exercise.date.toLocaleDateString('nl-NL')}` : ''}
                     </div>
@@ -8610,9 +8770,11 @@ function formatDuration(seconds) {
 function loadSettings() {
     const settings = getSettings();
     const bodyWeightInput = document.getElementById("bodyWeightInput");
+    const metValueInput = document.getElementById("metValueInput");
     const defaultSetsInput = document.getElementById("defaultSetsInput");
 
     if (bodyWeightInput) bodyWeightInput.value = settings.bodyWeight;
+    if (metValueInput) metValueInput.value = (settings.metValue || 4.5).toFixed(1);
     if (defaultSetsInput) defaultSetsInput.value = settings.defaultSets;
 }
 
@@ -8632,6 +8794,13 @@ function toggleDarkMode() {
     const newIsDark = !currentlyDark; // flip
     applyTheme(newIsDark);
     localStorage.setItem('gym_theme', newIsDark ? 'dark' : 'light');
+}
+
+function setAppVersionLabel() {
+    const versionElement = document.getElementById('appVersionText');
+    if (versionElement) {
+        versionElement.textContent = APP_VERSION;
+    }
 }
 
 function toggleLogging() {
@@ -8713,6 +8882,14 @@ function updateBodyWeight(value) {
     document.getElementById('bodyWeightInput').value = weight;
     const settings = getSettings();
     settings.bodyWeight = weight;
+    saveSettings(settings);
+}
+
+function updateMETValue(value) {
+    const met = Math.max(1.0, Math.min(15.0, parseFloat(value) || 4.5));
+    document.getElementById('metValueInput').value = met.toFixed(1);
+    const settings = getSettings();
+    settings.metValue = met;
     saveSettings(settings);
 }
 

@@ -1913,9 +1913,12 @@ let currentView = "workout";
 let currentWorkout = null;
 let timerInterval = null;
 let timerSeconds = 0;
+let timerStartMs = null;
+let timerAccumulatedMs = 0;
 let timerRunning = false;
 let restTimerInterval = null;
 let restTimerRemaining = 0;
+let restTimerEndAt = null;
 const REST_DURATION_SECONDS = 90;
 let progressState = { schemaId: null, exerciseId: null };
 
@@ -2269,7 +2272,9 @@ function updateStats() {
     });
     
     const settings = getSettings();
-    const durationMinutes = timerSeconds / 60;
+    const elapsedSeconds = getTimerSeconds();
+    timerSeconds = elapsedSeconds;
+    const durationMinutes = elapsedSeconds / 60;
     const totalKcal = calculateKcal(totalVolume, durationMinutes, settings.bodyWeight);
     
     document.getElementById("statSets").textContent = totalSets;
@@ -2320,18 +2325,29 @@ function getInitialWeight(exerciseId) {
 }
 
 // TIMER
+function getTimerSeconds() {
+    const now = Date.now();
+    const runningMs = (timerRunning && timerStartMs) ? (now - timerStartMs) : 0;
+    const totalMs = timerAccumulatedMs + runningMs;
+    return Math.max(0, Math.floor(totalMs / 1000));
+}
+
+function syncTimerState() {
+    timerSeconds = getTimerSeconds();
+    updateTimerDisplay();
+    updateStats();
+}
+
 function startTimer() {
     if (timerRunning) return;
     timerRunning = true;
+    timerStartMs = Date.now();
     document.getElementById("timerCard").classList.add("running");
     document.getElementById("timerIcon").textContent = "";
     document.getElementById("timerText").textContent = "Pause";
     
-    timerInterval = setInterval(() => {
-        timerSeconds++;
-        updateTimerDisplay();
-        updateStats();
-    }, 1000);
+    syncTimerState();
+    timerInterval = setInterval(syncTimerState, 1000);
 }
 
 function toggleTimer() {
@@ -2343,11 +2359,16 @@ function toggleTimer() {
 }
 
 function pauseTimer() {
+    if (!timerRunning) return;
+    timerAccumulatedMs += Date.now() - (timerStartMs || Date.now());
+    timerStartMs = null;
     timerRunning = false;
     clearInterval(timerInterval);
+    timerInterval = null;
     document.getElementById("timerCard").classList.remove("running");
     document.getElementById("timerIcon").textContent = "";
     document.getElementById("timerText").textContent = "Hervatten";
+    syncTimerState();
 }
 
 function resumeTimer() {
@@ -2359,7 +2380,9 @@ function resetTimer() {
     
     pauseTimer();
     timerSeconds = 0;
-    updateTimerDisplay();
+    timerAccumulatedMs = 0;
+    timerStartMs = null;
+    syncTimerState();
 }
 
 function updateTimerDisplay() {
@@ -2378,16 +2401,11 @@ function updateTimerDisplay() {
 function startRestTimer(seconds = REST_DURATION_SECONDS) {
     stopRestTimer(true);
     restTimerRemaining = seconds;
+    restTimerEndAt = Date.now() + (seconds * 1000);
     updateRestTimerUI();
     const card = document.getElementById("restTimerCard");
     if (card) card.style.display = "block";
-    restTimerInterval = setInterval(() => {
-        restTimerRemaining = Math.max(0, restTimerRemaining - 1);
-        updateRestTimerUI();
-        if (restTimerRemaining <= 0) {
-            stopRestTimer(true);
-        }
-    }, 1000);
+    restTimerInterval = setInterval(syncRestTimer, 500);
 }
 
 function refreshRestTimer() {
@@ -2399,12 +2417,27 @@ function stopRestTimer(auto = false) {
         clearInterval(restTimerInterval);
         restTimerInterval = null;
     }
+    restTimerEndAt = null;
     if (!auto) {
         restTimerRemaining = 0;
         const card = document.getElementById("restTimerCard");
         if (card) card.style.display = "none";
     }
     updateRestTimerUI();
+}
+
+function syncRestTimer() {
+    if (!restTimerEndAt) {
+        restTimerRemaining = 0;
+        updateRestTimerUI();
+        return;
+    }
+    const remainingMs = restTimerEndAt - Date.now();
+    restTimerRemaining = Math.max(0, Math.ceil(remainingMs / 1000));
+    updateRestTimerUI();
+    if (restTimerRemaining <= 0) {
+        stopRestTimer(true);
+    }
 }
 
 function updateRestTimerUI() {
@@ -2440,9 +2473,11 @@ function finishWorkout() {
     }
     
     pauseTimer();
+    const elapsedSeconds = getTimerSeconds();
+    timerSeconds = elapsedSeconds;
     
     currentWorkout.endTime = new Date().toISOString();
-    currentWorkout.duration = timerSeconds;
+    currentWorkout.duration = elapsedSeconds;
     
     // Save workout
     saveWorkout(currentWorkout);
@@ -2450,7 +2485,7 @@ function finishWorkout() {
     // Update PRs
     updatePRs(currentWorkout);
     
-    showToast(`Workout voltooid! ${completedSets} sets in ${formatDuration(timerSeconds)}`, "success");
+    showToast(`Workout voltooid! ${completedSets} sets in ${formatDuration(elapsedSeconds)}`, "success");
     
     // Reset
     resetWorkout();
@@ -2466,8 +2501,11 @@ function cancelWorkout() {
 function resetWorkout() {
     currentWorkout = null;
     timerSeconds = 0;
+    timerAccumulatedMs = 0;
+    timerStartMs = null;
     timerRunning = false;
     clearInterval(timerInterval);
+    timerInterval = null;
     
     document.getElementById("schemaSelection").style.display = "grid";
     document.getElementById("activeWorkout").style.display = "none";
@@ -3227,6 +3265,19 @@ function updateDefaultSets(value) {
     settings.defaultSets = sets;
     saveSettings(settings);
 }
+
+function syncForegroundTimers() {
+    syncTimerState();
+    syncRestTimer();
+}
+
+document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+        syncForegroundTimers();
+    }
+});
+
+window.addEventListener("focus", syncForegroundTimers);
 
 // Initialize on load
 document.addEventListener("DOMContentLoaded", init);

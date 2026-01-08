@@ -3731,7 +3731,7 @@ label.invalid {
 
 <script>
 // APP VERSION
-const APP_VERSION = "2026-01-08-01";
+const APP_VERSION = "2026-01-08-02";
 
 // AUDIO CONTEXT for haptic feedback fallbacks
 let audioContext = null;
@@ -4812,7 +4812,7 @@ let restTimerInterval = null;
 let restTimerRemaining = 0;
 let restTimerTotal = 0;
 let restTimerEndAt = null;
-const getRestDuration = () => getSettings().testMode ? 3 : 90;
+const getRestDuration = () => getSettings().testMode ? 10 : 90;
 let progressState = { schemaId: null, exerciseId: null };
 let currentRestExerciseId = null;
 

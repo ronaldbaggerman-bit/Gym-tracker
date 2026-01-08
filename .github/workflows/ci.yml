@@ -16,7 +16,7 @@ jobs:
       - name: Validate HTML files exist
         run: |
           echo "=== Checking HTML files ==="
-          test -f "gym-tracker-app.html" && echo "✓ gym-tracker-app.html" || (echo "✗ Missing gym-tracker-app.html" && exit 1)
+          test -f "gym-tracker.html" && echo "✓ gym-tracker.html" || (echo "✗ Missing gym-tracker.html" && exit 1)
           test -f "Sport tracker/gym-tracker.html" && echo "✓ Sport tracker/gym-tracker.html" || (echo "✗ Missing Sport tracker/gym-tracker.html" && exit 1)
           test -f "personal-index/index.html" && echo "✓ personal-index/index.html" || (echo "✗ Missing personal-index/index.html" && exit 1)
           test -f "README.md" && echo "✓ README.md" || (echo "✗ Missing README.md" && exit 1)
@@ -24,7 +24,7 @@ jobs:
       - name: Check HTML structure
         run: |
           echo "=== Validating HTML structure ==="
-          for file in gym-tracker-app.html "Sport tracker/gym-tracker.html" personal-index/index.html personal-index/vakantieplanning.html personal-index/werknemerplanning.html; do
+          for file in gym-tracker.html "Sport tracker/gym-tracker.html" personal-index/index.html personal-index/vakantieplanning.html personal-index/werknemerplanning.html; do
             if [ -f "$file" ]; then
               echo "Checking $file..."
               grep -q "<!DOCTYPE html>" "$file" && echo "  ✓ Valid DOCTYPE" || echo "  ⚠ Missing DOCTYPE"

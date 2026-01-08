@@ -7709,12 +7709,19 @@ function updateProgressChart() {
     }
 }
 
+// Global Chart instance tracker
+let currentProgressChart = null;
+
 function createChartJsChart(container, points, legend) {
-    // Zorg dat er maar 1 canvas is
-    if (container.firstChild && container.firstChild.tagName === 'CANVAS') {
-        container.innerHTML = '';
-    } else if (container.firstChild && container.firstChild.tagName === 'SVG') {
-        container.innerHTML = '';
+    // Destroy vorige chart instance
+    if (currentProgressChart) {
+        currentProgressChart.destroy();
+        currentProgressChart = null;
+    }
+    
+    // Maak container leeg - ALTIJD
+    while (container.firstChild) {
+        container.removeChild(container.firstChild);
     }
     
     const canvas = document.createElement('canvas');
@@ -7732,7 +7739,7 @@ function createChartJsChart(container, points, legend) {
     // Bepaal welke punten PRs zijn
     const pointColors = points.map(p => p.weight >= prWeight && prWeight > 0 ? '#FFCC00' : '#4A90E2');
     
-    new Chart(canvas, {
+    currentProgressChart = new Chart(canvas, {
         type: 'line',
         data: {
             labels: labels,
@@ -7790,7 +7797,16 @@ function createChartJsChart(container, points, legend) {
 }
 
 function createSVGChart(container, points, legend) {
-    // Y-bounds
+    // Destroy vorige chart instance als die bestaat
+    if (currentProgressChart) {
+        currentProgressChart.destroy();
+        currentProgressChart = null;
+    }
+    
+    // Maak container leeg - ALTIJD
+    while (container.firstChild) {
+        container.removeChild(container.firstChild);
+    }
     const weights = points.map(p => p.weight);
     const minY = Math.max(0, Math.min(...weights) - 5);
     const maxY = Math.max(...weights) + 5;

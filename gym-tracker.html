@@ -3754,7 +3754,7 @@ label.invalid {
 
 <script>
 // APP VERSION
-const APP_VERSION = "2026-01-09-09";
+const APP_VERSION = "2026-01-09-10";
 
 // ============================================================================
 // FIREBASE CONFIGURATION & INITIALIZATION
@@ -9065,21 +9065,18 @@ function audioFeedback(pattern) {
 // Dynamic Island support for iPhone 14 Pro+ workout timer
 // Note: Dynamic Island is a native iOS feature, this is a visual simulation for demo purposes
 function updateDynamicIsland() {
-    console.log('🏝️ updateDynamicIsland called');
+    if (!currentWorkout) return; // Early exit: no workout active
+
+    // More flexible iOS detection
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isIOS17Plus = isIOS && /OS 1[7-9]|OS 2[0-9]/.test(navigator.userAgent);
+    const isDynamicIslandDevice = isIOS && /iPhone1[4-9]|iPhone2[0-9]/.test(navigator.userAgent); // iPhone 14 Pro+
+
+    // Skip all logic and logging for non-iOS devices to avoid console spam
+    if (!isIOS) return;
 
     if (currentWorkout) {
-        console.log('✅ Current workout exists');
-
-        // More flexible iOS detection
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        const isIOS17Plus = isIOS && /OS 1[7-9]|OS 2[0-9]/.test(navigator.userAgent);
-        const isDynamicIslandDevice = isIOS && /iPhone1[4-9]|iPhone2[0-9]/.test(navigator.userAgent); // iPhone 14 Pro+
-
-        console.log('📱 iOS detected:', isIOS, 'iOS 17+:', isIOS17Plus, 'Dynamic Island device:', isDynamicIslandDevice);
-        console.log('🌐 User Agent:', navigator.userAgent);
-
         if (isDynamicIslandDevice && isIOS17Plus) {
-            console.log('🏝️ Dynamic Island simulation enabled (iOS 17+ on iPhone 14 Pro+)');
 
             // Create or update visual Dynamic Island overlay
             let dynamicIsland = document.getElementById('dynamic-island-overlay');
@@ -9150,9 +9147,7 @@ function updateDynamicIsland() {
             }, 3000);
 
         } else {
-            console.log('ℹ️ Dynamic Island simulation not available (requires iOS 17+ on iPhone 14 Pro+)');
-
-            // Fallback: Show a notification-style Dynamic Island simulation
+            // Fallback: Show a notification-style Dynamic Island simulation (iOS devices only)
             let fallbackIsland = document.getElementById('dynamic-island-fallback');
             if (!fallbackIsland) {
                 fallbackIsland = document.createElement('div');
@@ -9208,13 +9203,6 @@ function updateDynamicIsland() {
                     }, 500);
                 }
             }, 3000);
-        }
-    } else {
-        console.log('❌ No current workout');
-        // Hide Dynamic Island if it exists
-        const dynamicIsland = document.getElementById('dynamic-island-overlay');
-        if (dynamicIsland) {
-            dynamicIsland.style.display = 'none';
         }
     }
 }

@@ -3754,7 +3754,7 @@ label.invalid {
 
 <script>
 // APP VERSION
-const APP_VERSION = "2026-01-09-12";
+const APP_VERSION = "2026-01-09-13";
 
 // ============================================================================
 // FIREBASE CONFIGURATION & INITIALIZATION
@@ -4853,6 +4853,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="settings-backup-grid">
                     <button class="btn btn-primary" onclick="exportBackup()" style="width: 100%;">
                         ⬇️ Export Data
+                    </button>
+                    <button class="btn btn-primary" onclick="exportWorkoutsJSON()" style="width: 100%;">
+                        ⬇️ Export Workouts (JSON, 180d)
                     </button>
                     <button class="btn btn-secondary" onclick="importBackup()" style="width: 100%;">
                         ⬆️ Import Data
@@ -10603,6 +10606,71 @@ function exportBackup() {
         showToast("Backup geëxporteerd!", "success");
     } catch (error) {
         console.error("Export error:", error);
+        showToast("Export mislukt: " + error.message, "error");
+    }
+}
+
+// Export workouts to JSON for automation (default: last 180 days)
+function exportWorkoutsJSON(rangeDays = 180) {
+    try {
+        const history = getWorkoutHistory();
+        const cutoff = Date.now() - (rangeDays * 24 * 60 * 60 * 1000);
+
+        const filtered = history.filter(w => {
+            if (!w.startTime) return false;
+            const ts = new Date(w.startTime).getTime();
+            return !Number.isNaN(ts) && ts >= cutoff;
+        });
+
+        const workouts = filtered.map(w => {
+            const exercises = (w.exercises || []).map(ex => ({
+                id: ex.id || null,
+                name: ex.name,
+                muscleGroup: ex.muscleGroup || null,
+                muscleGroupIcon: ex.muscleGroupIcon || null,
+                sets: (ex.sets || []).map(set => ({
+                    reps: set.reps,
+                    weight: set.weight,
+                    completed: !!set.completed
+                }))
+            }));
+
+            const totalVolume = exercises.reduce((sum, ex) => sum + ex.sets.reduce((s, set) => s + ((Number(set.weight) || 0) * (Number(set.reps) || 0)), 0), 0);
+
+            return {
+                schemaId: w.schemaId || null,
+                schemaName: w.schemaName || null,
+                startTime: w.startTime || null,
+                endTime: w.endTime || null,
+                durationSeconds: w.duration || null,
+                totalVolume,
+                exercises
+            };
+        });
+
+        const payload = {
+            version: APP_VERSION,
+            generatedAt: new Date().toISOString(),
+            rangeDays,
+            count: workouts.length,
+            workouts
+        };
+
+        const dataStr = JSON.stringify(payload, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `gym-tracker-workouts-${rangeDays}d-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        showToast(`Workouts geëxporteerd (${workouts.length} items)`, "success");
+    } catch (error) {
+        console.error("Workout export error:", error);
         showToast("Export mislukt: " + error.message, "error");
     }
 }

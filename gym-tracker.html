@@ -3748,7 +3748,7 @@ label.invalid {
 
 <script>
 // APP VERSION
-const APP_VERSION = "2026-01-09-02";
+const APP_VERSION = "2026-01-09-03";
 
 // ============================================================================
 // FIREBASE CONFIGURATION & INITIALIZATION
@@ -3856,15 +3856,13 @@ const FirestoreSync = {
         
         try {
             const userData = {
-                workouts: JSON.parse(localStorage.getItem('workouts') || '[]'),
-                prs: JSON.parse(localStorage.getItem('prs') || '{}'),
-                workoutHistory: JSON.parse(localStorage.getItem('workoutHistory') || '[]'),
-                customSchemas: JSON.parse(localStorage.getItem('customSchemas') || '[]'),
-                settings: {
-                    darkMode: localStorage.getItem('darkMode'),
-                    vibrationEnabled: localStorage.getItem('vibrationEnabled'),
-                    audioEnabled: localStorage.getItem('audioEnabled')
-                },
+                workout_history: JSON.parse(localStorage.getItem('workout_history') || '[]'),
+                workout_prs: JSON.parse(localStorage.getItem('workout_prs') || '{}'),
+                workout_goals: JSON.parse(localStorage.getItem('workout_goals') || '[]'),
+                workout_templates: JSON.parse(localStorage.getItem('workout_templates') || '[]'),
+                gym_custom_exercises: JSON.parse(localStorage.getItem('gym_custom_exercises') || '[]'),
+                gym_custom_schemas: JSON.parse(localStorage.getItem('gym_custom_schemas') || '[]'),
+                gym_settings: JSON.parse(localStorage.getItem('gym_settings') || '{}'),
                 lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
             };
             
@@ -3886,15 +3884,13 @@ const FirestoreSync = {
                 const data = doc.data();
                 
                 // Update localStorage with cloud data
-                if (data.workouts) localStorage.setItem('workouts', JSON.stringify(data.workouts));
-                if (data.prs) localStorage.setItem('prs', JSON.stringify(data.prs));
-                if (data.workoutHistory) localStorage.setItem('workoutHistory', JSON.stringify(data.workoutHistory));
-                if (data.customSchemas) localStorage.setItem('customSchemas', JSON.stringify(data.customSchemas));
-                if (data.settings) {
-                    if (data.settings.darkMode !== undefined) localStorage.setItem('darkMode', data.settings.darkMode);
-                    if (data.settings.vibrationEnabled !== undefined) localStorage.setItem('vibrationEnabled', data.settings.vibrationEnabled);
-                    if (data.settings.audioEnabled !== undefined) localStorage.setItem('audioEnabled', data.settings.audioEnabled);
-                }
+                if (data.workout_history) localStorage.setItem('workout_history', JSON.stringify(data.workout_history));
+                if (data.workout_prs) localStorage.setItem('workout_prs', JSON.stringify(data.workout_prs));
+                if (data.workout_goals) localStorage.setItem('workout_goals', JSON.stringify(data.workout_goals));
+                if (data.workout_templates) localStorage.setItem('workout_templates', JSON.stringify(data.workout_templates));
+                if (data.gym_custom_exercises) localStorage.setItem('gym_custom_exercises', JSON.stringify(data.gym_custom_exercises));
+                if (data.gym_custom_schemas) localStorage.setItem('gym_custom_schemas', JSON.stringify(data.gym_custom_schemas));
+                if (data.gym_settings) localStorage.setItem('gym_settings', JSON.stringify(data.gym_settings));
                 
                 this.lastSyncTime = Date.now();
                 console.log('☁️ Data downloaded from cloud');
@@ -3922,17 +3918,20 @@ const FirestoreSync = {
                     this.syncInProgress = true;
                     
                     // Update local data
-                    if (data.workouts) localStorage.setItem('workouts', JSON.stringify(data.workouts));
-                    if (data.prs) localStorage.setItem('prs', JSON.stringify(data.prs));
-                    if (data.workoutHistory) localStorage.setItem('workoutHistory', JSON.stringify(data.workoutHistory));
-                    if (data.customSchemas) localStorage.setItem('customSchemas', JSON.stringify(data.customSchemas));
+                    if (data.workout_history) localStorage.setItem('workout_history', JSON.stringify(data.workout_history));
+                    if (data.workout_prs) localStorage.setItem('workout_prs', JSON.stringify(data.workout_prs));
+                    if (data.workout_goals) localStorage.setItem('workout_goals', JSON.stringify(data.workout_goals));
+                    if (data.workout_templates) localStorage.setItem('workout_templates', JSON.stringify(data.workout_templates));
+                    if (data.gym_custom_exercises) localStorage.setItem('gym_custom_exercises', JSON.stringify(data.gym_custom_exercises));
+                    if (data.gym_custom_schemas) localStorage.setItem('gym_custom_schemas', JSON.stringify(data.gym_custom_schemas));
+                    if (data.gym_settings) localStorage.setItem('gym_settings', JSON.stringify(data.gym_settings));
                     
                     this.lastSyncTime = remoteTimestamp;
                     this.syncInProgress = false;
                     
                     // Refresh UI if needed
                     if (typeof loadWorkoutHistory === 'function') loadWorkoutHistory();
-                    if (typeof updatePRsDisplay === 'function') updatePRsDisplay();
+                    if (typeof renderPRs === 'function') renderPRs();
                 }
             }
         }, error => {

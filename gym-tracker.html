@@ -3755,6 +3755,7 @@ label.invalid {
 <script>
 // APP VERSION
 const APP_VERSION = "2026-01-09-11";
+const APP_VERSION = "2026-01-09-12";
 
 // ============================================================================
 // FIREBASE CONFIGURATION & INITIALIZATION
@@ -3883,37 +3884,61 @@ const WorkoutStats = {
         };
     },
     
-    // Calculate current and longest streaks
+    // Calculate streaks based on consecutive workouts (not calendar days)
     getStreaks() {
         const history = getWorkoutHistory();
         if (history.length === 0) return { current: 0, longest: 0 };
         
-        const dates = history.map(w => new Date(w.startTime).toDateString()).reverse();
-        const uniqueDates = [...new Set(dates)];
+        // Sort by date descending (most recent first)
+        const sorted = [...history].sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
         
         let currentStreak = 0;
         let longestStreak = 1;
-        const today = new Date();
-        let expectedDate = new Date(today);
+        let streakCount = 0;
         
-        for (let i = 0; i < uniqueDates.length; i++) {
-            const workoutDate = new Date(uniqueDates[i]);
-            const daysDiff = Math.floor((expectedDate - workoutDate) / (1000 * 60 * 60 * 24));
+        // Group by unique dates to count workout days (not individual workouts)
+        const workoutDates = [];
+        let lastDate = null;
+        
+        for (let i = 0; i < sorted.length; i++) {
+            const workoutDate = new Date(sorted[i].startTime);
+            workoutDate.setHours(0, 0, 0, 0);
             
-            if (i === 0) {
-                // Check if today or yesterday
-                currentStreak = daysDiff <= 1 ? 1 : 0;
-                expectedDate = new Date(workoutDate);
-                expectedDate.setDate(expectedDate.getDate() - 1);
-            } else if (daysDiff === 1) {
-                currentStreak++;
-                expectedDate.setDate(expectedDate.getDate() - 1);
+            // Only count once per date
+            if (!lastDate || workoutDate.getTime() !== lastDate.getTime()) {
+                workoutDates.push(workoutDate);
+                lastDate = workoutDate;
+            }
+        }
+        
+        // Calculate current streak: workouts in a row
+        streakCount = 1;
+        for (let i = 0; i < workoutDates.length - 1; i++) {
+            const current = workoutDates[i];
+            const next = workoutDates[i + 1];
+            const daysDiff = (current - next) / (1000 * 60 * 60 * 24);
+            
+            // Allow up to 3 days gap (for MWF schedules, allows Fri->Mon with weekend)
+            if (daysDiff <= 3) {
+                streakCount++;
             } else {
                 break;
             }
         }
         
-        longestStreak = Math.max(longestStreak, currentStreak, uniqueDates.length);
+        // Current streak is only if last workout is recent (within last 3 days)
+        currentStreak = 0;
+        if (workoutDates.length > 0) {
+            const lastWorkoutDate = workoutDates[0];
+            const daysSinceLastWorkout = (today - lastWorkoutDate) / (1000 * 60 * 60 * 24);
+            if (daysSinceLastWorkout <= 3) {
+                currentStreak = streakCount;
+            }
+        }
+        
+        longestStreak = Math.max(streakCount, 1);
         
         return { current: currentStreak, longest: longestStreak };
     },
@@ -3925,6 +3950,39 @@ const WorkoutStats = {
             localStorage.setItem('workout_stats', JSON.stringify(stats));
         } catch (e) {
             console.warn('Could not save workout stats');
+        }
+    },
+    
+    // Update the stats header display on the page
+    updateStatsDisplay() {
+        const stats = this.getStats();
+        
+        // Update workout count
+        const workoutEl = document.getElementById('statTotalWorkouts');
+        if (workoutEl) {
+            workoutEl.textContent = stats.totalWorkouts;
+        }
+        
+        // Update volume
+        const volumeEl = document.getElementById('statTotalVolume');
+        if (volumeEl) {
+            volumeEl.textContent = stats.totalVolume + ' kg';
+        }
+        
+        // Update streak badge with smart label
+        const streakEl = document.getElementById('streakBadge');
+        if (streakEl) {
+            let badgeText = '';
+            if (stats.currentStreak === 0) {
+                badgeText = '💤 Geen serie';
+            } else if (stats.currentStreak === 1) {
+                badgeText = '🔥 1 workout';
+            } else if (stats.currentStreak === 2) {
+                badgeText = '⚡ 2 workouts';
+            } else if (stats.currentStreak >= 3) {
+                badgeText = '🔥 ' + stats.currentStreak + ' workouts';
+            }
+            streakEl.textContent = badgeText;
         }
     }
 };
@@ -4348,7 +4406,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (totalWorkoutsEl) totalWorkoutsEl.textContent = stats.totalWorkouts;
         if (totalVolumeEl) totalVolumeEl.textContent = stats.totalVolume.toLocaleString('nl-NL') + ' kg';
     }
+        }
 
+        // Actually use WorkoutStats.updateStatsDisplay
+        function updateWorkoutStatsDisplay() {
+            WorkoutStats.updateStatsDisplay();
+        }
     // Fallback: altijd een view tonen na laden
     document.addEventListener('DOMContentLoaded', function() {
         const anyActive = document.querySelector('.view.active');
@@ -6026,6 +6089,9 @@ function init() {
 
     // Check for PWA installation prompt
     checkPWAInstall();
+    
+        // Initialize stats display
+        updateWorkoutStatsDisplay();
 }
 
 function renderSchemaSelection() {
@@ -6709,13 +6775,6 @@ function startRestTimer(seconds = getRestDuration()) {
         overlay.style.display = "flex";
         setTimeout(() => {
             overlay.classList.add("active");
-            console.log("Added active class to overlay");
-        }, 10);
-    } else {
-        console.error("restTimerOverlay element not found!");
-    }
-    
-    restTimerInterval = setInterval(syncRestTimer, 500);
 }
 
 function refreshRestTimer() {
@@ -6856,6 +6915,7 @@ function resetWorkout() {
     updateExerciseMeta();
     renderHistory();
     renderPRs();
+        updateWorkoutStatsDisplay();
 }
 
 // WORKOUT STORAGE

@@ -6766,31 +6766,29 @@ function updateTimerDisplay() {
 }
 
 // REST TIMER
+// Global helpers for workout notes and quick rest presets
+function saveWorkoutNotes() {
+    if (!currentWorkout) return;
+    const notes = document.getElementById('workoutNotes');
+    if (notes) {
+        currentWorkout.notes = notes.value;
+    }
+}
+
+function loadWorkoutNotes() {
+    const notes = document.getElementById('workoutNotes');
+    if (notes && currentWorkout) {
+        notes.value = currentWorkout.notes || '';
+    }
+}
+
+function quickRestTimer(seconds) {
+    startRestTimer(seconds);
+}
+
 function startRestTimer(seconds = getRestDuration()) {
     console.log("startRestTimer called with", seconds, "seconds");
     stopRestTimer(true);
-
-    // Save workout notes
-    function saveWorkoutNotes() {
-        if (!currentWorkout) return;
-        const notes = document.getElementById('workoutNotes');
-        if (notes) {
-            currentWorkout.notes = notes.value;
-        }
-    }
-
-    // Load workout notes to textarea
-    function loadWorkoutNotes() {
-        const notes = document.getElementById('workoutNotes');
-        if (notes && currentWorkout) {
-            notes.value = currentWorkout.notes || '';
-        }
-    }
-
-    // Quick rest timer presets
-    function quickRestTimer(seconds) {
-        startRestTimer(seconds);
-    }
     restTimerRemaining = seconds;
     restTimerTotal = seconds;
     restTimerEndAt = Date.now() + (seconds * 1000);

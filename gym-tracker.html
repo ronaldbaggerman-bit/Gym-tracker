@@ -3754,7 +3754,7 @@ label.invalid {
 
 <script>
 // APP VERSION
-const APP_VERSION = "2026-01-09-10";
+const APP_VERSION = "2026-01-09-11";
 
 // ============================================================================
 // FIREBASE CONFIGURATION & INITIALIZATION
@@ -3811,6 +3811,123 @@ function initFirebase() {
         return false;
     }
 }
+
+// ============================================================================
+// 1RM CALCULATOR
+// ============================================================================
+const OneRepMaxCalculator = {
+    // Berbagai formulas untuk 1RM calculation
+    brzycki: (weight, reps) => weight * (36 / (37 - reps)),
+    epley: (weight, reps) => weight * (1 + reps / 30),
+    lombardi: (weight, reps) => weight * Math.pow(reps, 0.1),
+    
+    calculate(weight, reps, formula = 'brzycki') {
+        if (reps <= 0 || weight <= 0) return 0;
+        if (reps === 1) return weight;
+        
+        const methods = {
+            brzycki: this.brzycki,
+            epley: this.epley,
+            lombardi: this.lombardi
+        };
+        
+        const calc = methods[formula] || this.brzycki;
+        return Math.round(calc(weight, reps) * 10) / 10;
+    },
+    
+    // Estimate back from 1RM to other rep ranges
+    estimateWeight(oneRepMax, targetReps, formula = 'brzycki') {
+        if (targetReps === 1) return oneRepMax;
+        
+        // Use inverse calculation (approximation)
+        if (formula === 'brzycki') {
+            return Math.round(oneRepMax / (36 / (37 - targetReps)) * 10) / 10;
+        } else if (formula === 'epley') {
+            return Math.round(oneRepMax / (1 + targetReps / 30) * 10) / 10;
+        }
+        return oneRepMax;
+    }
+};
+
+// ============================================================================
+// WORKOUT STREAKS & STATISTICS
+// ============================================================================
+const WorkoutStats = {
+    // Get all-time statistics
+    getStats() {
+        const history = getWorkoutHistory();
+        const streaks = this.getStreaks();
+        
+        let totalWorkouts = history.length;
+        let totalVolume = 0;
+        let totalSets = 0;
+        
+        history.forEach(workout => {
+            workout.exercises.forEach(ex => {
+                ex.sets.forEach(set => {
+                    totalSets++;
+                    if (set.completed) {
+                        totalVolume += (set.weight || 0) * (set.reps || 0);
+                    }
+                });
+            });
+        });
+        
+        return {
+            totalWorkouts,
+            totalVolume: Math.round(totalVolume),
+            totalSets,
+            currentStreak: streaks.current,
+            longestStreak: streaks.longest,
+            lastWorkoutDate: history.length > 0 ? history[history.length - 1].startTime : null
+        };
+    },
+    
+    // Calculate current and longest streaks
+    getStreaks() {
+        const history = getWorkoutHistory();
+        if (history.length === 0) return { current: 0, longest: 0 };
+        
+        const dates = history.map(w => new Date(w.startTime).toDateString()).reverse();
+        const uniqueDates = [...new Set(dates)];
+        
+        let currentStreak = 0;
+        let longestStreak = 1;
+        const today = new Date();
+        let expectedDate = new Date(today);
+        
+        for (let i = 0; i < uniqueDates.length; i++) {
+            const workoutDate = new Date(uniqueDates[i]);
+            const daysDiff = Math.floor((expectedDate - workoutDate) / (1000 * 60 * 60 * 24));
+            
+            if (i === 0) {
+                // Check if today or yesterday
+                currentStreak = daysDiff <= 1 ? 1 : 0;
+                expectedDate = new Date(workoutDate);
+                expectedDate.setDate(expectedDate.getDate() - 1);
+            } else if (daysDiff === 1) {
+                currentStreak++;
+                expectedDate.setDate(expectedDate.getDate() - 1);
+            } else {
+                break;
+            }
+        }
+        
+        longestStreak = Math.max(longestStreak, currentStreak, uniqueDates.length);
+        
+        return { current: currentStreak, longest: longestStreak };
+    },
+    
+    // Save stats to localStorage
+    saveStats() {
+        const stats = this.getStats();
+        try {
+            localStorage.setItem('workout_stats', JSON.stringify(stats));
+        } catch (e) {
+            console.warn('Could not save workout stats');
+        }
+    }
+};
 
 // ============================================================================
 // FIRESTORE SYNC MODULE
@@ -3913,6 +4030,7 @@ const FirestoreSync = {
                 workout_prs: JSON.parse(localStorage.getItem('workout_prs') || '{}'),
                 workout_goals: JSON.parse(localStorage.getItem('workout_goals') || '[]'),
                 workout_templates: JSON.parse(localStorage.getItem('workout_templates') || '[]'),
+                workout_stats: JSON.parse(localStorage.getItem('workout_stats') || '{}'),
                 gym_custom_exercises: JSON.parse(localStorage.getItem('gym_custom_exercises') || '[]'),
                 gym_custom_schemas: JSON.parse(localStorage.getItem('gym_custom_schemas') || '[]'),
                 gym_settings: JSON.parse(localStorage.getItem('gym_settings') || '{}'),
@@ -3924,6 +4042,7 @@ const FirestoreSync = {
                 prs: Object.keys(userData.workout_prs).length,
                 goals: userData.workout_goals.length,
                 templates: userData.workout_templates.length,
+                stats: Object.keys(userData.workout_stats).length,
                 exercises: userData.gym_custom_exercises.length,
                 schemas: userData.gym_custom_schemas.length
             });
@@ -3952,6 +4071,7 @@ const FirestoreSync = {
                 if (data.workout_prs) localStorage.setItem('workout_prs', JSON.stringify(data.workout_prs));
                 if (data.workout_goals) localStorage.setItem('workout_goals', JSON.stringify(data.workout_goals));
                 if (data.workout_templates) localStorage.setItem('workout_templates', JSON.stringify(data.workout_templates));
+                if (data.workout_stats) localStorage.setItem('workout_stats', JSON.stringify(data.workout_stats));
                 if (data.gym_custom_exercises) localStorage.setItem('gym_custom_exercises', JSON.stringify(data.gym_custom_exercises));
                 if (data.gym_custom_schemas) localStorage.setItem('gym_custom_schemas', JSON.stringify(data.gym_custom_schemas));
                 if (data.gym_settings) localStorage.setItem('gym_settings', JSON.stringify(data.gym_settings));
@@ -4204,10 +4324,29 @@ document.addEventListener('DOMContentLoaded', function() {
             el.style.display = '';
             if (view === 'schemas') renderCustomSchemasList();
             if (view === 'settings') initCloudSyncUI();
+            if (view === 'workout') updateWorkoutStatsDisplay();
         }
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         const tab = document.querySelector('.tab[data-view="' + view + '"]');
         if (tab) tab.classList.add('active');
+    }
+    
+    // Update stats display when viewing workout
+    function updateWorkoutStatsDisplay() {
+        const stats = WorkoutStats.getStats();
+        const streakEl = document.getElementById('streakBadge');
+        const totalWorkoutsEl = document.getElementById('statTotalWorkouts');
+        const totalVolumeEl = document.getElementById('statTotalVolume');
+        
+        if (streakEl) {
+            let streakEmoji = '🔥';
+            if (stats.currentStreak === 0) streakEmoji = '💤';
+            else if (stats.currentStreak >= 7) streakEmoji = '🔥';
+            else if (stats.currentStreak >= 3) streakEmoji = '⚡';
+            streakEl.textContent = `${streakEmoji} ${stats.currentStreak} dagen`;
+        }
+        if (totalWorkoutsEl) totalWorkoutsEl.textContent = stats.totalWorkouts;
+        if (totalVolumeEl) totalVolumeEl.textContent = stats.totalVolume.toLocaleString('nl-NL') + ' kg';
     }
 
     // Fallback: altijd een view tonen na laden
@@ -4428,6 +4567,24 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
 
         <div id="activeWorkout" style="display: none;">
+            <!-- Workout Stats Header -->
+            <div style="background: var(--dark-card); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; border-left: 4px solid #4A90E2;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <h3 style="margin: 0; font-size: 1rem;">📊 Workout Stats</h3>
+                    <span id="streakBadge" style="background: linear-gradient(135deg, #FF6B35, #FF8C42); padding: 0.35rem 0.75rem; border-radius: 20px; font-size: 0.85rem; font-weight: bold; color: white;">🔥 0 dagen</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.9rem;">
+                    <div>
+                        <span style="color: var(--text-muted);">Totaal Workouts</span>
+                        <div style="font-size: 1.5rem; font-weight: bold; color: #4A90E2;" id="statTotalWorkouts">0</div>
+                    </div>
+                    <div>
+                        <span style="color: var(--text-muted);">Totaal Volume</span>
+                        <div style="font-size: 1.5rem; font-weight: bold; color: #50C878;" id="statTotalVolume">0 kg</div>
+                    </div>
+                </div>
+            </div>
+
             <div class="timer-card" id="timerCard">
                 <div class="timer-content">
                     <div class="timer-label">Workout Tijd</div>
@@ -4489,13 +4646,14 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="prs-header">
             <h2>🏆 Persoonlijke Records</h2>
             <p style="color: var(--text-muted); margin: 0.5rem 0 1rem 0;">Je beste prestaties per oefening</p>
-            <div class="prs-controls">
-                <select id="prsSortSelect" onchange="renderPRs()" style="padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border); background: var(--dark-card); color: var(--text);">
+            <div class="prs-controls" style="display: flex; gap: 1rem; align-items: center;">
+                <select id="prsSortSelect" onchange="renderPRs()" style="padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border); background: var(--dark-card); color: var(--text); flex: 1;">
                     <option value="date">Sorteren op datum</option>
                     <option value="name">Sorteren op naam</option>
                     <option value="weight">Sorteren op gewicht</option>
                     <option value="onerm">Sorteren op 1RM</option>
                 </select>
+                <button onclick="openOneRMModal()" style="padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid var(--border); background: var(--primary); color: white; font-weight: 600; white-space: nowrap;">💪 1RM Calc</button>
             </div>
         </div>
         <div id="prsContainer"></div>
@@ -4901,6 +5059,44 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="modal-footer">
             <button class="btn btn-secondary" onclick="closeFinishWorkoutModal()">Annuleren</button>
             <button class="btn btn-primary" onclick="confirmFinishWorkout()">Ja, Voltooien</button>
+        </div>
+    </div>
+</div>
+
+<!-- 1RM Calculator Modal -->
+<div class="modal" id="oneRMModal">
+    <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-header">
+            <h2>💪 1RM Calculator</h2>
+            <button class="modal-close" onclick="closeOneRMModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div style="display: grid; gap: 1rem;">
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem;">Gewicht (kg)</label>
+                    <input type="number" id="oneRMWeight" placeholder="Bijv. 100" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--dark-card); color: var(--text); box-sizing: border-box;" />
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem;">Reps</label>
+                    <input type="number" id="oneRMReps" placeholder="Bijv. 5" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--dark-card); color: var(--text); box-sizing: border-box;" />
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem;">Formule</label>
+                    <select id="oneRMFormula" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--dark-card); color: var(--text); box-sizing: border-box;">
+                        <option value="brzycki">Brzycki</option>
+                        <option value="epley">Epley</option>
+                        <option value="lombardi">Lombardi</option>
+                    </select>
+                </div>
+                <div id="oneRMResult" style="text-align: center; padding: 1rem; background: var(--dark-card); border-radius: 8px; display: none;">
+                    <div style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Geschatte 1RM</div>
+                    <div id="oneRMResultValue" style="font-size: 2rem; font-weight: bold; color: #4A90E2;">-</div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeOneRMModal()">Sluiten</button>
+            <button class="btn btn-primary" onclick="calculateAndShowOneRM()">Bereken</button>
         </div>
     </div>
 </div>
@@ -5645,6 +5841,38 @@ function closeFinishWorkoutModal() {
 function confirmFinishWorkout() {
     closeFinishWorkoutModal();
     proceedFinishWorkout();
+}
+
+// 1RM Calculator Modal Functions
+function openOneRMModal() {
+    const modal = document.getElementById('oneRMModal');
+    modal.classList.add('active');
+    document.getElementById('oneRMWeight').value = '';
+    document.getElementById('oneRMReps').value = '';
+    document.getElementById('oneRMResult').style.display = 'none';
+}
+
+function closeOneRMModal() {
+    const modal = document.getElementById('oneRMModal');
+    modal.classList.remove('active');
+}
+
+function calculateAndShowOneRM() {
+    const weight = parseFloat(document.getElementById('oneRMWeight').value);
+    const reps = parseInt(document.getElementById('oneRMReps').value);
+    const formula = document.getElementById('oneRMFormula').value;
+    
+    if (!weight || weight <= 0 || !reps || reps <= 0) {
+        showToast('Voer geldige waarden in', 'error');
+        return;
+    }
+    
+    const oneRM = OneRepMaxCalculator.calculate(weight, reps, formula);
+    const resultEl = document.getElementById('oneRMResult');
+    const resultValueEl = document.getElementById('oneRMResultValue');
+    
+    resultValueEl.textContent = oneRM.toFixed(1) + ' kg';
+    resultEl.style.display = 'block';
 }
 
 function saveCustomExercise() {
@@ -6588,6 +6816,9 @@ function proceedFinishWorkout() {
     
     // Update PRs
     updatePRs(currentWorkout);
+    
+    // Update and save stats
+    WorkoutStats.saveStats();
     
     showToast(`Workout voltooid! ${completedSets} sets in ${formatDuration(elapsedSeconds)}`, "success");
     

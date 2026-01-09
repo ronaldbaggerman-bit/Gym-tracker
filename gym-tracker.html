@@ -3754,7 +3754,6 @@ label.invalid {
 
 <script>
 // APP VERSION
-const APP_VERSION = "2026-01-09-11";
 const APP_VERSION = "2026-01-09-12";
 
 // ============================================================================
@@ -4391,27 +4390,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Update stats display when viewing workout
     function updateWorkoutStatsDisplay() {
-        const stats = WorkoutStats.getStats();
-        const streakEl = document.getElementById('streakBadge');
-        const totalWorkoutsEl = document.getElementById('statTotalWorkouts');
-        const totalVolumeEl = document.getElementById('statTotalVolume');
-        
-        if (streakEl) {
-            let streakEmoji = '🔥';
-            if (stats.currentStreak === 0) streakEmoji = '💤';
-            else if (stats.currentStreak >= 7) streakEmoji = '🔥';
-            else if (stats.currentStreak >= 3) streakEmoji = '⚡';
-            streakEl.textContent = `${streakEmoji} ${stats.currentStreak} dagen`;
-        }
-        if (totalWorkoutsEl) totalWorkoutsEl.textContent = stats.totalWorkouts;
-        if (totalVolumeEl) totalVolumeEl.textContent = stats.totalVolume.toLocaleString('nl-NL') + ' kg';
+        WorkoutStats.updateStatsDisplay();
     }
-        }
-
-        // Actually use WorkoutStats.updateStatsDisplay
-        function updateWorkoutStatsDisplay() {
-            WorkoutStats.updateStatsDisplay();
-        }
     // Fallback: altijd een view tonen na laden
     document.addEventListener('DOMContentLoaded', function() {
         const anyActive = document.querySelector('.view.active');
@@ -6775,6 +6755,9 @@ function startRestTimer(seconds = getRestDuration()) {
         overlay.style.display = "flex";
         setTimeout(() => {
             overlay.classList.add("active");
+        }, 50);
+    }
+
 }
 
 function refreshRestTimer() {

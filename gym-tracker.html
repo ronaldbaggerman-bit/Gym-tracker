@@ -3748,7 +3748,7 @@ label.invalid {
 
 <script>
 // APP VERSION
-const APP_VERSION = "2026-01-09-05";
+const APP_VERSION = "2026-01-09-06";
 
 // ============================================================================
 // FIREBASE CONFIGURATION & INITIALIZATION
@@ -4684,6 +4684,39 @@ document.addEventListener('DOMContentLoaded', function() {
                             ℹ️ Cloud Sync is uitgeschakeld. Zet aan voor automatische backup en sync tussen devices.
                         </p>
                     </div>
+                </div>
+
+                <div class="settings-divider"></div>
+
+                <h3>🔑 Sync Key (Koppel Devices)</h3>
+                
+                <div class="settings-backup-grid">
+                    <div class="settings-tip" style="grid-column: 1 / -1;">
+                        <p>
+                            💡 <strong>Gebruik dezelfde Sync Key op al je devices om data te synchroniseren!</strong><br>
+                            1️⃣ Genereer of kopieer je Sync Key hieronder<br>
+                            2️⃣ Voer deze key in op je andere devices<br>
+                            3️⃣ Alle devices syncen nu naar dezelfde account
+                        </p>
+                    </div>
+                    
+                    <div style="grid-column: 1 / -1; display: flex; gap: 0.5rem; align-items: center;">
+                        <input type="text" id="syncKeyInput" readonly 
+                               style="flex: 1; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border); 
+                                      background: var(--dark-card); color: var(--text); font-family: monospace; font-size: 0.9rem;"
+                               placeholder="Je huidige Sync Key...">
+                        <button class="btn btn-secondary" onclick="copySyncKey()" style="min-width: auto; padding: 0.75rem 1rem;">
+                            📋 Kopieer
+                        </button>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="showChangeSyncKeyDialog()" style="width: 100%;">
+                        🔄 Wijzig/Voer Sync Key In
+                    </button>
+                    
+                    <button class="btn btn-secondary" onclick="generateNewSyncKey()" style="width: 100%;">
+                        ✨ Nieuwe Key Genereren
+                    </button>
                 </div>
 
                 <div class="settings-divider"></div>
@@ -10369,6 +10402,107 @@ function handleImportFile(event) {
 // CLOUD SYNC FUNCTIONS
 // ============================================================================
 
+// Display current Sync Key in UI
+function displaySyncKey() {
+    const syncKeyInput = document.getElementById('syncKeyInput');
+    if (syncKeyInput) {
+        syncKeyInput.value = FirestoreSync.userId || 'Geen key actief';
+    }
+}
+
+// Copy Sync Key to clipboard
+function copySyncKey() {
+    const syncKey = FirestoreSync.userId;
+    if (!syncKey) {
+        showToast('Geen Sync Key beschikbaar', 'error');
+        return;
+    }
+    
+    navigator.clipboard.writeText(syncKey).then(() => {
+        showToast('Sync Key gekopieerd naar klembord!', 'success');
+    }).catch(err => {
+        // Fallback for older browsers
+        const input = document.getElementById('syncKeyInput');
+        input.select();
+        document.execCommand('copy');
+        showToast('Sync Key gekopieerd!', 'success');
+    });
+}
+
+// Show dialog to change/enter Sync Key
+function showChangeSyncKeyDialog() {
+    const newKey = prompt(
+        '🔑 Voer je Sync Key in van een ander device:\n\n' +
+        'Let op: Dit overschrijft je huidige Sync Key!\n' +
+        'Alle devices met dezelfde key delen data.\n\n' +
+        'Huidige key: ' + (FirestoreSync.userId || 'geen'),
+        ''
+    );
+    
+    if (newKey && newKey.trim()) {
+        changeSyncKey(newKey.trim());
+    }
+}
+
+// Change Sync Key
+async function changeSyncKey(newKey) {
+    if (!newKey || newKey.length < 10) {
+        showToast('Ongeldige Sync Key (minimaal 10 tekens)', 'error');
+        return;
+    }
+    
+    const oldKey = FirestoreSync.userId;
+    
+    // Confirm change
+    if (!confirm(`Weet je zeker dat je wilt overschakelen naar deze Sync Key?\n\nOude key: ${oldKey}\nNieuwe key: ${newKey}\n\nJe huidige lokale data blijft behouden.`)) {
+        return;
+    }
+    
+    // Update user ID
+    localStorage.setItem('firebase_user_id', newKey);
+    FirestoreSync.userId = newKey;
+    
+    console.log('🔑 Sync Key changed:', oldKey, '→', newKey);
+    
+    // Update UI
+    displaySyncKey();
+    
+    // If Cloud Sync is enabled, upload local data to new key
+    if (FirestoreSync.enabled) {
+        try {
+            await FirestoreSync.uploadAllData();
+            showToast('Sync Key gewijzigd! Lokale data geüpload naar nieuwe key.', 'success');
+            
+            // Re-setup realtime sync
+            FirestoreSync.setupRealtimeSync();
+        } catch (error) {
+            showToast('Sync Key gewijzigd, maar upload mislukt: ' + error.message, 'error');
+        }
+    } else {
+        showToast('Sync Key gewijzigd! Schakel Cloud Sync in om te synchroniseren.', 'success');
+    }
+}
+
+// Generate new Sync Key
+function generateNewSyncKey() {
+    if (!confirm('⚠️ Weet je zeker dat je een NIEUWE Sync Key wilt genereren?\n\nDit betekent:\n✓ Je krijgt een nieuwe unieke key\n✓ Deze key werkt nog niet op je andere devices\n✗ Je verliest verbinding met je oude sync group\n\nTip: Gebruik alleen als je opnieuw wilt beginnen!')) {
+        return;
+    }
+    
+    // Generate new unique user ID
+    const newKey = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    
+    localStorage.setItem('firebase_user_id', newKey);
+    FirestoreSync.userId = newKey;
+    
+    console.log('✨ New Sync Key generated:', newKey);
+    
+    // Update UI
+    displaySyncKey();
+    
+    showToast('Nieuwe Sync Key gegenereerd! Kopieer deze naar je andere devices.', 'success');
+}
+
 // Toggle cloud sync on/off
 async function toggleCloudSync(enabled) {
     const statusText = document.getElementById('cloudSyncStatusText');
@@ -10436,6 +10570,9 @@ function initCloudSyncUI() {
             statusText.innerHTML = '✅ Cloud Sync actief! Data wordt automatisch gesynchroniseerd.';
         }
     }
+    
+    // Display current Sync Key
+    displaySyncKey();
 }
 
 // Test function for rest timer overlay

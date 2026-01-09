@@ -32,16 +32,22 @@
     <title> Gym Tracker Pro</title>
 </head>
 <script>
-// Register Service Worker for offline support
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('service-worker.js').then(registration => {
-      console.log('✅ Service Worker registered:', registration.scope);
-    }).catch(err => {
-      console.warn('⚠️ Service Worker registration failed:', err);
+// Register Service Worker for offline support (only in secure contexts)
+(function(){
+  const isSecure = (window.isSecureContext && (location.protocol === 'https:' || location.hostname === 'localhost'));
+  if ('serviceWorker' in navigator && isSecure) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js').then(registration => {
+        console.log('✅ Service Worker registered:', registration.scope);
+      }).catch(err => {
+        console.warn('⚠️ Service Worker registration failed:', err);
+      });
     });
-  });
-}
+  } else {
+    // In file:// or non-secure contexts, skip SW to avoid SecurityError
+    // console.info('ℹ️ Service Worker skipped: insecure context', { isSecure, protocol: location.protocol });
+  }
+})();
 </script>
 <body>
 <!-- Console Log Overlay -->
@@ -3748,7 +3754,7 @@ label.invalid {
 
 <script>
 // APP VERSION
-const APP_VERSION = "2026-01-09-08";
+const APP_VERSION = "2026-01-09-09";
 
 // ============================================================================
 // FIREBASE CONFIGURATION & INITIALIZATION
@@ -4914,20 +4920,23 @@ document.addEventListener('DOMContentLoaded', function() {
         if (storedVersion && storedVersion !== APP_VERSION) {
             console.log(`🔄 Version upgrade: ${storedVersion} → ${APP_VERSION}`);
             
-            // Unregister any service workers
-            if ('serviceWorker' in navigator) {
-                const registrations = await navigator.serviceWorker.getRegistrations();
-                for (let registration of registrations) {
-                    await registration.unregister();
-                    console.log("🗑️ Service worker unregistered");
+            // In secure contexts, clear SW and caches; else skip to avoid SecurityError
+            const isSecure = (window.isSecureContext && (location.protocol === 'https:' || location.hostname === 'localhost'));
+            if (isSecure) {
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let registration of registrations) {
+                        await registration.unregister();
+                        console.log("🗑️ Service worker unregistered");
+                    }
                 }
-            }
-            
-            // Clear caches
-            if ('caches' in window) {
-                const cacheNames = await caches.keys();
-                await Promise.all(cacheNames.map(name => caches.delete(name)));
-                console.log("🗑️ Caches cleared");
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(cacheNames.map(name => caches.delete(name)));
+                    console.log("🗑️ Caches cleared");
+                }
+            } else {
+                // console.info("ℹ️ Skipping SW/caches clear in insecure context");
             }
             
             // Update version and force reload with cache bust
@@ -10126,6 +10135,15 @@ function setAppVersionLabel() {
 async function forceReload() {
     try {
         console.log("🔄 Force reload initiated...");
+        const isSecure = (window.isSecureContext && (location.protocol === 'https:' || location.hostname === 'localhost'));
+        if (!isSecure) {
+            // Fallback: simple reload with cache-bust; avoids SecurityError on file://
+            const url = new URL(location.href);
+            url.searchParams.set("v", APP_VERSION);
+            url.searchParams.set("t", Date.now().toString());
+            location.replace(url.toString());
+            return;
+        }
         
         // Unregister service workers
         if ('serviceWorker' in navigator) {

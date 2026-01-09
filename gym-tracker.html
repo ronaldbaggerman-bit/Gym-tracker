@@ -23,10 +23,23 @@
     <meta name="apple-action-button-title" content="Start Workout">
     <!-- Live Activities hint -->
     <meta name="apple-live-activities" content="workout-timer">
-    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiR3ltIFRyYWNrZXIgUHJvIiwic2hvcnRfbmFtZSI6Ikd5bSBUcmFja2VyIiwic3RhcnRfdXJsIjoiLyIsInNjb3BlIjoiLyIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwib3JpZW50YXRpb24iOiJwb3J0cmFpdCIsImJhY2tncm91bmRfY29sb3IiOiIjMDAwMDAwIiwidGhlbWVfY29sb3IiOiIjNEE5MEUyIiwibGFuZyI6Im5sIn0=">
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiR3ltIFRyYWNrZXIgUHJvIiwic2hvcnRfbmFtZSI6Ikd5bSBUcmFja2VyIiwic3RhcnRfdXJsIjoiL2d5bS10cmFja2VyLmh0bWwiLCJzY29wZSI6Ii8iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsIm9yaWVudGF0aW9uIjoicG9ydHJhaXQiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiIzAwMDAwMCIsInRoZW1lX2NvbG9yIjoiIzRBOTBFMiIsImxhbmciOiJubCIsImlzY2FwYWJsZl9hY3Rpb25zIjp0cnVlfQ==">
+    <!-- Chart.js will be loaded from CDN with offline fallback -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <title> Gym Tracker Pro</title>
 </head>
+<script>
+// Register Service Worker for offline support
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').then(registration => {
+      console.log('✅ Service Worker registered:', registration.scope);
+    }).catch(err => {
+      console.warn('⚠️ Service Worker registration failed:', err);
+    });
+  });
+}
+</script>
 <body>
 <!-- Console Log Overlay -->
 <div id="console-log-overlay" style="display:none;position:fixed;bottom:0;left:0;right:0;max-height:40vh;overflow-y:auto;z-index:99999;background:rgba(18,18,18,0.95);color:#fff;font-size:13px;font-family:monospace;padding:8px 12px;border-top:2px solid #4A90E2;box-shadow:0 -2px 16px #000;pointer-events:auto;">
@@ -3732,7 +3745,7 @@ label.invalid {
 
 <script>
 // APP VERSION
-const APP_VERSION = "2026-01-08-03";
+const APP_VERSION = "2026-01-09-01";
 
 // AUDIO CONTEXT for haptic feedback fallbacks
 let audioContext = null;

@@ -1,0 +1,77 @@
+{
+  "name": "Gym Tracker Pro",
+  "short_name": "Gym Tracker",
+  "start_url": "/gym-tracker.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#000000",
+  "theme_color": "#4A90E2",
+  "lang": "nl",
+  "description": "Professionele fitness tracking app met offline support",
+  "categories": ["fitness", "health", "productivity"],
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23000' width='192' height='192'/><text x='96' y='96' text-anchor='middle' dominant-baseline='middle' font-size='48' fill='%234A90E2' font-family='system-ui'>GYM</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "form_factor": "narrow"
+    }
+  ],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23000' width='192' height='192'/><text x='96' y='96' text-anchor='middle' dominant-baseline='middle' font-size='80' fill='%234A90E2'>💪</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23000' width='192' height='192'/><text x='96' y='96' text-anchor='middle' dominant-baseline='middle' font-size='80' fill='%23FFD700'>💪</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Start Workout",
+      "short_name": "Workout",
+      "description": "Snel een workout starten",
+      "url": "/gym-tracker.html?view=workout",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect fill='%234A90E2' width='96' height='96' rx='24'/><text x='48' y='48' text-anchor='middle' dominant-baseline='middle' font-size='48' fill='white'>▶</text></svg>",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "View History",
+      "short_name": "History",
+      "description": "Bekijk je workout geschiedenis",
+      "url": "/gym-tracker.html?view=history",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect fill='%234A90E2' width='96' height='96' rx='24'/><text x='48' y='48' text-anchor='middle' dominant-baseline='middle' font-size='48' fill='white'>📊</text></svg>",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false,
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "files": [
+        {
+          "name": "backup",
+          "accept": ["application/json", ".json"]
+        }
+      ]
+    }
+  }
+}

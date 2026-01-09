@@ -26,6 +26,9 @@
     <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiR3ltIFRyYWNrZXIgUHJvIiwic2hvcnRfbmFtZSI6Ikd5bSBUcmFja2VyIiwic3RhcnRfdXJsIjoiL2d5bS10cmFja2VyLmh0bWwiLCJzY29wZSI6Ii8iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsIm9yaWVudGF0aW9uIjoicG9ydHJhaXQiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiIzAwMDAwMCIsInRoZW1lX2NvbG9yIjoiIzRBOTBFMiIsImxhbmciOiJubCIsImlzY2FwYWJsZl9hY3Rpb25zIjp0cnVlfQ==">
     <!-- Chart.js will be loaded from CDN with offline fallback -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <title> Gym Tracker Pro</title>
 </head>
 <script>
@@ -3745,7 +3748,214 @@ label.invalid {
 
 <script>
 // APP VERSION
-const APP_VERSION = "2026-01-09-01";
+const APP_VERSION = "2026-01-09-02";
+
+// ============================================================================
+// FIREBASE CONFIGURATION & INITIALIZATION
+// ============================================================================
+const firebaseConfig = {
+    apiKey: "AIzaSyB_brKEajr99coKNb9_UZQUPIeKD26P5XE",
+    authDomain: "gymtracker-68b70.firebaseapp.com",
+    projectId: "gymtracker-68b70",
+    storageBucket: "gymtracker-68b70.firebasestorage.app",
+    messagingSenderId: "347914925318",
+    appId: "1:347914925318:web:3391ecd13d94d80d769a87",
+    measurementId: "G-8BTS671427"
+};
+
+// Initialize Firebase
+let db = null;
+let firebaseInitialized = false;
+
+function initFirebase() {
+    try {
+        if (typeof firebase !== 'undefined' && !firebaseInitialized) {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            
+            // Enable offline persistence
+            db.enablePersistence({ synchronizeTabs: true })
+                .then(() => console.log('🔥 Firebase offline persistence enabled'))
+                .catch(err => {
+                    if (err.code === 'failed-precondition') {
+                        console.warn('⚠️ Multiple tabs open, persistence only in first tab');
+                    } else if (err.code === 'unimplemented') {
+                        console.warn('⚠️ Browser doesn\'t support persistence');
+                    }
+                });
+            
+            firebaseInitialized = true;
+            console.log('🔥 Firebase initialized');
+            return true;
+        }
+    } catch (error) {
+        console.error('❌ Firebase initialization error:', error);
+        return false;
+    }
+    return false;
+}
+
+// ============================================================================
+// FIRESTORE SYNC MODULE
+// ============================================================================
+const FirestoreSync = {
+    enabled: false,
+    userId: null,
+    syncInProgress: false,
+    lastSyncTime: null,
+    
+    // Initialize sync with a unique user ID
+    init() {
+        // Get or create unique user ID
+        this.userId = localStorage.getItem('firebase_user_id');
+        if (!this.userId) {
+            this.userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('firebase_user_id', this.userId);
+        }
+        
+        // Check if sync is enabled
+        const syncEnabled = localStorage.getItem('cloud_sync_enabled');
+        this.enabled = syncEnabled === 'true';
+        
+        if (this.enabled && initFirebase()) {
+            console.log('🔄 Cloud Sync enabled for user:', this.userId);
+            this.setupRealtimeSync();
+        }
+    },
+    
+    // Enable cloud sync
+    async enable() {
+        if (!initFirebase()) {
+            alert('❌ Firebase kon niet worden geïnitialiseerd. Check je internetverbinding.');
+            return false;
+        }
+        
+        this.enabled = true;
+        localStorage.setItem('cloud_sync_enabled', 'true');
+        
+        // Initial upload of local data
+        await this.uploadAllData();
+        
+        // Setup realtime sync
+        this.setupRealtimeSync();
+        
+        console.log('✅ Cloud Sync ingeschakeld');
+        return true;
+    },
+    
+    // Disable cloud sync
+    disable() {
+        this.enabled = false;
+        localStorage.setItem('cloud_sync_enabled', 'false');
+        console.log('❌ Cloud Sync uitgeschakeld');
+    },
+    
+    // Upload all local data to Firestore
+    async uploadAllData() {
+        if (!this.enabled || !db) return;
+        
+        try {
+            const userData = {
+                workouts: JSON.parse(localStorage.getItem('workouts') || '[]'),
+                prs: JSON.parse(localStorage.getItem('prs') || '{}'),
+                workoutHistory: JSON.parse(localStorage.getItem('workoutHistory') || '[]'),
+                customSchemas: JSON.parse(localStorage.getItem('customSchemas') || '[]'),
+                settings: {
+                    darkMode: localStorage.getItem('darkMode'),
+                    vibrationEnabled: localStorage.getItem('vibrationEnabled'),
+                    audioEnabled: localStorage.getItem('audioEnabled')
+                },
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            await db.collection('users').doc(this.userId).set(userData, { merge: true });
+            this.lastSyncTime = Date.now();
+            console.log('☁️ Data uploaded to cloud');
+        } catch (error) {
+            console.error('❌ Upload error:', error);
+        }
+    },
+    
+    // Download data from Firestore
+    async downloadAllData() {
+        if (!this.enabled || !db) return;
+        
+        try {
+            const doc = await db.collection('users').doc(this.userId).get();
+            if (doc.exists) {
+                const data = doc.data();
+                
+                // Update localStorage with cloud data
+                if (data.workouts) localStorage.setItem('workouts', JSON.stringify(data.workouts));
+                if (data.prs) localStorage.setItem('prs', JSON.stringify(data.prs));
+                if (data.workoutHistory) localStorage.setItem('workoutHistory', JSON.stringify(data.workoutHistory));
+                if (data.customSchemas) localStorage.setItem('customSchemas', JSON.stringify(data.customSchemas));
+                if (data.settings) {
+                    if (data.settings.darkMode !== undefined) localStorage.setItem('darkMode', data.settings.darkMode);
+                    if (data.settings.vibrationEnabled !== undefined) localStorage.setItem('vibrationEnabled', data.settings.vibrationEnabled);
+                    if (data.settings.audioEnabled !== undefined) localStorage.setItem('audioEnabled', data.settings.audioEnabled);
+                }
+                
+                this.lastSyncTime = Date.now();
+                console.log('☁️ Data downloaded from cloud');
+                return true;
+            }
+        } catch (error) {
+            console.error('❌ Download error:', error);
+        }
+        return false;
+    },
+    
+    // Setup realtime sync listener
+    setupRealtimeSync() {
+        if (!this.enabled || !db) return;
+        
+        // Listen for remote changes
+        db.collection('users').doc(this.userId).onSnapshot(snapshot => {
+            if (snapshot.exists && !this.syncInProgress) {
+                const data = snapshot.data();
+                const remoteTimestamp = data.lastUpdated?.toMillis() || 0;
+                
+                // Only sync if remote is newer
+                if (!this.lastSyncTime || remoteTimestamp > this.lastSyncTime) {
+                    console.log('🔄 Remote changes detected, syncing...');
+                    this.syncInProgress = true;
+                    
+                    // Update local data
+                    if (data.workouts) localStorage.setItem('workouts', JSON.stringify(data.workouts));
+                    if (data.prs) localStorage.setItem('prs', JSON.stringify(data.prs));
+                    if (data.workoutHistory) localStorage.setItem('workoutHistory', JSON.stringify(data.workoutHistory));
+                    if (data.customSchemas) localStorage.setItem('customSchemas', JSON.stringify(data.customSchemas));
+                    
+                    this.lastSyncTime = remoteTimestamp;
+                    this.syncInProgress = false;
+                    
+                    // Refresh UI if needed
+                    if (typeof loadWorkoutHistory === 'function') loadWorkoutHistory();
+                    if (typeof updatePRsDisplay === 'function') updatePRsDisplay();
+                }
+            }
+        }, error => {
+            console.error('❌ Realtime sync error:', error);
+        });
+    },
+    
+    // Sync after local changes
+    async syncAfterChange() {
+        if (!this.enabled || this.syncInProgress) return;
+        
+        // Debounce: wait 2 seconds before syncing
+        clearTimeout(this.syncTimeout);
+        this.syncTimeout = setTimeout(async () => {
+            await this.uploadAllData();
+        }, 2000);
+    }
+};
+
+// Initialize Firebase Sync on load
+window.addEventListener('load', () => {
+    FirestoreSync.init();
+});
 
 // AUDIO CONTEXT for haptic feedback fallbacks
 let audioContext = null;
@@ -3930,6 +4140,7 @@ document.addEventListener('DOMContentLoaded', function() {
             el.classList.add('active');
             el.style.display = '';
             if (view === 'schemas') renderCustomSchemasList();
+            if (view === 'settings') initCloudSyncUI();
         }
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         const tab = document.querySelector('.tab[data-view="' + view + '"]');
@@ -4386,6 +4597,34 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="settings-tip">
                         <p>
                             💡 Tip: Backup bevat al je workouts, PRs en instellingen. Bewaar in OneDrive voor sync tussen apparaten.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="settings-divider"></div>
+
+                <h3>☁️ Cloud Synchronisatie (Firebase)</h3>
+                
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <div class="setting-title">Cloud Sync</div>
+                        <div class="setting-description">Automatische sync tussen al je apparaten via Firebase</div>
+                    </div>
+                    <div class="setting-control">
+                        <label class="toggle">
+                            <input type="checkbox" id="cloudSyncToggle" onchange="toggleCloudSync(this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-backup-grid">
+                    <button class="btn btn-secondary" onclick="manualCloudSync()" style="width: 100%;" id="manualSyncBtn" disabled>
+                        🔄 Handmatig Synchroniseren
+                    </button>
+                    <div class="settings-tip" id="cloudSyncStatus">
+                        <p id="cloudSyncStatusText">
+                            ℹ️ Cloud Sync is uitgeschakeld. Zet aan voor automatische backup en sync tussen devices.
                         </p>
                     </div>
                 </div>
@@ -6300,6 +6539,11 @@ function saveWorkout(workout) {
     }
     
     localStorage.setItem("workout_history", JSON.stringify(history));
+    
+    // Trigger cloud sync if enabled
+    if (FirestoreSync.enabled) {
+        FirestoreSync.syncAfterChange();
+    }
 }
 
 function getWorkoutHistory() {
@@ -6610,6 +6854,11 @@ function updatePRs(workout) {
     });
     
     localStorage.setItem("workout_prs", JSON.stringify(prs));
+    
+    // Trigger cloud sync if enabled
+    if (FirestoreSync.enabled) {
+        FirestoreSync.syncAfterChange();
+    }
     
     return newPRs;
 }
@@ -10025,6 +10274,79 @@ function handleImportFile(event) {
         }
     };
     reader.readAsText(file);
+}
+
+// ============================================================================
+// CLOUD SYNC FUNCTIONS
+// ============================================================================
+
+// Toggle cloud sync on/off
+async function toggleCloudSync(enabled) {
+    const statusText = document.getElementById('cloudSyncStatusText');
+    const manualSyncBtn = document.getElementById('manualSyncBtn');
+    
+    if (enabled) {
+        // Show loading
+        statusText.innerHTML = '⏳ Initialiseren...';
+        
+        const success = await FirestoreSync.enable();
+        
+        if (success) {
+            statusText.innerHTML = '✅ Cloud Sync actief! Data wordt automatisch gesynchroniseerd tussen al je apparaten.';
+            manualSyncBtn.disabled = false;
+            showToast("Cloud Sync ingeschakeld!", "success");
+        } else {
+            // Revert toggle if failed
+            document.getElementById('cloudSyncToggle').checked = false;
+            statusText.innerHTML = '❌ Kan geen verbinding maken met Firebase. Check je internetverbinding.';
+            showToast("Cloud Sync mislukt", "error");
+        }
+    } else {
+        FirestoreSync.disable();
+        statusText.innerHTML = 'ℹ️ Cloud Sync is uitgeschakeld. Zet aan voor automatische backup en sync tussen devices.';
+        manualSyncBtn.disabled = true;
+        showToast("Cloud Sync uitgeschakeld", "info");
+    }
+}
+
+// Manual sync button
+async function manualCloudSync() {
+    const btn = document.getElementById('manualSyncBtn');
+    const statusText = document.getElementById('cloudSyncStatusText');
+    
+    btn.disabled = true;
+    btn.textContent = '⏳ Synchroniseren...';
+    statusText.innerHTML = '⏳ Synchroniseren met cloud...';
+    
+    try {
+        await FirestoreSync.uploadAllData();
+        btn.textContent = '🔄 Handmatig Synchroniseren';
+        btn.disabled = false;
+        statusText.innerHTML = '✅ Laatste sync: ' + new Date().toLocaleTimeString('nl-NL');
+        showToast("Gesynchroniseerd met cloud!", "success");
+    } catch (error) {
+        btn.textContent = '🔄 Handmatig Synchroniseren';
+        btn.disabled = false;
+        statusText.innerHTML = '❌ Sync mislukt: ' + error.message;
+        showToast("Sync mislukt", "error");
+    }
+}
+
+// Initialize cloud sync toggle on settings load
+function initCloudSyncUI() {
+    const cloudSyncToggle = document.getElementById('cloudSyncToggle');
+    const manualSyncBtn = document.getElementById('manualSyncBtn');
+    const statusText = document.getElementById('cloudSyncStatusText');
+    
+    if (cloudSyncToggle) {
+        const syncEnabled = localStorage.getItem('cloud_sync_enabled') === 'true';
+        cloudSyncToggle.checked = syncEnabled;
+        
+        if (syncEnabled) {
+            manualSyncBtn.disabled = false;
+            statusText.innerHTML = '✅ Cloud Sync actief! Data wordt automatisch gesynchroniseerd.';
+        }
+    }
 }
 
 // Test function for rest timer overlay

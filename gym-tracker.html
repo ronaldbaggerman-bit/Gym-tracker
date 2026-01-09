@@ -4670,6 +4670,23 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
 
             <div id="exercisesContainer"></div>
+            
+                <!-- Workout Notes -->
+                <div style="background: var(--dark-card); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; margin-top: 1rem;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">📝 Notities</label>
+                    <textarea id="workoutNotes" placeholder="Voel je goed? Energie? Opmerkingen?..." style="width: 100%; height: 80px; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--dark-lighter); color: var(--text); font-family: inherit; resize: vertical;" onchange="saveWorkoutNotes()"></textarea>
+                </div>
+            
+                <!-- Rest Timer Presets -->
+                <div style="background: var(--dark-card); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.75rem;">⏱️ Rust Timer Presets</label>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;">
+                        <button class="btn btn-secondary" onclick="quickRestTimer(30)" style="padding: 0.65rem 0.5rem; font-size: 0.9rem;">30s</button>
+                        <button class="btn btn-secondary" onclick="quickRestTimer(60)" style="padding: 0.65rem 0.5rem; font-size: 0.9rem;">1m</button>
+                        <button class="btn btn-secondary" onclick="quickRestTimer(90)" style="padding: 0.65rem 0.5rem; font-size: 0.9rem;">1m30s</button>
+                        <button class="btn btn-secondary" onclick="quickRestTimer(120)" style="padding: 0.65rem 0.5rem; font-size: 0.9rem;">2m</button>
+                    </div>
+                </div>
         </div>
     </div>
 
@@ -6256,7 +6273,8 @@ function selectSchema(schemaId) {
         schemaId: schema.id,
         schemaName: schema.name,
         startTime: new Date().toISOString(),
-        exercises: []
+        exercises: [],
+        notes: ''
     };
     
     (schema.muscleGroups || []).forEach(group => {
@@ -6291,6 +6309,9 @@ function selectSchema(schemaId) {
     timerCard.style.setProperty("--schema-accent", accent);
     timerCard.style.setProperty("--schema-accent-2", accent2);
     
+    // Load workout notes into textarea
+    loadWorkoutNotes();
+    
     // Set schema colors for the workout
     const activeWorkout = document.getElementById("activeWorkout");
     activeWorkout.style.setProperty("--schema-accent", accent);
@@ -6300,6 +6321,7 @@ function selectSchema(schemaId) {
     activeWorkout.style.setProperty("--schema-accent-rgba-shadow", hexToRgba(accent, 0.2));
     
     renderExercises();
+    loadWorkoutNotes();
     startTimer();
 }
 
@@ -6747,6 +6769,28 @@ function updateTimerDisplay() {
 function startRestTimer(seconds = getRestDuration()) {
     console.log("startRestTimer called with", seconds, "seconds");
     stopRestTimer(true);
+
+    // Save workout notes
+    function saveWorkoutNotes() {
+        if (!currentWorkout) return;
+        const notes = document.getElementById('workoutNotes');
+        if (notes) {
+            currentWorkout.notes = notes.value;
+        }
+    }
+
+    // Load workout notes to textarea
+    function loadWorkoutNotes() {
+        const notes = document.getElementById('workoutNotes');
+        if (notes && currentWorkout) {
+            notes.value = currentWorkout.notes || '';
+        }
+    }
+
+    // Quick rest timer presets
+    function quickRestTimer(seconds) {
+        startRestTimer(seconds);
+    }
     restTimerRemaining = seconds;
     restTimerTotal = seconds;
     restTimerEndAt = Date.now() + (seconds * 1000);

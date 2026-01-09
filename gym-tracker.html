@@ -3748,7 +3748,7 @@ label.invalid {
 
 <script>
 // APP VERSION
-const APP_VERSION = "2026-01-09-04";
+const APP_VERSION = "2026-01-09-05";
 
 // ============================================================================
 // FIREBASE CONFIGURATION & INITIALIZATION
@@ -10281,7 +10281,7 @@ function handleImportFile(event) {
     if (!file) return;
     
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = async function(e) {
         try {
             const backup = JSON.parse(e.target.result);
             
@@ -10295,38 +10295,70 @@ function handleImportFile(event) {
                 return;
             }
             
-            // Import data
-            if (backup.data.workout_history) {
+            console.log('📥 Importing backup...', backup);
+            
+            // Import data - handle all possible data structures
+            let itemsImported = 0;
+            
+            if (backup.data.workout_history && Array.isArray(backup.data.workout_history)) {
                 localStorage.setItem("workout_history", JSON.stringify(backup.data.workout_history));
+                console.log('✅ Imported workout_history:', backup.data.workout_history.length, 'workouts');
+                itemsImported++;
             }
-            if (backup.data.workout_prs) {
+            
+            if (backup.data.workout_prs && typeof backup.data.workout_prs === 'object') {
                 localStorage.setItem("workout_prs", JSON.stringify(backup.data.workout_prs));
+                console.log('✅ Imported workout_prs:', Object.keys(backup.data.workout_prs).length, 'PRs');
+                itemsImported++;
             }
+            
             if (backup.data.workout_goals) {
                 localStorage.setItem("workout_goals", JSON.stringify(backup.data.workout_goals));
+                console.log('✅ Imported workout_goals');
+                itemsImported++;
             }
+            
             if (backup.data.workout_templates) {
                 localStorage.setItem("workout_templates", JSON.stringify(backup.data.workout_templates));
+                console.log('✅ Imported workout_templates');
+                itemsImported++;
             }
+            
             if (backup.data.gym_custom_exercises) {
                 localStorage.setItem("gym_custom_exercises", JSON.stringify(backup.data.gym_custom_exercises));
+                console.log('✅ Imported gym_custom_exercises');
+                itemsImported++;
             }
+            
             if (backup.data.gym_custom_schemas) {
                 localStorage.setItem("gym_custom_schemas", JSON.stringify(backup.data.gym_custom_schemas));
+                console.log('✅ Imported gym_custom_schemas');
+                itemsImported++;
             }
+            
             if (backup.data.gym_settings) {
                 localStorage.setItem("gym_settings", JSON.stringify(backup.data.gym_settings));
+                console.log('✅ Imported gym_settings');
+                itemsImported++;
             }
             
-            showToast("Backup geïmporteerd! Herlaad de app om wijzigingen te zien.", "success");
+            console.log(`📦 Import complete: ${itemsImported} data types imported`);
             
-            // Optional: reload after short delay
+            // Trigger cloud sync if enabled
+            if (FirestoreSync.enabled) {
+                console.log('☁️ Triggering cloud sync...');
+                await FirestoreSync.uploadAllData();
+            }
+            
+            showToast(`Backup geïmporteerd! (${itemsImported} items). App wordt herladen...`, "success");
+            
+            // Reload to refresh all UI
             setTimeout(() => {
                 window.location.reload();
             }, 2000);
             
         } catch (error) {
-            console.error("Import error:", error);
+            console.error("❌ Import error:", error);
             showToast("Import mislukt: " + error.message, "error");
         }
     };

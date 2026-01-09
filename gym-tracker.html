@@ -3748,7 +3748,7 @@ label.invalid {
 
 <script>
 // APP VERSION
-const APP_VERSION = "2026-01-09-06";
+const APP_VERSION = "2026-01-09-07";
 
 // ============================================================================
 // FIREBASE CONFIGURATION & INITIALIZATION
@@ -6745,6 +6745,30 @@ function deleteWorkoutByTime(startTime, schemaName) {
     showToast("Workout verwijderd", "success");
     renderHistory(); // Re-render the history view
     renderPRs(); // Re-render PRs as they might be affected
+    
+    // Trigger cloud sync if enabled
+    if (typeof FirestoreSync !== 'undefined' && FirestoreSync.enabled) {
+        FirestoreSync.syncAfterChange();
+    }
+}
+
+// Delete workout by global index in history (used by calendar day list)
+function deleteWorkout(globalIndex) {
+    if (!confirm('Weet je zeker dat je deze workout wilt verwijderen?')) {
+        return;
+    }
+    const history = getWorkoutHistory();
+    if (globalIndex < 0 || globalIndex >= history.length) return;
+    history.splice(globalIndex, 1);
+    localStorage.setItem('workout_history', JSON.stringify(history));
+    showToast('Workout verwijderd', 'success');
+    // Re-render both calendar and list views
+    renderHistory();
+    renderPRs();
+    // Trigger cloud sync if enabled
+    if (typeof FirestoreSync !== 'undefined' && FirestoreSync.enabled) {
+        FirestoreSync.syncAfterChange();
+    }
 }
 
 // PR TRACKING

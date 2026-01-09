@@ -3748,7 +3748,7 @@ label.invalid {
 
 <script>
 // APP VERSION
-const APP_VERSION = "2026-01-09-07";
+const APP_VERSION = "2026-01-09-08";
 
 // ============================================================================
 // FIREBASE CONFIGURATION & INITIALIZATION
@@ -6770,6 +6770,9 @@ function deleteWorkout(globalIndex) {
         FirestoreSync.syncAfterChange();
     }
 }
+
+// Expose for inline onclick usage
+window.deleteWorkout = deleteWorkout;
 
 // PR TRACKING
 function getPRs() {
@@ -10781,9 +10784,10 @@ function applyProgressiveEnhancement() {
 function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
+        const context = this;
         const later = () => {
             clearTimeout(timeout);
-            func(...args);
+            func.apply(context, args);
         };
         clearTimeout(timeout);
         timeout = setTimeout(later, wait);
@@ -10807,6 +10811,29 @@ function enhanceFormValidation() {
             }
         }, 300));
     });
+}
+
+// Basic field validation used by enhanceFormValidation
+function validateField(el) {
+    if (!el) return;
+    const value = (el.value ?? '').toString().trim();
+    const isRequired = el.hasAttribute('required');
+    let invalid = false;
+    if (isRequired && value.length === 0) {
+        invalid = true;
+    }
+    if (!invalid && el.type === 'number') {
+        if (el.value !== '' && isNaN(Number(el.value))) {
+            invalid = true;
+        }
+    }
+    if (!invalid && el.pattern) {
+        try {
+            const re = new RegExp(el.pattern);
+            if (!re.test(value)) invalid = true;
+        } catch (e) { /* ignore invalid pattern */ }
+    }
+    el.classList.toggle('invalid', invalid);
 }
 
 // Test functions for debugging iOS 17+ features

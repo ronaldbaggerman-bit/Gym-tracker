@@ -3748,7 +3748,7 @@ label.invalid {
 
 <script>
 // APP VERSION
-const APP_VERSION = "2026-01-09-03";
+const APP_VERSION = "2026-01-09-04";
 
 // ============================================================================
 // FIREBASE CONFIGURATION & INITIALIZATION
@@ -3769,7 +3769,14 @@ let firebaseInitialized = false;
 
 function initFirebase() {
     try {
-        if (typeof firebase !== 'undefined' && !firebaseInitialized) {
+        // Check if Firebase SDK is loaded
+        if (typeof firebase === 'undefined') {
+            console.error('❌ Firebase SDK not loaded - check internet connection or CDN');
+            return false;
+        }
+        
+        if (!firebaseInitialized) {
+            console.log('🔥 Initializing Firebase...');
             firebase.initializeApp(firebaseConfig);
             db = firebase.firestore();
             
@@ -3781,18 +3788,22 @@ function initFirebase() {
                         console.warn('⚠️ Multiple tabs open, persistence only in first tab');
                     } else if (err.code === 'unimplemented') {
                         console.warn('⚠️ Browser doesn\'t support persistence');
+                    } else {
+                        console.error('❌ Persistence error:', err);
                     }
                 });
             
             firebaseInitialized = true;
-            console.log('🔥 Firebase initialized');
+            console.log('✅ Firebase initialized successfully');
             return true;
         }
+        return true;
     } catch (error) {
         console.error('❌ Firebase initialization error:', error);
+        if (error.code) console.error('Error code:', error.code);
+        if (error.message) console.error('Error message:', error.message);
         return false;
     }
-    return false;
 }
 
 // ============================================================================
@@ -3825,22 +3836,54 @@ const FirestoreSync = {
     
     // Enable cloud sync
     async enable() {
-        if (!initFirebase()) {
-            alert('❌ Firebase kon niet worden geïnitialiseerd. Check je internetverbinding.');
+        console.log('🔄 Attempting to enable Cloud Sync...');
+        
+        // Check if Firebase SDK is loaded
+        if (typeof firebase === 'undefined') {
+            console.error('❌ Firebase SDK niet geladen');
+            const retry = await this.waitForFirebase();
+            if (!retry) {
+                alert('❌ Firebase SDK kon niet worden geladen. Check je internetverbinding en herlaad de pagina.');
+                return false;
+            }
+        }
+        
+        // Try to initialize Firebase
+        const initialized = initFirebase();
+        if (!initialized) {
+            console.error('❌ Firebase initialisatie mislukt');
+            alert('❌ Firebase kon niet worden geïnitialiseerd. Controleer:\n\n1. Je internetverbinding\n2. Of Firestore Database is aangemaakt in Firebase Console\n3. Browser console (F12) voor details');
             return false;
         }
         
         this.enabled = true;
         localStorage.setItem('cloud_sync_enabled', 'true');
         
-        // Initial upload of local data
-        await this.uploadAllData();
-        
-        // Setup realtime sync
-        this.setupRealtimeSync();
-        
-        console.log('✅ Cloud Sync ingeschakeld');
-        return true;
+        try {
+            // Initial upload of local data
+            await this.uploadAllData();
+            
+            // Setup realtime sync
+            this.setupRealtimeSync();
+            
+            console.log('✅ Cloud Sync ingeschakeld');
+            return true;
+        } catch (error) {
+            console.error('❌ Cloud Sync enable error:', error);
+            this.enabled = false;
+            localStorage.setItem('cloud_sync_enabled', 'false');
+            alert('❌ Fout bij uploaden van data: ' + error.message);
+            return false;
+        }
+    },
+    
+    // Wait for Firebase SDK to load (with timeout)
+    async waitForFirebase(maxWait = 5000) {
+        const startTime = Date.now();
+        while (typeof firebase === 'undefined' && Date.now() - startTime < maxWait) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        return typeof firebase !== 'undefined';
     },
     
     // Disable cloud sync
@@ -3852,9 +3895,13 @@ const FirestoreSync = {
     
     // Upload all local data to Firestore
     async uploadAllData() {
-        if (!this.enabled || !db) return;
+        if (!this.enabled || !db) {
+            console.error('❌ Cannot upload: sync not enabled or db not initialized');
+            return;
+        }
         
         try {
+            console.log('☁️ Uploading data to cloud...');
             const userData = {
                 workout_history: JSON.parse(localStorage.getItem('workout_history') || '[]'),
                 workout_prs: JSON.parse(localStorage.getItem('workout_prs') || '{}'),
@@ -3866,11 +3913,22 @@ const FirestoreSync = {
                 lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
             };
             
+            console.log('☁️ Data to upload:', {
+                workouts: userData.workout_history.length,
+                prs: Object.keys(userData.workout_prs).length,
+                goals: userData.workout_goals.length,
+                templates: userData.workout_templates.length,
+                exercises: userData.gym_custom_exercises.length,
+                schemas: userData.gym_custom_schemas.length
+            });
+            
             await db.collection('users').doc(this.userId).set(userData, { merge: true });
             this.lastSyncTime = Date.now();
-            console.log('☁️ Data uploaded to cloud');
+            console.log('✅ Data uploaded successfully to cloud');
         } catch (error) {
             console.error('❌ Upload error:', error);
+            console.error('Error details:', error.code, error.message);
+            throw error; // Re-throw to be caught by enable()
         }
     },
     

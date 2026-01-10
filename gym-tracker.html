@@ -6775,6 +6775,7 @@ function startRestTimer(seconds = getRestDuration()) {
     restTimerRemaining = seconds;
     restTimerTotal = seconds;
     restTimerEndAt = Date.now() + (seconds * 1000);
+    restTimerInterval = setInterval(syncRestTimer, 100);
     updateRestTimerUI();
     const overlay = document.getElementById("restTimerOverlay");
     console.log("Overlay element:", overlay);

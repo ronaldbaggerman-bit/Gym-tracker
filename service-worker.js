@@ -3,7 +3,7 @@
  * Enables offline functionality and caching
  */
 
-const CACHE_NAME = 'gym-tracker-v2026-01-09-13';
+const CACHE_NAME = 'gym-tracker-v2026-01-10-01';
 const urlsToCache = [
   '/',
   '/gym-tracker.html',

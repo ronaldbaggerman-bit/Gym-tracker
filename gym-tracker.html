@@ -5048,6 +5048,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">MET Waarde *</label>
                 <input type="number" id="inlineExerciseMET" placeholder="bijv. 4.5" step="0.1" min="1" max="15" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--dark-lighter); color: var(--text);">
             </div>
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">📹 Instructie Video URL (optioneel)</label>
+                <input type="url" id="inlineExerciseVideoUrl" placeholder="bijv. https://www.youtube.com/watch?v=..." style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--dark-lighter); color: var(--text);">
+                <small style="display: block; margin-top: 0.25rem; color: var(--text-muted); font-size: 0.8rem;">💡 YouTube, Vimeo of directe video link</small>
+            </div>
             <div style="display: flex; gap: 0.5rem;">
                 <button onclick="saveInlineExercise()" style="flex: 1; padding: 0.75rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600;">Toevoegen</button>
                 <button onclick="hideInlineExerciseForm()" style="flex: 1; padding: 0.75rem; background: var(--dark-lighter); color: var(--text); border: 1px solid var(--border); border-radius: 8px; font-weight: 600;">Annuleren</button>
@@ -5116,6 +5121,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 <input type="number" id="customExerciseMET" placeholder="bijv. 4.5" step="0.1" min="1" max="15" class="form-input">
             </div>
             <div class="form-group">
+                <label>📹 Instructie Video URL (optioneel)</label>
+                <input type="url" id="customExerciseVideoUrl" placeholder="bijv. https://www.youtube.com/watch?v=..." class="form-input">
+                <small style="display: block; margin-top: 0.25rem; color: var(--text-muted); font-size: 0.85rem;">💡 YouTube, Vimeo of directe video link</small>
+            </div>
+            <div class="form-group">
                 <label style="font-size: 0.85rem; color: var(--text-muted);">💡 MET bepaalt calorieverbruik. Typische waarden: 3-5 (cardio), 5-8 (kracht)</label>
             </div>
         </div>
@@ -5181,6 +5191,35 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="modal-footer">
             <button class="btn btn-secondary" onclick="closeOneRMModal()">Sluiten</button>
             <button class="btn btn-primary" onclick="calculateAndShowOneRM()">Bereken</button>
+        </div>
+    </div>
+</div>
+
+<!-- Video Player Modal -->
+<div class="modal" id="videoModal">
+    <div class="modal-content" style="max-width: 900px;">
+        <div class="modal-header">
+            <h2>📹 <span id="videoModalTitle">Instructie Video</span></h2>
+            <button class="modal-close" onclick="closeVideoModal()">✕</button>
+        </div>
+        <div class="modal-body" style="padding: 0;">
+            <div id="videoPlayerContainer" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; background: #000; border-radius: 12px;">
+                <iframe 
+                    id="videoPlayer" 
+                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 12px;" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                    allowfullscreen
+                    sandbox="allow-scripts allow-same-origin allow-presentation"
+                ></iframe>
+            </div>
+            <div style="padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+                💡 Als de video niet wordt afgespeeld, kan het zijn dat embedden door de eigenaar is uitgeschakeld. Probeer de video op YouTube te openen.
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="openVideoInNewTab()" id="openVideoBtn">Open op YouTube</button>
+            <button class="btn btn-primary" onclick="closeVideoModal()">Sluiten</button>
         </div>
     </div>
 </div>
@@ -5815,6 +5854,7 @@ function hideInlineExerciseForm() {
         document.getElementById('inlineExerciseName').value = '';
         document.getElementById('inlineMuscleGroup').value = '';
         document.getElementById('inlineExerciseMET').value = '';
+        document.getElementById('inlineExerciseVideoUrl').value = '';
     }
 }
 
@@ -5822,6 +5862,7 @@ function saveInlineExercise() {
     const name = document.getElementById('inlineExerciseName').value.trim();
     const muscleGroupId = document.getElementById('inlineMuscleGroup').value;
     const met = parseFloat(document.getElementById('inlineExerciseMET').value) || 0;
+    const videoUrl = document.getElementById('inlineExerciseVideoUrl').value.trim();
     
     // Validation
     if (!name) {
@@ -5861,7 +5902,8 @@ function saveInlineExercise() {
         muscleGroupId,
         muscleGroupName: muscleGroup.name,
         icon: "💪",
-        custom: true
+        custom: true,
+        videoUrl: videoUrl || null
     };
     saveCustomExercises(custom);
     
@@ -5910,10 +5952,12 @@ function closeAddExerciseModal() {
     const nameInput = document.getElementById('customExerciseName');
     const groupInput = document.getElementById('customMuscleGroup');
     const metInput = document.getElementById('customExerciseMET');
+    const videoInput = document.getElementById('customExerciseVideoUrl');
 
     if(nameInput) nameInput.value = '';
     if(groupInput) groupInput.value = '';
     if(metInput) metInput.value = '';
+    if(videoInput) videoInput.value = '';
     
     // Reset Edit State
     currentEditingExerciseId = null;
@@ -5951,6 +5995,66 @@ function openOneRMModal() {
 function closeOneRMModal() {
     const modal = document.getElementById('oneRMModal');
     modal.classList.remove('active');
+}
+
+// Video Modal Functions
+let currentVideoUrl = null;
+
+function openVideoModal(exerciseName, videoUrl) {
+    if (!videoUrl) {
+        showToast('Geen video beschikbaar', 'error');
+        return;
+    }
+    
+    const modal = document.getElementById('videoModal');
+    const titleEl = document.getElementById('videoModalTitle');
+    const playerEl = document.getElementById('videoPlayer');
+    
+    titleEl.textContent = exerciseName;
+    currentVideoUrl = videoUrl;
+    
+    // Convert YouTube/Vimeo URLs to embed URLs
+    const embedUrl = convertToEmbedUrl(videoUrl);
+    playerEl.src = embedUrl;
+    
+    modal.classList.add('active');
+}
+
+function closeVideoModal() {
+    const modal = document.getElementById('videoModal');
+    const playerEl = document.getElementById('videoPlayer');
+    
+    // Stop video playback
+    playerEl.src = '';
+    currentVideoUrl = null;
+    
+    modal.classList.remove('active');
+}
+
+function openVideoInNewTab() {
+    if (currentVideoUrl) {
+        window.open(currentVideoUrl, '_blank');
+    }
+}
+
+function convertToEmbedUrl(url) {
+    // YouTube - support various URL formats
+    const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const youtubeMatch = url.match(youtubeRegex);
+    if (youtubeMatch && youtubeMatch[1]) {
+        // Add parameters to allow embedding and avoid restrictions
+        return `https://www.youtube-nocookie.com/embed/${youtubeMatch[1]}?autoplay=0&rel=0&modestbranding=1`;
+    }
+    
+    // Vimeo
+    const vimeoRegex = /vimeo\.com\/(?:.*\/)?(\d+)/;
+    const vimeoMatch = url.match(vimeoRegex);
+    if (vimeoMatch && vimeoMatch[1]) {
+        return `https://player.vimeo.com/video/${vimeoMatch[1]}?title=0&byline=0&portrait=0`;
+    }
+    
+    // Direct video or already embed URL
+    return url;
 }
 
 function calculateAndShowOneRM() {
@@ -5994,10 +6098,12 @@ function editCustomExercise(id) {
     
     const nameInput = document.getElementById('customExerciseName');
     const metInput = document.getElementById('customExerciseMET');
+    const videoInput = document.getElementById('customExerciseVideoUrl');
 
     if(nameInput) nameInput.value = exercise.name;
     if(metInput) metInput.value = exercise.met;
     if(groupInput) groupInput.value = exercise.muscleGroupId;
+    if(videoInput) videoInput.value = exercise.videoUrl || '';
     
     const modalTitle = document.querySelector('#addExerciseModal h2');
     const submitBtn = document.querySelector('#addExerciseModal .modal-footer .btn-primary');
@@ -6013,8 +6119,9 @@ function saveCustomExercise() {
     const name = document.getElementById('customExerciseName').value.trim();
     const muscleGroupId = document.getElementById('customMuscleGroup').value;
     const met = parseFloat(document.getElementById('customExerciseMET').value) || 0;
+    const videoUrl = document.getElementById('customExerciseVideoUrl').value.trim();
     
-    console.log('Form values:', { name, muscleGroupId, met });
+    console.log('Form values:', { name, muscleGroupId, met, videoUrl });
     
     // Validation
     if (!name) {
@@ -6057,7 +6164,8 @@ function saveCustomExercise() {
                 name,
                 met,
                 muscleGroupId,
-                muscleGroupName: muscleGroup.name
+                muscleGroupName: muscleGroup.name,
+                videoUrl: videoUrl || null
             };
         }
     } else {
@@ -6069,7 +6177,8 @@ function saveCustomExercise() {
             muscleGroupId,
             muscleGroupName: muscleGroup.name,
             icon: "💪",
-            custom: true
+            custom: true,
+            videoUrl: videoUrl || null
         };
     }
     
@@ -6496,6 +6605,11 @@ function renderExerciseCard(exercise) {
     const setsDisplay = collapsed ? 'style="display:none;"' : '';
     const collapseClass = collapsed ? 'collapse-btn collapsed' : 'collapse-btn';
     
+    // Check if exercise has video URL (for custom exercises)
+    const customExercises = getCustomExercises();
+    const customExercise = customExercises[exercise.id];
+    const videoUrl = customExercise?.videoUrl || null;
+    
     return `
         <div class="exercise-card" data-exercise-id="${exercise.id}" ontouchstart="handleSwipeStart(event, ${exercise.id})" ontouchmove="handleSwipeMove(event, ${exercise.id})" ontouchend="handleSwipeEnd(event, ${exercise.id})">
             <div class="exercise-card-delete-bg">
@@ -6509,6 +6623,7 @@ function renderExerciseCard(exercise) {
                     <div class="exercise-name">
                         ${exercise.icon || "💪"} ${exercise.name}
                         ${hasPR ? '<span class="pr-badge-inline"> PR!</span>' : ""}
+                        ${videoUrl ? '<span style="color: var(--success); margin-left: 0.5rem; cursor: pointer;" onclick="openVideoModal(\'' + exercise.name.replace(/'/g, "\\'") + '\', \'' + videoUrl + '\')" title="Bekijk instructie video">📹</span>' : ''}
                     </div>
                     <div class="exercise-meta">
                         <span class="exercise-meta-item"> MET ${exercise.met.toFixed(1)}</span>
@@ -8463,12 +8578,22 @@ function renderExercisesList() {
     
     container.innerHTML = allExercises.map(exercise => `
         <div class="exercise-item" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: var(--dark-card); border-radius: 12px; margin-bottom: 0.5rem; border: 1px solid var(--border);">
-            <div>
-                <div style="font-weight: 600; color: var(--text);">${exercise.name} ${exercise.custom ? '<span style="color: var(--primary);">⚡ Eigen</span>' : ''}</div>
+            <div style="flex: 1;">
+                <div style="font-weight: 600; color: var(--text);">
+                    ${exercise.name} 
+                    ${exercise.custom ? '<span style="color: var(--primary);">⚡ Eigen</span>' : ''}
+                    ${exercise.videoUrl ? '<span style="color: var(--success); margin-left: 0.5rem;" title="Video beschikbaar">📹</span>' : ''}
+                </div>
                 <div style="font-size: 0.875rem; color: var(--text-muted);">${exercise.muscleGroup} • MET ${exercise.met.toFixed(1)}</div>
             </div>
-            ${exercise.custom ? `
             <div style="display: flex; gap: 0.5rem; align-items: center;">
+                ${exercise.videoUrl ? `
+                <button class="btn-icon" onclick="openVideoModal('${exercise.name.replace(/'/g, "\\'")}', '${exercise.videoUrl}')" title="Bekijk video" style="background: none; border: none; color: var(--success); cursor: pointer; padding: 4px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                </button>` : ''}
+                ${exercise.custom ? `
                 <button class="btn-icon edit-btn" onclick="editCustomExercise(${exercise.id})" title="Bewerken" style="background: none; border: none; color: var(--primary); cursor: pointer; padding: 4px;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -8479,8 +8604,8 @@ function renderExercisesList() {
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14M10 11v6m4-6v6"/>
                     </svg>
-                </button>
-            </div>` : ''}
+                </button>` : ''}
+            </div>
         </div>
     `).join("");
 }

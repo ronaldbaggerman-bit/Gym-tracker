@@ -2,9 +2,9 @@ name: CI - HTML5 Standalone Apps
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, main ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, main ]
 
 jobs:
   validate-html:
@@ -41,3 +41,39 @@ jobs:
           echo "Type: HTML5 Standalone Applications"
           echo "No Node.js/npm dependencies required"
           ls -la
+
+  validate-pwa-files:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate PWA files
+        run: |
+          echo "=== Checking PWA files ==="
+          test -f "manifest.json" && echo "✓ manifest.json" || (echo "✗ Missing manifest.json" && exit 1)
+          test -f "service-worker.js" && echo "✓ service-worker.js" || (echo "✗ Missing service-worker.js" && exit 1)
+          test -f "index.html" && echo "✓ index.html" || (echo "✗ Missing index.html" && exit 1)
+
+      - name: Validate service worker references
+        run: |
+          echo "=== Checking service worker wiring ==="
+          grep -q "service-worker.js" "index.html" && echo "✓ index.html references service-worker.js" || echo "⚠ No service-worker.js reference found in index.html"
+          grep -q "manifest.json" "index.html" && echo "✓ index.html references manifest.json" || echo "⚠ No manifest.json reference found in index.html"
+
+  validate-versioning:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate app version markers
+        run: |
+          echo "=== Checking app version markers ==="
+          grep -q "APP_VERSION" "gym-tracker.html" && echo "✓ gym-tracker.html has APP_VERSION" || (echo "✗ APP_VERSION missing in gym-tracker.html" && exit 1)
+          grep -q "APP_VERSION" "Sport tracker/gym-tracker.html" && echo "✓ Sport tracker/gym-tracker.html has APP_VERSION" || (echo "✗ APP_VERSION missing in Sport tracker/gym-tracker.html" && exit 1)
+
+      - name: Validate release tag format in main file
+        run: |
+          echo "=== Checking release tag format ==="
+          grep -E 'const APP_VERSION = "[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]+";' "gym-tracker.html" && echo "✓ APP_VERSION format is valid" || (echo "✗ APP_VERSION format invalid in gym-tracker.html" && exit 1)

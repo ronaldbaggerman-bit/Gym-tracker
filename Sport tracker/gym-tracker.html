@@ -4698,9 +4698,82 @@ function getCustomSchemas() {
         console.log('[getCustomSchemas] called');
     try {
         const stored = localStorage.getItem("gym_custom_schemas");
+        console.log('[getCustomSchemas] Raw localStorage value:', stored);
         const parsed = stored ? JSON.parse(stored) : [];
-        return Array.isArray(parsed) ? parsed : [];
+        console.log('[getCustomSchemas] Parsed array:', parsed, 'Length:', parsed.length);
+        if (!Array.isArray(parsed)) {
+            console.warn('[getCustomSchemas] Parsed value is not an array, returning []');
+            return [];
+        }
+
+        let didNormalize = false;
+        const normalized = parsed.map((schema, index) => {
+            console.log(`[getCustomSchemas] Normalizing schema ${index}:`, schema);
+            const safeSchema = (schema && typeof schema === 'object') ? { ...schema } : {};
+
+            const schemaId = (safeSchema.id !== undefined && safeSchema.id !== null && String(safeSchema.id).trim() !== '')
+                ? String(safeSchema.id)
+                : `custom_legacy_${index + 1}`;
+            if (schemaId !== safeSchema.id) {
+                console.log(`[getCustomSchemas] Schema ${index} ID changed from`, safeSchema.id, 'to', schemaId);
+                didNormalize = true;
+            }
+
+            let muscleGroups = [];
+            if (Array.isArray(safeSchema.muscleGroups)) {
+                console.log(`[getCustomSchemas] Schema ${index} already has muscleGroups:`, safeSchema.muscleGroups.length);
+                muscleGroups = safeSchema.muscleGroups
+                    .filter(group => group && typeof group === 'object')
+                    .map((group, groupIndex) => {
+                        const exercises = Array.isArray(group.exercises)
+                            ? group.exercises.filter(ex => ex && typeof ex === 'object')
+                            : [];
+                        return {
+                            id: group.id || `custom_group_${groupIndex + 1}`,
+                            name: group.name || 'Custom',
+                            icon: group.icon || '💪',
+                            exercises
+                        };
+                    });
+            } else if (Array.isArray(safeSchema.exercises)) {
+                console.log(`[getCustomSchemas] Schema ${index} has exercises array (legacy format):`, safeSchema.exercises.length);
+                const normalizedExercises = safeSchema.exercises
+                    .filter(ex => ex && typeof ex === 'object')
+                    .map(ex => ({
+                        ...ex,
+                        muscleGroup: ex.muscleGroup || ex.muscleGroupName || 'Custom'
+                    }));
+                muscleGroups = groupExercisesByMuscleGroup(normalizedExercises);
+                console.log(`[getCustomSchemas] Converted to ${muscleGroups.length} muscle groups`);
+                didNormalize = true;
+            } else {
+                console.warn(`[getCustomSchemas] Schema ${index} has neither muscleGroups nor exercises!`);
+                didNormalize = true;
+            }
+
+            const normalizedSchema = {
+                ...safeSchema,
+                id: schemaId,
+                name: safeSchema.name || `Custom schema ${index + 1}`,
+                description: safeSchema.description || '',
+                color: safeSchema.color || '#4A90E2',
+                icon: safeSchema.icon || '💪',
+                muscleGroups
+            };
+
+            console.log(`[getCustomSchemas] Normalized schema ${index}:`, normalizedSchema);
+            return normalizedSchema;
+        });
+
+        if (didNormalize) {
+            console.log('[getCustomSchemas] Normalizing schemas, saving to localStorage:', normalized);
+            saveCustomSchemas(normalized);
+        }
+
+        console.log('[getCustomSchemas] Returning', normalized.length, 'custom schemas:', normalized);
+        return normalized;
     } catch (e) {
+        console.error('[getCustomSchemas] Error:', e);
         return [];
     }
 }
@@ -5446,9 +5519,13 @@ function init() {
 }
 
 function renderSchemaSelection() {
+    console.log('[renderSchemaSelection] Starting render');
     const container = document.getElementById("schemaSelection");
-    container.innerHTML = getAllSchemas().map(schema => {
-        const muscleGroups = schema.muscleGroups || [];
+    const allSchemas = getAllSchemas();
+    console.log('[renderSchemaSelection] Total schemas:', allSchemas.length, allSchemas);
+    container.innerHTML = allSchemas.map((schema, index) => {
+        const normalizedSchema = normalizeSchemaStructure(schema);
+        const muscleGroups = normalizedSchema.muscleGroups || [];
         const totalExercises = muscleGroups.reduce((sum, g) => sum + (g.exercises ? g.exercises.length : 0), 0);
         const classType = schema.id === "schema1" ? "push" : schema.id === "schema2" ? "legs" : "custom";
         const badgeText = schema.id === "schema1" ? "Upper" : schema.id === "schema2" ? "Lower" : "Custom";
@@ -5456,7 +5533,7 @@ function renderSchemaSelection() {
         const styleVars = `--schema-accent:${accent}; --schema-accent-2:${accent2};`;
         
         return `
-            <div class="schema-card ${classType}" onclick="selectSchema('${schema.id}')" style="${styleVars}">
+            <div class="schema-card ${classType}" data-schema-index="${index}" style="${styleVars}">
                 <div class="schema-content">
                     <div class="schema-header">
                         <div class="schema-icon">${schema.icon || "💪"}</div>
@@ -5482,6 +5559,68 @@ function renderSchemaSelection() {
             </div>
         `;
     }).join("");
+
+    const cards = container.querySelectorAll('.schema-card');
+    console.log('[renderSchemaSelection] Found', cards.length, 'schema cards to bind events');
+    cards.forEach((card, idx) => {
+        const schemaIndex = card.dataset.schemaIndex;
+        console.log('[renderSchemaSelection] Binding click to card', idx, 'with schemaIndex:', schemaIndex);
+        card.addEventListener('click', () => {
+            console.log('[CLICK EVENT] Card clicked! schemaIndex:', schemaIndex);
+            const schemaIndexNum = Number(schemaIndex);
+            if (!Number.isNaN(schemaIndexNum)) {
+                console.log('[CLICK EVENT] Calling selectSchemaByIndex with:', schemaIndexNum);
+                selectSchemaByIndex(schemaIndexNum);
+            } else {
+                console.error('[CLICK EVENT] Invalid schemaIndex:', schemaIndex);
+            }
+        });
+    });
+    console.log('[renderSchemaSelection] Event binding complete');
+}
+
+function normalizeSchemaStructure(schema) {
+    if (!schema || typeof schema !== "object") {
+        return { id: "", name: "", description: "", color: "#4A90E2", icon: "💪", muscleGroups: [] };
+    }
+
+    if (Array.isArray(schema.muscleGroups)) {
+        return schema;
+    }
+
+    if (Array.isArray(schema.exercises)) {
+        const normalizedExercises = schema.exercises
+            .filter(ex => ex && typeof ex === "object")
+            .map(ex => ({
+                ...ex,
+                muscleGroup: ex.muscleGroup || ex.muscleGroupName || "Custom"
+            }));
+
+        return {
+            ...schema,
+            muscleGroups: groupExercisesByMuscleGroup(normalizedExercises)
+        };
+    }
+
+    return {
+        ...schema,
+        muscleGroups: []
+    };
+}
+
+function selectSchemaByIndex(index) {
+    console.log('[selectSchemaByIndex] Called with index:', index);
+    const allSchemas = getAllSchemas();
+    console.log('[selectSchemaByIndex] All schemas:', allSchemas.length);
+    const schema = allSchemas[index];
+    console.log('[selectSchemaByIndex] Selected schema:', schema);
+    if (!schema) {
+        console.error('[selectSchemaByIndex] No schema found at index:', index);
+        return;
+    }
+    const schemaId = schema.id !== undefined && schema.id !== null ? schema.id : String(index);
+    console.log('[selectSchemaByIndex] Calling selectSchema with id:', schemaId);
+    selectSchema(schemaId);
 }
 
 function renderTemplateSelection() {
@@ -5615,8 +5754,14 @@ function showSaveTemplateDialog() {
 }
 
 function selectSchema(schemaId) {
-    const schema = WORKOUT_DATA.schemas.find(s => s.id === schemaId);
+    const allSchemas = WORKOUT_DATA.schemas;
+    const schemaIdStr = String(schemaId);
+    let schema = allSchemas.find(s => String(s?.id) === schemaIdStr);
+    if (!schema && /^\d+$/.test(schemaIdStr)) {
+        schema = allSchemas[Number(schemaIdStr)] || null;
+    }
     if (!schema) return;
+    schema = normalizeSchemaStructure(schema);
     
     const settings = getSettings();
     
